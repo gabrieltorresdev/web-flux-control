@@ -1,24 +1,29 @@
-import { LayoutDashboard, Settings } from "lucide-react";
+import { LayoutDashboard, List, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
-  SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from "./ui/sidebar";
 
 const items = [
   {
     title: "Dashboard",
-    url: "#",
+    url: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Configurações",
-    url: "#",
+    title: "Transactions",
+    url: "/dashboard/transactions",
+    icon: List,
+  },
+  {
+    title: "Settings",
+    url: "/dashboard/settings",
     icon: Settings,
   },
 ];
@@ -26,9 +31,11 @@ const items = [
 export default function AppSidebar() {
   return (
     <Sidebar>
-      <SidebarContent>
+      <SidebarHeader className="p-4">
+        <h1>FluxControl</h1>
+      </SidebarHeader>
+      <SidebarContent className="bg-background">
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarMenu>
             {items.map((item) => (
               <SidebarMenuItem key={item.title}>
@@ -44,7 +51,7 @@ export default function AppSidebar() {
         </SidebarGroup>
         <SidebarGroup />
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarRail />
     </Sidebar>
   );
 }

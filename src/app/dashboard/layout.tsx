@@ -17,9 +17,11 @@ export default async function DashboardLayout({
       <div className="flex w-full min-h-screen">
         <AppSidebar />
         <main className="flex flex-col flex-1">
-          <header className="flex gap-2 p-4 bg-background border-b border-primary/5 w-full">
-            <SidebarTrigger />
-            {breadcrumb}
+          <header className="flex flex-col p-4 bg-background w-full">
+            <div className="flex gap-2">
+              <SidebarTrigger />
+              <div className="flex items-center">{breadcrumb}</div>
+            </div>
           </header>
           <div className="p-4">{children}</div>
         </main>

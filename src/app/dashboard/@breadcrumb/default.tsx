@@ -5,12 +5,12 @@ import {
   BreadcrumbList,
 } from "@/components/ui/breadcrumb";
 
-export default function BreadcrumbSlot() {
+export default function Default() {
   return (
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
+          <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
