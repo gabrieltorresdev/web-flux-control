@@ -1,51 +1,46 @@
-import React, { ReactElement } from "react";
+"use client";
 
+import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
   BreadcrumbSeparator,
+  BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import React from "react";
 
-export function AppBreadcrumbs({ routes = [] }: { routes: string[] }) {
-  let fullHref: string | undefined = undefined;
-  const breadcrumbItems: ReactElement[] = [];
-  let breadcrumbPage: ReactElement = <></>;
+export function AppBreadcrumbs() {
+  const pathname = usePathname();
 
-  for (let i = 0; i < routes.length; i++) {
-    const route = routes[i];
-    const href: string = fullHref ? `${fullHref}/${route}` : `/${route}`;
-    fullHref = href;
+  const segments = pathname?.split("/").filter(Boolean) || [];
 
-    if (i === routes.length - 1) {
-      breadcrumbPage = (
+  const breadcrumbItems = segments.map((segment, index) => {
+    const isLast = index === segments.length - 1;
+    const href = `/${segments.slice(0, index + 1).join("/")}`;
+
+    return (
+      <React.Fragment key={href}>
         <BreadcrumbItem>
-          <BreadcrumbPage className="capitalize">{route}</BreadcrumbPage>
-        </BreadcrumbItem>
-      );
-    } else {
-      breadcrumbItems.push(
-        <React.Fragment key={href}>
-          {i > 0 ? <BreadcrumbSeparator /> : null}
-          <BreadcrumbItem>
+          {!isLast ? (
             <BreadcrumbLink href={href} className="capitalize">
-              {route}
+              {decodeURIComponent(segment)}
             </BreadcrumbLink>
-          </BreadcrumbItem>
-        </React.Fragment>
-      );
-    }
-  }
+          ) : (
+            <BreadcrumbPage className="capitalize">
+              {decodeURIComponent(segment)}
+            </BreadcrumbPage>
+          )}
+        </BreadcrumbItem>
+        {!isLast && <BreadcrumbSeparator />}
+      </React.Fragment>
+    );
+  });
 
   return (
     <Breadcrumb>
-      <BreadcrumbList>
-        {breadcrumbItems}
-        <BreadcrumbSeparator />
-        {breadcrumbPage}
-      </BreadcrumbList>
+      <BreadcrumbList>{breadcrumbItems}</BreadcrumbList>
     </Breadcrumb>
   );
 }

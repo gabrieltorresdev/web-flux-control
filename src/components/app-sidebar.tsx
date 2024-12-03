@@ -1,14 +1,16 @@
+"use client";
+
 import { LayoutDashboard, List, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarHeader,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "./ui/sidebar";
+import Link from "next/link";
 
 const items = [
   {
@@ -28,22 +30,20 @@ const items = [
   },
 ];
 
-export default function AppSidebar() {
+export function AppSidebar() {
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
-        <h1>FluxControl</h1>
-      </SidebarHeader>
+    <Sidebar variant="inset">
       <SidebarContent className="bg-background">
         <SidebarGroup>
+          <SidebarGroupLabel>FluxControl</SidebarGroupLabel>
           <SidebarMenu>
             {items.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     <item.icon />
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -51,7 +51,6 @@ export default function AppSidebar() {
         </SidebarGroup>
         <SidebarGroup />
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   );
 }
