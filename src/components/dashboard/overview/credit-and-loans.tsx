@@ -11,7 +11,7 @@ export function CreditAndLoans() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <CreditCard className="h-5 w-5 text-primary" />
           <span className="text-sm font-medium">Cartão de Crédito</span>
@@ -28,7 +28,7 @@ export function CreditAndLoans() {
           </p>
         </div>
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <Landmark className="h-5 w-5 text-primary" />
           <span className="text-sm font-medium">Empréstimo</span>

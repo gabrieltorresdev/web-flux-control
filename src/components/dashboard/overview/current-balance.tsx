@@ -1,15 +1,15 @@
-import { Wallet } from "lucide-react";
+import { HandCoins, Wallet } from "lucide-react";
 
 export function CurrentBalance() {
   const balance = 5000; // Este valor deve vir de uma API ou estado global
   const extraBalance = 6500; // Soma do crédito disponível e outros saldos extras
 
   return (
-    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+      <div className="flex items-center gap-4">
         <Wallet className="h-10 w-10 text-primary" />
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-base font-medium text-muted-foreground">
             Saldo Atual
           </p>
           <p
@@ -21,12 +21,17 @@ export function CurrentBalance() {
           </p>
         </div>
       </div>
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Saldo Extra</p>
-        <p className="text-xl font-semibold text-blue-500">
-          R${" "}
-          {extraBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-        </p>
+      <div className="flex items-center md:justify-end md:flex-row-reverse gap-4">
+        <HandCoins className="h-10 w-10 text-primary" />
+        <div className="md:text-right">
+          <p className="text-base font-medium text-muted-foreground">
+            Saldo Extra
+          </p>
+          <p className="text-2xl font-bold text-blue-600">
+            R${" "}
+            {extraBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </p>
+        </div>
       </div>
     </div>
   );

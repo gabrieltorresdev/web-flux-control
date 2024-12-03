@@ -8,9 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { format } from "date-fns";
-import { DashboardTransactionsListItem } from "../../transactions/list-item";
+import { DashboardTransactionsListItem } from "@/components/dashboard/transactions/list-item";
 import { useState } from "react";
-import { AddTransactionDialog } from "../../transactions/add-transaction-dialog";
+import { AddTransactionDialog } from "@/components/dashboard/transactions/add-transaction-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type DayTransactions = {
   date: string;
@@ -23,16 +24,11 @@ type DayTransactions = {
       name: string;
       color: string;
     };
+    subcategory: string;
   }[];
 };
 
-interface DashboardOverviewRecentTransactionsProps {
-  transactions: DayTransactions[];
-}
-
-export function DashboardOverviewRecentTransactions({
-  transactions,
-}: DashboardOverviewRecentTransactionsProps) {
+export function DashboardOverviewRecentTransactions({}) {
   const [transactionsByDay, setTransactionsByDay] = useState<DayTransactions[]>(
     [
       {
@@ -47,47 +43,9 @@ export function DashboardOverviewRecentTransactions({
               name: "Receita",
               color: "hsl(120, 70%, 40%)",
             },
+            subcategory: "Salário",
           },
-          {
-            description: "Salário",
-            time: "13:40",
-            amount: "5000.00",
-            type: "income",
-            category: {
-              name: "Receita",
-              color: "hsl(120, 70%, 40%)",
-            },
-          },
-          {
-            description: "Salário",
-            time: "13:40",
-            amount: "5000.00",
-            type: "income",
-            category: {
-              name: "Receita",
-              color: "hsl(120, 70%, 40%)",
-            },
-          },
-          {
-            description: "Salário",
-            time: "13:40",
-            amount: "5000.00",
-            type: "income",
-            category: {
-              name: "Receita",
-              color: "hsl(120, 70%, 40%)",
-            },
-          },
-          {
-            description: "Salário",
-            time: "13:40",
-            amount: "5000.00",
-            type: "income",
-            category: {
-              name: "Receita",
-              color: "hsl(120, 70%, 40%)",
-            },
-          },
+          // ... (outros exemplos de transações)
         ],
       },
       {
@@ -102,6 +60,7 @@ export function DashboardOverviewRecentTransactions({
               name: "Alimentação",
               color: "hsl(200, 80%, 50%)",
             },
+            subcategory: "Supermercado",
           },
           {
             description: "Pagamento Aluguel",
@@ -112,6 +71,7 @@ export function DashboardOverviewRecentTransactions({
               name: "Moradia",
               color: "hsl(20, 60%, 45%)",
             },
+            subcategory: "Aluguel",
           },
         ],
       },
@@ -128,6 +88,7 @@ export function DashboardOverviewRecentTransactions({
       name: string;
       color: string;
     };
+    subcategory: string;
   }) => {
     const today = new Date().toISOString().split("T")[0];
     const currentTime = new Date().toLocaleTimeString("pt-BR", {
@@ -177,15 +138,16 @@ export function DashboardOverviewRecentTransactions({
       ),
     }))
     .filter((group) => group.transactions.length > 0);
+
   return (
-    <div className="flex flex-col gap-4 overflow-hidden min-h-0 max-h-[23rem] w-full">
-      <Card className="flex flex-col min-h-0 overflow-hidden shadow-none flex-1">
+    <div className="gap-4 w-full">
+      <Card className="shadow-none flex-1">
         <CardHeader>
           <div className="flex flex-col gap-4">
             <div>
-              <CardTitle>Últimas transações</CardTitle>
+              <CardTitle className="text-xl">Últimas transações</CardTitle>
               <CardDescription className="line-clamp-1">
-                Foram feitas {transactions.length} transações no período
+                Foram feitas {transactionsByDay.length} transações no período
               </CardDescription>
             </div>
             <div className="w-full">
@@ -193,38 +155,41 @@ export function DashboardOverviewRecentTransactions({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col flex-1 overflow-y-auto snap-y gap-4">
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((group) => (
-              <div className="flex flex-col gap-4" key={group.date}>
-                <strong className="text-xs font-light opacity-70 tracking-wider">
-                  {format(new Date(group.date), "dd/MM/yyyy")}
-                </strong>
-                <div className="flex flex-col w-full">
-                  {group.transactions.map((item, index) => (
-                    <DashboardTransactionsListItem
-                      key={group.date + String(index)}
-                      description={item.description}
-                      time={item.time}
-                      amount={item.amount}
-                      category={item.category}
-                    />
-                  ))}
+        <CardContent>
+          <ScrollArea className="flex flex-col gap-4 snap-y h-[232px]">
+            {filteredTransactions.length > 0 ? (
+              filteredTransactions.map((group) => (
+                <div className="flex flex-col gap-4" key={group.date}>
+                  <strong className="text-xs font-light opacity-70 tracking-wider">
+                    {format(new Date(group.date), "dd/MM/yyyy")}
+                  </strong>
+                  <div className="flex flex-col w-full">
+                    {group.transactions.map((item, index) => (
+                      <DashboardTransactionsListItem
+                        key={group.date + String(index)}
+                        description={item.description}
+                        time={item.time}
+                        amount={item.amount}
+                        category={item.category}
+                        subcategory={item.subcategory}
+                      />
+                    ))}
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="flex flex-1 justify-center items-center opacity-40">
+                Suas Transações recentes aparecerão aqui
               </div>
-            ))
-          ) : (
-            <div className="flex flex-1 justify-center items-center opacity-40">
-              Suas Transações recentes aparecerão aqui
+            )}
+            <div className="grid grid-cols-9 items-center">
+              <div className="border-t col-span-4"></div>
+              <div className="text-center font-light text-sm opacity-50 col-span-1">
+                FIM
+              </div>
+              <div className="border-t col-span-4"></div>
             </div>
-          )}
-          <div className="grid grid-cols-9 items-center">
-            <div className="border-t col-span-4"></div>
-            <div className="text-center font-light text-sm opacity-50 col-span-1">
-              FIM
-            </div>
-            <div className="border-t col-span-4"></div>
-          </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>

@@ -18,6 +18,7 @@ interface TransactionItemProps {
     name: string;
     color: string;
   };
+  subcategory: string;
 }
 
 export function DashboardTransactionsListItem({
@@ -25,6 +26,7 @@ export function DashboardTransactionsListItem({
   time,
   amount,
   category,
+  subcategory,
 }: TransactionItemProps) {
   const amountNumber = parseFloat(amount.replace(/[^0-9.-]+/g, ""));
   const isNegative = amountNumber < 0;
@@ -42,7 +44,7 @@ export function DashboardTransactionsListItem({
               style={{ color: category.color }}
               className="text-xs/3 font-medium truncate"
             >
-              {category.name}
+              {category.name} - {subcategory}
             </span>
             <TooltipProvider>
               <Tooltip>
