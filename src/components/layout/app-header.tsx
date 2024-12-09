@@ -3,10 +3,17 @@
 import { useSidebarStore } from "@/stores/sidebar";
 import { SidebarTrigger } from "../ui/sidebar";
 import { NavigationMenu, NavigationMenuList } from "../ui/navigation-menu";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "../ui/dropdown-menu";
 
 const menuItems = [{ icon: LayoutDashboard, label: "Dashboard", href: "/" }];
 
@@ -20,6 +27,27 @@ export default function AppHeader() {
         <SidebarTrigger onClick={toggle} variant={"outline"} />
         <div className="flex-1 ml-3">
           <h1 className="text-xl font-semibold">FluxControl</h1>
+        </div>
+
+        <div className="flex overflow-hidden rounded-full">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
+                <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop" />
+                <AvatarFallback>JD</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem className="cursor-pointer gap-2">
+                <Settings size={16} />
+                <span>Configurações</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer gap-2 text-red-600 focus:text-red-600">
+                <LogOut size={16} />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
       <div className="hidden md:block">
