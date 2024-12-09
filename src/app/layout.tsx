@@ -36,7 +36,7 @@ export default function RootLayout({
             <AppSidebar />
             <main className="flex-1 bg-gray-50">
               <Header />
-              <div className="h-[calc(100vh-4rem)] overflow-y-auto p-6 flex-1">
+              <div className="h-[calc(100vh-8rem)] overflow-y-auto p-6 flex-1">
                 {children}
               </div>
             </main>
