@@ -4,9 +4,7 @@ import "./globals.css";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Providers } from "./providers";
-import Header from "@/components/layout/app-header";
-import AppSidebar from "@/components/layout/app-sidebar";
-import Providers from "./providers";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -44,6 +42,7 @@ export default function RootLayout({
               </div>
             </main>
           </div>
+          <Toaster />
         </Providers>
       </body>
     </html>
