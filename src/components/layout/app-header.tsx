@@ -1,6 +1,5 @@
 "use client";
 
-import { useSidebarStore } from "@/stores/sidebar";
 import { SidebarTrigger } from "../ui/sidebar";
 import { NavigationMenu, NavigationMenuList } from "../ui/navigation-menu";
 import { LayoutDashboard, LogOut, Settings } from "lucide-react";
@@ -17,14 +16,13 @@ import {
 
 const menuItems = [{ icon: LayoutDashboard, label: "Dashboard", href: "/" }];
 
-export default function AppHeader() {
-  const { toggle } = useSidebarStore();
+export function AppHeader() {
   const pathname = usePathname();
 
   return (
-    <div className="px-4 border-b-2 bg-white">
+    <div className="sticky top-0 z-10 px-4 border-b-2 bg-white">
       <header className="h-16 flex items-center w-full">
-        <SidebarTrigger onClick={toggle} variant={"outline"} />
+        <SidebarTrigger />
         <div className="flex-1 ml-3">
           <h1 className="text-xl font-semibold">FluxControl</h1>
         </div>

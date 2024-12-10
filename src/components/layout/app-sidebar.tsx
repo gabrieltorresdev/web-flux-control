@@ -8,7 +8,7 @@ import { Sidebar, SidebarContent } from "../ui/sidebar";
 
 const menuItems = [{ icon: LayoutDashboard, label: "Dashboard", href: "/" }];
 
-export default function AppSidebar() {
+export function AppSidebar() {
   const pathname = usePathname();
 
   return (

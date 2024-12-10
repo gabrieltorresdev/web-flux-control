@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { AppHeader } from "@/components/layout/app-header";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { Providers } from "./providers";
 import Header from "@/components/layout/app-header";
 import AppSidebar from "@/components/layout/app-sidebar";
 import Providers from "./providers";
@@ -34,9 +37,9 @@ export default function RootLayout({
         <Providers>
           <div className="flex min-h-screen w-full">
             <AppSidebar />
-            <main className="flex-1 bg-gray-50">
-              <Header />
-              <div className="h-[calc(100vh-8rem)] overflow-y-auto p-6 flex-1">
+            <main className="flex-1 flex flex-col bg-gray-50">
+              <AppHeader />
+              <div className="flex-1 overflow-y-auto p-6 relative">
                 {children}
               </div>
             </main>
