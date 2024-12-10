@@ -2,9 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Transaction } from "../types/transaction";
+import { Transaction, TransactionInput } from "../types/transaction";
 import { TransactionService } from "../services/transaction-service";
-import { generateMockTransactions } from "../lib/mock-data";
 import { useToast } from "./use-toast";
 
 const service = new TransactionService();
@@ -158,7 +157,7 @@ export function useTransactions() {
   );
 
   const createTransaction = useCallback(
-    async (data: Transaction) => {
+    async (data: TransactionInput) => {
       try {
         const newTransaction = await service.create(data);
         await fetchTransactions(); // Refresh the list after creating
@@ -172,7 +171,7 @@ export function useTransactions() {
   );
 
   const updateTransaction = useCallback(
-    async (id: string, data: Transaction) => {
+    async (id: string, data: TransactionInput) => {
       try {
         const updatedTransaction = await service.update(id, data);
         await fetchTransactions(); // Refresh the list after updating
