@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "../ui/card";
 import { ArrowDownRight, ArrowUpRight, DollarSign } from "lucide-react";
 import type { TransactionSummary } from "@/hooks/use-transactions";
 
@@ -19,7 +18,7 @@ export function TransactionSummary({ summary }: TransactionSummaryProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-      <Card className="p-4">
+      <div className="p-4 bg-card border border-border rounded-md">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Entradas</p>
@@ -31,9 +30,9 @@ export function TransactionSummary({ summary }: TransactionSummaryProps) {
             <ArrowUpRight className="w-5 h-5 text-green-600" />
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-4">
+      <div className="p-4 bg-card border border-border rounded-md">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Saídas</p>
@@ -45,9 +44,9 @@ export function TransactionSummary({ summary }: TransactionSummaryProps) {
             <ArrowDownRight className="w-5 h-5 text-red-600" />
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-4 lg:col-span-2 xl:col-span-1">
+      <div className="p-4 lg:col-span-2 xl:col-span-1 bg-card border border-border rounded-md">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Total</p>
@@ -71,7 +70,7 @@ export function TransactionSummary({ summary }: TransactionSummaryProps) {
             />
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

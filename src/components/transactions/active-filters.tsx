@@ -41,7 +41,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
   return (
     <div className="flex flex-wrap gap-2">
       {filters.search && (
-        <Badge variant="secondary" className="gap-1">
+        <Badge variant="outline" className="gap-1 py-1 px-2">
           Busca: {filters.search}
           <Button
             variant="ghost"
@@ -55,7 +55,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
       )}
 
       {filters.dateRange?.from && filters.dateRange?.to && (
-        <Badge variant="secondary" className="gap-1">
+        <Badge variant="outline" className="gap-1 py-1 px-2">
           Período: {filters.dateRange.from.toLocaleDateString()} até{" "}
           {filters.dateRange.to.toLocaleDateString()}
           <Button
@@ -70,7 +70,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
       )}
 
       {filters.category && (
-        <Badge variant="secondary" className="gap-1">
+        <Badge variant="outline" className="gap-1 py-1 px-2">
           Categoria: {CATEGORIES[filters.category as keyof typeof CATEGORIES]}
           <Button
             variant="ghost"
@@ -84,7 +84,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
       )}
 
       {filters.type && (
-        <Badge variant="secondary" className="gap-1">
+        <Badge variant="outline" className="gap-1 py-1 px-2">
           Tipo: {filters.type === "income" ? "Entrada" : "Saída"}
           <Button
             variant="ghost"

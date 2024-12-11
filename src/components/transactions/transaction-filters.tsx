@@ -123,7 +123,7 @@ export function TransactionFilters({
           placeholder="Pesquisar transações..."
           value={filters.search || ""}
           onChange={handleSearchChange}
-          className="w-full pl-9"
+          className="w-full pl-9 bg-card"
         />
       </div>
 

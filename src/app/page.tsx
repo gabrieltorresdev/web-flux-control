@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { TransactionList } from "../components/transactions/transaction-list";
 import { TransactionForm } from "../components/transactions/transaction-form";
 import { TransactionSummary } from "../components/transactions/transaction-summary";
@@ -13,8 +13,8 @@ import { useTransactions } from "../hooks/use-transactions";
 import type { Transaction, TransactionInput } from "../types/transaction";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 export default function Home() {
   const { toast } = useToast();
@@ -30,12 +30,12 @@ export default function Home() {
     isLoadingMore,
   } = useTransactions();
 
-  const [showForm, setShowForm] = React.useState(false);
-  const [editingTransaction, setEditingTransaction] = React.useState<
+  const [showForm, setShowForm] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<
     Transaction | undefined
   >();
-  const [selectedDate, setSelectedDate] = React.useState<string>();
-  const [filters, setFilters] = React.useState<Filters>({
+  const [selectedDate, setSelectedDate] = useState<string>();
+  const [filters, setFilters] = useState<Filters>({
     dateRange: {
       from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
       to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
@@ -121,14 +121,22 @@ export default function Home() {
   }, []);
 
   return (
-    <Card>
-      <CardHeader>
+    <div>
+      <div>
         <div className="flex flex-col gap-4 items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Transações</h1>
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
+      </div>
+      <div className="flex flex-col gap-6 mt-6">
         <TransactionSummary summary={summary} />
+
+        <div className="flex flex-col gap-4 bg-card p-4 rounded-md border border-border">
+          <TransactionFilters filters={filters} onFilterChange={setFilters} />
+          <ActiveFilters
+            filters={filters}
+            onFilterRemove={handleRemoveFilter}
+          />
+        </div>
         <div className="w-full flex justify-end">
           <Button
             onClick={handleNewTransaction}
@@ -139,19 +147,19 @@ export default function Home() {
             Nova transação
           </Button>
         </div>
-        <TransactionFilters filters={filters} onFilterChange={setFilters} />
-        <ActiveFilters filters={filters} onFilterRemove={handleRemoveFilter} />
 
-        <TransactionList
-          transactions={transactions}
-          onDeleteTransaction={handleDeleteTransaction}
-          onEditTransaction={handleEdit}
-          onAddTransaction={handleAddTransaction}
-          hasMore={hasMore}
-          onLoadMore={loadMore}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMore}
-        />
+        <div className=" rounded-md border p-0 bg-card pt-4">
+          <TransactionList
+            transactions={transactions}
+            onDeleteTransaction={handleDeleteTransaction}
+            onEditTransaction={handleEdit}
+            onAddTransaction={handleAddTransaction}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+          />
+        </div>
 
         <TransactionForm
           isVisible={showForm}
@@ -169,7 +177,7 @@ export default function Home() {
               : undefined)
           }
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

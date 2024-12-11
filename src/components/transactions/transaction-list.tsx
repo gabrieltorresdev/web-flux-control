@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, memo } from "react";
-import { Calendar, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Transaction } from "../../types/transaction";
 import { TransactionItem } from "./transaction-item";
 import { TransactionSkeleton } from "./transaction-skeleton";
@@ -53,6 +53,7 @@ function TransactionListComponent({
         year: "numeric",
         month: "long",
         day: "numeric",
+        timeZone: "UTC",
       });
 
       if (!groups[date]) {
@@ -83,18 +84,17 @@ function TransactionListComponent({
   }
 
   return (
-    <div className="divide-y divide-gray-100">
+    <div>
       {Object.entries(groupedTransactions).map(
         ([date, transactions], groupIndex, groupArray) => (
           <div key={date} className="space-y-1">
-            <div className="bg-gray-50 border border-border z-[5] flex items-center justify-between px-4 py-2">
+            <div className="z-[5] flex items-center justify-between px-4 gap-2">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <h2 className="text-sm font-medium text-gray-500">{date}</h2>
+                <h2 className="text-xs font-medium opacity-40">{date}</h2>
               </div>
               <Button
-                size="sm"
-                variant="ghost"
+                size="icon"
+                variant="outline"
                 onClick={() => {
                   const [day, month, year] = date
                     .split(" de ")
@@ -120,12 +120,12 @@ function TransactionListComponent({
                     });
                   onAddTransaction(`${year}-${month}-${day.padStart(2, "0")}`);
                 }}
+                className="w-6 h-6 rounded-full"
               >
-                <Plus className="h-4 w-4 mr-1" />
-                Adicionar
+                <Plus className="h-4 w-4 " />
               </Button>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div>
               {transactions.map((transaction, index) => (
                 <div
                   key={transaction.id}
@@ -157,8 +157,8 @@ function TransactionListComponent({
       )}
 
       {!hasMore && transactions.length > 0 && (
-        <div className="text-center py-6">
-          <p className="text-gray-500">Não há mais transações para carregar.</p>
+        <div className="text-center">
+          <p className="opacity-40 text-sm py-4">Fim</p>
         </div>
       )}
     </div>

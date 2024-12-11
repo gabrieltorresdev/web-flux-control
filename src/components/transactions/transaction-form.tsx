@@ -37,7 +37,7 @@ const getDefaultValues = () => ({
   amount: 0,
   category: "",
   type: "expense" as const,
-  date: new Date().toISOString().split("T")[0],
+  date: new Date().toISOString(),
   time: new Date().toLocaleTimeString("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
