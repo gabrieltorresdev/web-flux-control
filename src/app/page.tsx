@@ -14,6 +14,7 @@ import type { Transaction, TransactionInput } from "../types/transaction";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Home() {
   const { toast } = useToast();
@@ -139,15 +140,17 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="flex flex-col gap-3 bg-card p-6 rounded-md border border-border">
-          <TransactionFilters filters={filters} onFilterChange={setFilters} />
-          <ActiveFilters
-            filters={filters}
-            onFilterRemove={handleRemoveFilter}
-          />
-        </div>
+        <Card>
+          <CardContent className="pt-6 space-y-3">
+            <TransactionFilters filters={filters} onFilterChange={setFilters} />
+            <ActiveFilters
+              filters={filters}
+              onFilterRemove={handleRemoveFilter}
+            />
+          </CardContent>
+        </Card>
 
-        <div className="rounded-md border p-0 bg-card">
+        <Card className="pt-3">
           <TransactionList
             transactions={transactions}
             onDeleteTransaction={handleDeleteTransaction}
@@ -158,7 +161,7 @@ export default function Home() {
             isLoading={isLoading}
             isLoadingMore={isLoadingMore}
           />
-        </div>
+        </Card>
       </div>
 
       <TransactionForm

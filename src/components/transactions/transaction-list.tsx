@@ -6,6 +6,7 @@ import type { Transaction } from "../../types/transaction";
 import { TransactionItem } from "./transaction-item";
 import { TransactionSkeleton } from "./transaction-skeleton";
 import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 type GroupedTransactions = {
   [key: string]: Transaction[];
@@ -67,9 +68,9 @@ function TransactionListComponent({
 
   if (isLoading && transactions.length === 0) {
     return (
-      <div className="divide-y divide-gray-100">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <TransactionSkeleton key={index} />
+      <div>
+        {Array.from({ length: 2 }).map((_, index) => (
+          <TransactionSkeleton key={`transaction-skeleton-${index}`} />
         ))}
       </div>
     );
@@ -87,8 +88,14 @@ function TransactionListComponent({
     <div>
       {Object.entries(groupedTransactions).map(
         ([date, transactions], groupIndex, groupArray) => (
-          <div key={date} className="space-y-1">
-            <div className="z-[5] flex items-center justify-between px-4 gap-2">
+          <div
+            key={date}
+            className={cn(
+              "border-t border-border pt-1.5",
+              groupIndex === 0 && "border-none pt-0"
+            )}
+          >
+            <div className="z-[5] flex items-center justify-between px-3 pb-1.5">
               <div className="flex items-center gap-2">
                 <h2 className="text-xs font-medium opacity-40">{date}</h2>
               </div>
@@ -122,7 +129,7 @@ function TransactionListComponent({
                 }}
                 className="w-6 h-6 rounded-full"
               >
-                <Plus className="h-4 w-4 " />
+                <Plus />
               </Button>
             </div>
             <div>
@@ -146,14 +153,6 @@ function TransactionListComponent({
             </div>
           </div>
         )
-      )}
-
-      {isLoadingMore && (
-        <div className="py-4">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <TransactionSkeleton key={index} />
-          ))}
-        </div>
       )}
 
       {!hasMore && transactions.length > 0 && (
