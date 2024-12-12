@@ -8,7 +8,7 @@ import { useToast } from "./use-toast";
 
 const service = new TransactionService();
 const ITEMS_PER_PAGE = 10;
-const LOAD_DELAY = 2000;
+const LOAD_DELAY = 1000;
 
 export type TransactionSummary = {
   income: number;
@@ -36,6 +36,7 @@ export function useTransactions() {
 
   const fetchTransactions = useCallback(async () => {
     try {
+      await new Promise((r) => setTimeout(r, LOAD_DELAY));
       setIsLoading(true);
       const allTransactions = await service.getAll();
 
