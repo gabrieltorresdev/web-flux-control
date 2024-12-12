@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { TransactionList } from "../components/transactions/transaction-list";
 import { TransactionForm } from "../components/transactions/transaction-form";
-import { TransactionSummary } from "../components/transactions/transaction-summary";
+import { TransactionSummary } from "../components/transactions/summary/transaction-summary";
 import {
   TransactionFilters,
   type TransactionFilters as Filters,
@@ -120,15 +120,15 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
-      <div>
-        <div className="flex flex-col gap-4 items-center sm:justify-between">
-          <h1 className="text-2xl font-bold">Transações</h1>
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 items-center sm:justify-between">
+        <h1 className="text-2xl font-bold">Transações</h1>
       </div>
-      <div className="flex flex-col gap-3 mt-6">
-        <TransactionSummary summary={summary} />
-        <div className="w-full flex justify-end">
+
+      <TransactionSummary summary={summary} isLoading={isLoading} />
+
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-end">
           <Button
             onClick={handleNewTransaction}
             size="sm"
@@ -147,7 +147,7 @@ export default function Home() {
           />
         </div>
 
-        <div className=" rounded-md border p-0 bg-card pt-4">
+        <div className="rounded-md border p-0 bg-card">
           <TransactionList
             transactions={transactions}
             onDeleteTransaction={handleDeleteTransaction}
@@ -159,24 +159,24 @@ export default function Home() {
             isLoadingMore={isLoadingMore}
           />
         </div>
-
-        <TransactionForm
-          isVisible={showForm}
-          onClose={handleCloseForm}
-          onSubmit={
-            editingTransaction ? handleEditTransaction : handleCreateTransaction
-          }
-          initialData={
-            editingTransaction ||
-            (selectedDate
-              ? ({
-                  date: selectedDate,
-                  time: getCurrentDateTime().time,
-                } as Transaction)
-              : undefined)
-          }
-        />
       </div>
+
+      <TransactionForm
+        isVisible={showForm}
+        onClose={handleCloseForm}
+        onSubmit={
+          editingTransaction ? handleEditTransaction : handleCreateTransaction
+        }
+        initialData={
+          editingTransaction ||
+          (selectedDate
+            ? ({
+                date: selectedDate,
+                time: getCurrentDateTime().time,
+              } as Transaction)
+            : undefined)
+        }
+      />
     </div>
   );
 }
