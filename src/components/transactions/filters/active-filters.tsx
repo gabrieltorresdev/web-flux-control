@@ -2,11 +2,12 @@
 
 import React from "react";
 import { X } from "lucide-react";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { TransactionFilters } from "./transaction-filters";
 import { CATEGORIES } from "@/types/transaction";
 import { useTransactions } from "@/hooks/use-transactions";
+import { Card, CardContent } from "@/components/ui/card";
 
 type ActiveFiltersProps = {
   filters: TransactionFilters;
@@ -15,11 +16,11 @@ type ActiveFiltersProps = {
 
 export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
   const { updateFilters } = useTransactions();
+  const hasFilters = Object.keys(filters).length > 0;
 
   const handleRemoveFilter = (key: keyof TransactionFilters) => {
     onFilterRemove(key);
 
-    // Update URL query params based on the removed filter
     switch (key) {
       case "search":
         updateFilters({ search: undefined });
@@ -36,12 +37,22 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
     }
   };
 
-  if (!Object.keys(filters).length) return null;
+  if (!hasFilters) {
+    return (
+      <Card className="bg-blue-50 border-blue-100">
+        <CardContent className="p-4">
+          <p className="text-sm text-blue-600">
+            Nenhum filtro aplicado. Use os filtros acima para refinar sua busca.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="flex flex-wrap gap-2">
       {filters.search && (
-        <Badge variant="outline" className="gap-1 py-1 px-2">
+        <Badge variant="secondary" className="gap-1 py-1 px-2">
           Busca: {filters.search}
           <Button
             variant="ghost"
@@ -55,7 +66,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
       )}
 
       {filters.dateRange?.from && filters.dateRange?.to && (
-        <Badge variant="outline" className="gap-1 py-1 px-2">
+        <Badge variant="secondary" className="gap-1 py-1 px-2">
           Período: {filters.dateRange.from.toLocaleDateString()} até{" "}
           {filters.dateRange.to.toLocaleDateString()}
           <Button
@@ -70,7 +81,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
       )}
 
       {filters.category && (
-        <Badge variant="outline" className="gap-1 py-1 px-2">
+        <Badge variant="secondary" className="gap-1 py-1 px-2">
           Categoria: {CATEGORIES[filters.category as keyof typeof CATEGORIES]}
           <Button
             variant="ghost"
@@ -84,7 +95,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
       )}
 
       {filters.type && (
-        <Badge variant="outline" className="gap-1 py-1 px-2">
+        <Badge variant="secondary" className="gap-1 py-1 px-2">
           Tipo: {filters.type === "income" ? "Entrada" : "Saída"}
           <Button
             variant="ghost"

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import { Filter, Search } from "lucide-react";
 import {
   Sheet,
@@ -8,18 +8,17 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "../ui/sheet";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { DateRangePicker } from "../ui/date-picker";
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
-import { Combobox } from "../ui/combobox";
+import { Combobox } from "@/components/ui/combobox";
 import { CategoryService } from "@/services/category-service";
 import { useQuery } from "@tanstack/react-query";
-import { useTransactions } from "@/hooks/use-transactions";
-import { useSearchParams } from "next/navigation";
+import { useFilterHandlers } from "./use-filter-handlers";
 
 const categoryService = new CategoryService();
 
@@ -35,84 +34,25 @@ type TransactionFiltersProps = {
   onFilterChange: (filters: TransactionFilters) => void;
 };
 
-export function TransactionFilters({
+function TransactionFiltersComponent({
   filters,
   onFilterChange,
 }: TransactionFiltersProps) {
   const [categorySearch, setCategorySearch] = React.useState("");
-  const { updateFilters } = useTransactions();
-  const searchParams = useSearchParams();
+
+  const {
+    handleSearchChange,
+    handleDateRangeChange,
+    handleCategoryChange,
+    handleTypeChange,
+    handleClear,
+  } = useFilterHandlers(filters, onFilterChange);
 
   const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ["categories", categorySearch],
     queryFn: () => categoryService.search(categorySearch),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    onFilterChange({ ...filters, search: value });
-    updateFilters({ search: value || undefined });
-  };
-
-  const handleDateRangeChange = (dateRange: DateRange | undefined) => {
-    onFilterChange({ ...filters, dateRange });
-    if (dateRange?.from && dateRange?.to) {
-      updateFilters({
-        from: dateRange.from.toISOString(),
-        to: dateRange.to.toISOString(),
-      });
-    } else {
-      updateFilters({ from: undefined, to: undefined });
-    }
-  };
-
-  const handleCategoryChange = (value: string) => {
-    onFilterChange({ ...filters, category: value || undefined });
-    updateFilters({ category: value || undefined });
-  };
-
-  const handleTypeChange = (value: string) => {
-    const type = value as "income" | "expense" | undefined;
-    onFilterChange({ ...filters, type });
-    updateFilters({ type: type || undefined });
-  };
-
-  const handleClear = () => {
-    onFilterChange({});
-    updateFilters({
-      search: undefined,
-      category: undefined,
-      type: undefined,
-      from: undefined,
-      to: undefined,
-    });
-  };
-
-  // Initialize filters from URL on mount
-  React.useEffect(() => {
-    const urlFilters: TransactionFilters = {};
-
-    const search = searchParams.get("search");
-    const category = searchParams.get("category");
-    const type = searchParams.get("type") as "income" | "expense" | undefined;
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
-
-    if (search) urlFilters.search = search;
-    if (category) urlFilters.category = category;
-    if (type) urlFilters.type = type;
-    if (from && to) {
-      urlFilters.dateRange = {
-        from: new Date(from),
-        to: new Date(to),
-      };
-    }
-
-    if (Object.keys(urlFilters).length > 0) {
-      onFilterChange(urlFilters);
-    }
-  }, [searchParams, onFilterChange]);
 
   return (
     <div className="flex gap-2">
@@ -122,7 +62,7 @@ export function TransactionFilters({
           type="search"
           placeholder="Pesquisar transações..."
           value={filters.search || ""}
-          onChange={handleSearchChange}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="w-full pl-9 bg-card"
         />
       </div>
@@ -191,3 +131,5 @@ export function TransactionFilters({
     </div>
   );
 }
+
+export const TransactionFilters = memo(TransactionFiltersComponent);

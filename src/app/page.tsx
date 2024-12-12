@@ -7,8 +7,8 @@ import { TransactionSummary } from "../components/transactions/summary/transacti
 import {
   TransactionFilters,
   type TransactionFilters as Filters,
-} from "../components/transactions/transaction-filters";
-import { ActiveFilters } from "../components/transactions/active-filters";
+} from "../components/transactions/filters/transaction-filters";
+import { ActiveFilters } from "../components/transactions/filters/active-filters";
 import { useTransactions } from "../hooks/use-transactions";
 import type { Transaction, TransactionInput } from "../types/transaction";
 import { Button } from "@/components/ui/button";
