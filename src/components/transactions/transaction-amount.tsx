@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 type TransactionAmountProps = {
   amount: number;
@@ -15,9 +16,10 @@ function TransactionAmountComponent({ amount, type }: TransactionAmountProps) {
 
   return (
     <span
-      className={`font-medium ${
-        type === "income" ? "text-green-600" : "text-red-600"
-      }`}
+      className={cn(
+        "font-medium tabular-nums",
+        type === "income" ? "text-emerald-600" : "text-rose-600"
+      )}
     >
       {type === "income" ? "+" : "-"}
       {formattedAmount}

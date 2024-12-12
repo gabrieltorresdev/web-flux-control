@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { Coffee, ShoppingCart, Briefcase, Gift, Car, Home } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const categoryIcons = {
   food: Coffee,
@@ -20,14 +21,16 @@ function TransactionIconComponent({ category, type }: TransactionIconProps) {
 
   return (
     <div
-      className={`p-2 rounded-full ${
-        type === "income" ? "bg-green-100" : "bg-red-100"
-      }`}
+      className={cn(
+        "p-2 rounded-full",
+        type === "income" ? "bg-emerald-100" : "bg-rose-100"
+      )}
     >
       <Icon
-        className={`w-5 h-5 ${
-          type === "income" ? "text-green-600" : "text-red-600"
-        }`}
+        className={cn(
+          "w-4 h-4",
+          type === "income" ? "text-emerald-600" : "text-rose-600"
+        )}
       />
     </div>
   );
