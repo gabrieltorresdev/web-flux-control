@@ -14,7 +14,6 @@ import type { Transaction, TransactionInput } from "../types/transaction";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
 
 export default function Home() {
   const { toast } = useToast();
@@ -127,16 +126,8 @@ export default function Home() {
           <h1 className="text-2xl font-bold">Transações</h1>
         </div>
       </div>
-      <div className="flex flex-col gap-6 mt-6">
+      <div className="flex flex-col gap-3 mt-6">
         <TransactionSummary summary={summary} />
-
-        <div className="flex flex-col gap-4 bg-card p-4 rounded-md border border-border">
-          <TransactionFilters filters={filters} onFilterChange={setFilters} />
-          <ActiveFilters
-            filters={filters}
-            onFilterRemove={handleRemoveFilter}
-          />
-        </div>
         <div className="w-full flex justify-end">
           <Button
             onClick={handleNewTransaction}
@@ -146,6 +137,14 @@ export default function Home() {
             <Plus className="w-4 h-4 mr-2" />
             Nova transação
           </Button>
+        </div>
+
+        <div className="flex flex-col gap-3 bg-card p-6 rounded-md border border-border">
+          <TransactionFilters filters={filters} onFilterChange={setFilters} />
+          <ActiveFilters
+            filters={filters}
+            onFilterRemove={handleRemoveFilter}
+          />
         </div>
 
         <div className=" rounded-md border p-0 bg-card pt-4">

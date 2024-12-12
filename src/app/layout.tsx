@@ -35,7 +35,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex min-h-screen w-full">
             <AppSidebar />
-            <main className="flex-1 flex flex-col bg-gray-50">
+            <main className="flex-1 flex flex-col bg-gray-100/70">
               <AppHeader />
               <div className="flex-1 overflow-y-auto p-6 relative">
                 {children}
