@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/toaster";
+import { Suspense } from "react";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -38,7 +39,15 @@ export default function RootLayout({
             <main className="flex-1 flex flex-col bg-gray-100/70">
               <AppHeader />
               <div className="flex-1 overflow-y-auto p-6 relative">
-                {children}
+                <Suspense
+                  fallback={
+                    <div className="flex place-items-center">
+                      Carregando aplicação...
+                    </div>
+                  }
+                >
+                  {children}
+                </Suspense>
               </div>
             </main>
           </div>
