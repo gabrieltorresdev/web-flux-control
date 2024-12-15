@@ -5,7 +5,7 @@ import { VoiceInputField } from "../input/voice-input-field";
 import { parseAmount } from "../utils/amount-parser";
 import type { StepProps } from "./types";
 
-export function AmountStep({ onNext }: StepProps) {
+export function AmountStep({ onNext, onCancel, onBack }: StepProps) {
   const handleConfirm = (value: string) => {
     const amount = parseAmount(value);
     if (amount !== null) {
@@ -16,6 +16,8 @@ export function AmountStep({ onNext }: StepProps) {
   return (
     <VoiceInputField
       onConfirm={handleConfirm}
+      onCancel={onCancel}
+      onBack={onBack}
       placeholder="Digite ou fale o valor da transação..."
       validator={(value) => {
         const amount = parseAmount(value);

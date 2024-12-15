@@ -47,12 +47,18 @@ export const WEEKDAYS: Record<string, number> = {
   sábado: 6,
 };
 
-export const TIME_PERIODS = {
-  MORNING: ["manha", "manhã", "madrugada"],
-  AFTERNOON: ["tarde"],
-  NIGHT: ["noite"],
-  MIDNIGHT: ["meia-noite", "meianoite"],
+export const TimePeriod = {
+  MORNING: ["manha", "manhã", "madrugada"] as const,
+  AFTERNOON: ["tarde"] as const,
+  NIGHT: ["noite"] as const,
+  MIDNIGHT: ["meia-noite", "meianoite"] as const,
 } as const;
+
+export type TimePeriodType = 
+  | typeof TimePeriod.MORNING[number]
+  | typeof TimePeriod.AFTERNOON[number]
+  | typeof TimePeriod.NIGHT[number]
+  | typeof TimePeriod.MIDNIGHT[number];
 
 export const TIME_PATTERNS = [
   // 14:30, 14h30
