@@ -1,40 +1,15 @@
 "use client";
 
-import React from "react";
+import { memo } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { TransactionFilters } from "./transaction-filters";
-import { useTransactions } from "@/hooks/use-transactions";
 import { Card, CardContent } from "@/components/ui/card";
+import { useFilterHandler } from "@/hooks/use-filter-handler";
 import { DateRange } from "react-day-picker";
 
-type ActiveFiltersProps = {
-  filters: TransactionFilters;
-  onFilterRemove: (key: keyof TransactionFilters) => void;
-};
-
-export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
-  const { updateFilters } = useTransactions();
-
-  const handleRemoveFilter = (key: keyof TransactionFilters) => {
-    onFilterRemove(key);
-
-    switch (key) {
-      case "search":
-        updateFilters({ search: undefined });
-        break;
-      case "dateRange":
-        updateFilters({ startDate: undefined, endDate: undefined });
-        break;
-      case "categoryId":
-        updateFilters({ categoryId: undefined });
-        break;
-      case "type":
-        updateFilters({ type: undefined });
-        break;
-    }
-  };
+function ActiveFiltersComponent() {
+  const { filters, updateFilters } = useFilterHandler();
 
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
     if (key === "dateRange") {
@@ -69,7 +44,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
             variant="ghost"
             size="icon"
             className="h-4 w-4 p-0 hover:bg-transparent"
-            onClick={() => handleRemoveFilter("search")}
+            onClick={() => updateFilters({ search: undefined })}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -84,21 +59,21 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
             variant="ghost"
             size="icon"
             className="h-4 w-4 p-0 hover:bg-transparent"
-            onClick={() => handleRemoveFilter("dateRange")}
+            onClick={() => updateFilters({ dateRange: undefined })}
           >
             <X className="h-3 w-3" />
           </Button>
         </Badge>
       )}
 
-      {filters.categoryId && filters.categoryName && (
+      {(filters.categoryId || filters.categoryName) && (
         <Badge variant="secondary" className="gap-1 py-1 px-2">
-          Categoria: {filters.categoryName}
+          Categoria: {filters.categoryName ?? filters.categoryId}
           <Button
             variant="ghost"
             size="icon"
             className="h-4 w-4 p-0 hover:bg-transparent"
-            onClick={() => handleRemoveFilter("categoryId")}
+            onClick={() => updateFilters({ categoryId: undefined })}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -112,7 +87,7 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
             variant="ghost"
             size="icon"
             className="h-4 w-4 p-0 hover:bg-transparent"
-            onClick={() => handleRemoveFilter("type")}
+            onClick={() => updateFilters({ type: undefined })}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -121,3 +96,5 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
     </div>
   );
 }
+
+export const ActiveFilters = memo(ActiveFiltersComponent);

@@ -17,18 +17,25 @@ export interface TransactionSlice {
   loadedPages: number[];
   error: Error | null;
   filters: TransactionFilters;
-  
+
   setFilters: (filters: Partial<TransactionFilters>) => void;
   loadTransactions: () => Promise<void>;
   loadMore: () => Promise<void>;
   loadPrevious: () => Promise<void>;
-  addTransactions: (transactions: Transaction[], page: number, meta: ApiTransactionResponse["meta"]) => void;
+  addTransactions: (
+    transactions: Transaction[],
+    page: number,
+    meta: ApiTransactionResponse["meta"]
+  ) => void;
   reset: () => void;
 }
 
 const service = new TransactionService();
 
-export const createTransactionSlice: StateCreator<TransactionSlice> = (set, get) => ({
+export const createTransactionSlice: StateCreator<TransactionSlice> = (
+  set,
+  get
+) => ({
   transactions: [],
   isLoading: false,
   isLoadingMore: false,
@@ -41,10 +48,32 @@ export const createTransactionSlice: StateCreator<TransactionSlice> = (set, get)
   filters: {},
 
   setFilters: (newFilters) => {
-    set((state) => ({
-      filters: { ...state.filters, ...newFilters },
-      currentPage: newFilters.page ? Number(newFilters.page) : 1,
-    }));
+    set((state) => {
+      // Se os filtros mudaram (exceto página), reseta o estado de paginação
+      const filtersChanged = Object.entries(newFilters).some(([key, value]) => {
+        if (key === "page") return false;
+        return state.filters[key as keyof TransactionFilters] !== value;
+      });
+
+      if (filtersChanged) {
+        return {
+          filters: { ...newFilters },
+          transactions: [],
+          loadedPages: [],
+          currentPage: 1,
+          hasMore: false,
+          hasPrevious: false,
+        };
+      }
+
+      // Se apenas a página mudou, atualiza apenas os filtros
+      return {
+        filters: { ...state.filters, ...newFilters },
+        currentPage: newFilters.page
+          ? Number(newFilters.page)
+          : state.currentPage,
+      };
+    });
   },
 
   loadTransactions: async () => {
@@ -78,9 +107,12 @@ export const createTransactionSlice: StateCreator<TransactionSlice> = (set, get)
     const nextPage = currentPage + 1;
 
     set({ isLoadingMore: true });
-    
+
     try {
-      const response = await service.getAll({ ...filters, page: String(nextPage) });
+      const response = await service.getAll({
+        ...filters,
+        page: String(nextPage),
+      });
       const mappedTransactions = response.data.map(mapTransaction);
 
       set((state) => ({
@@ -101,16 +133,20 @@ export const createTransactionSlice: StateCreator<TransactionSlice> = (set, get)
     if (previousPage < 1) return;
 
     set({ isLoadingPrevious: true });
-    
+
     try {
-      const response = await service.getAll({ ...filters, page: String(previousPage) });
+      const response = await service.getAll({
+        ...filters,
+        page: String(previousPage),
+      });
       const mappedTransactions = response.data.map(mapTransaction);
 
       set((state) => ({
         transactions: [...mappedTransactions, ...state.transactions],
         loadedPages: [...state.loadedPages, previousPage],
         currentPage: previousPage,
-        hasPrevious: previousPage > 1 && !state.loadedPages.includes(previousPage - 1),
+        hasPrevious:
+          previousPage > 1 && !state.loadedPages.includes(previousPage - 1),
       }));
     } finally {
       set({ isLoadingPrevious: false });
@@ -119,9 +155,10 @@ export const createTransactionSlice: StateCreator<TransactionSlice> = (set, get)
 
   addTransactions: (transactions, page, meta) => {
     set((state) => ({
-      transactions: page > state.currentPage 
-        ? [...state.transactions, ...transactions]
-        : [...transactions, ...state.transactions],
+      transactions:
+        page > state.currentPage
+          ? [...state.transactions, ...transactions]
+          : [...transactions, ...state.transactions],
       loadedPages: [...state.loadedPages, page],
       currentPage: page,
       hasMore: page < meta.last_page,

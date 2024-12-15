@@ -4,10 +4,7 @@ import { useCallback, useState } from "react";
 import { TransactionList } from "../components/transactions/transaction-list";
 import { TransactionForm } from "../components/transactions/transaction-form";
 import { TransactionSummary } from "../components/transactions/summary/transaction-summary";
-import {
-  TransactionFilters,
-  type TransactionFilters as Filters,
-} from "../components/transactions/filters/transaction-filters";
+import { TransactionFilters } from "../components/transactions/filters/transaction-filters";
 import { ActiveFilters } from "../components/transactions/filters/active-filters";
 import { useTransactions } from "../hooks/use-transactions";
 import type { Transaction, TransactionInput } from "../types/transaction";
@@ -42,12 +39,6 @@ export default function Home() {
     Transaction | undefined
   >();
   const [selectedDate, setSelectedDate] = useState<string>();
-  const [filters, setFilters] = useState<Filters>({
-    dateRange: {
-      from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-      to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
-    },
-  });
 
   const handleCreateTransaction = useCallback(
     async (data: TransactionInput) => {
@@ -125,22 +116,14 @@ export default function Home() {
     setShowForm(true);
   }, [getCurrentDateTime]);
 
-  const handleRemoveFilter = useCallback((key: keyof Filters) => {
-    setFilters((prev) => {
-      const newFilters = { ...prev };
-      delete newFilters[key];
-      return newFilters;
-    });
-  }, []);
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Transações</h1>
       </div>
 
-      <TransactionSummary 
-        summary={summary} 
+      <TransactionSummary
+        summary={summary}
         isLoading={isLoading}
         error={error}
       />
@@ -168,11 +151,8 @@ export default function Home() {
 
         <Card>
           <CardContent className="pt-6 space-y-3">
-            <TransactionFilters filters={filters} onFilterChange={setFilters} />
-            <ActiveFilters
-              filters={filters}
-              onFilterRemove={handleRemoveFilter}
-            />
+            <TransactionFilters />
+            <ActiveFilters />
           </CardContent>
         </Card>
 

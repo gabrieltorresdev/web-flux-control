@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import { Filter, Search } from "lucide-react";
 import {
   Sheet,
@@ -14,46 +14,39 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { DateRange } from "react-day-picker";
 import { Combobox } from "@/components/ui/combobox";
-import { CategoryService } from "@/services/category-service";
 import { useQuery } from "@tanstack/react-query";
-import { useFilterHandlers } from "./use-filter-handlers";
+import { CategoryService } from "@/services/category-service";
+import { Filters, useFilterHandler } from "@/hooks/use-filter-handler";
 
 const categoryService = new CategoryService();
 
-export type TransactionFilters = {
-  search?: string;
-  dateRange?: DateRange;
-  categoryId?: string;
-  categoryName?: string;
-  type?: "income" | "expense";
-};
-
-type TransactionFiltersProps = {
-  filters: TransactionFilters;
-  onFilterChange: (filters: TransactionFilters) => void;
-};
-
-function TransactionFiltersComponent({
-  filters,
-  onFilterChange,
-}: TransactionFiltersProps) {
+function TransactionFiltersComponent() {
+  const { filters, updateFilters } = useFilterHandler();
   const [categorySearch, setCategorySearch] = React.useState("");
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [localFilters, setLocalFilters] = React.useState<Filters>(filters);
 
-  const {
-    handleSearchChange,
-    handleDateRangeChange,
-    handleCategoryChange,
-    handleTypeChange,
-    handleClear,
-  } = useFilterHandlers(filters, onFilterChange);
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
 
   const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ["categories", categorySearch],
     queryFn: () => categoryService.search(categorySearch),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  const handleApplyFilters = () => {
+    updateFilters(localFilters);
+    setIsOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = {};
+    updateFilters(clearedFilters);
+    setIsOpen(false);
+  };
 
   const mappedCategories = categories.map((category) => ({
     value: category.id,
@@ -67,13 +60,16 @@ function TransactionFiltersComponent({
         <Input
           type="search"
           placeholder="Pesquisar transações..."
-          value={filters.search || ""}
-          onChange={(e) => handleSearchChange(e.target.value)}
+          value={localFilters.search || ""}
+          onChange={(e) => {
+            const value = e.target.value;
+            setLocalFilters({ ...localFilters, search: value });
+          }}
           className="w-full pl-9 bg-card"
         />
       </div>
 
-      <Sheet>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon">
             <Filter className="h-4 w-4" />
@@ -88,8 +84,10 @@ function TransactionFiltersComponent({
             <div className="space-y-4">
               <Label>Período</Label>
               <DateRangePicker
-                date={filters.dateRange}
-                onDateChange={handleDateRangeChange}
+                date={localFilters.dateRange}
+                onDateChange={(dateRange) =>
+                  setLocalFilters({ ...localFilters, dateRange })
+                }
               />
             </div>
 
@@ -97,9 +95,13 @@ function TransactionFiltersComponent({
               <Label>Categoria</Label>
               <Combobox
                 options={mappedCategories}
-                value={filters.categoryId}
+                value={localFilters.categoryId}
                 onValueChange={(value, label) =>
-                  handleCategoryChange(value, label)
+                  setLocalFilters({
+                    ...localFilters,
+                    categoryId: value,
+                    categoryName: label,
+                  })
                 }
                 placeholder="Selecione uma categoria..."
                 searchPlaceholder="Buscar categoria..."
@@ -111,8 +113,13 @@ function TransactionFiltersComponent({
             <div className="space-y-4">
               <Label>Tipo</Label>
               <RadioGroup
-                value={filters.type || ""}
-                onValueChange={handleTypeChange}
+                value={localFilters.type || ""}
+                onValueChange={(value) =>
+                  setLocalFilters({
+                    ...localFilters,
+                    type: value as "income" | "expense" | undefined,
+                  })
+                }
                 className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">
@@ -130,9 +137,18 @@ function TransactionFiltersComponent({
               </RadioGroup>
             </div>
 
-            <Button onClick={handleClear} variant="outline" className="w-full">
-              Limpar filtros
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleClearFilters}
+                variant="outline"
+                className="flex-1"
+              >
+                Limpar filtros
+              </Button>
+              <Button onClick={handleApplyFilters} className="flex-1">
+                Aplicar filtros
+              </Button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>

@@ -27,18 +27,9 @@ export function useTransactions() {
     loadTransactions,
     loadMore,
     loadPrevious,
+    filters,
     setFilters,
   } = useStore();
-
-  const filters = {
-    page: searchParams.get("page") || "1",
-    perPage: searchParams.get("perPage") || "15",
-    search: searchParams.get("search") ?? undefined,
-    categoryId: searchParams.get("categoryId") ?? undefined,
-    type: (searchParams.get("type") as "income" | "expense") ?? undefined,
-    startDate: searchParams.get("startDate") ?? undefined,
-    endDate: searchParams.get("endDate") ?? undefined,
-  };
 
   const {
     data: summary = { income: 0, expense: 0, total: 0 },
@@ -68,7 +59,11 @@ export function useTransactions() {
 
   // Handle initial date range setup
   useEffect(() => {
-    if (isInitialMount.current && !searchParams.has("startDate") && !searchParams.has("endDate")) {
+    if (
+      isInitialMount.current &&
+      !searchParams.has("startDate") &&
+      !searchParams.has("endDate")
+    ) {
       const now = new Date();
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -84,7 +79,8 @@ export function useTransactions() {
   // Handle filter changes
   useEffect(() => {
     if (!isInitialMount.current) {
-      const filtersChanged = JSON.stringify(filters) !== JSON.stringify(useStore.getState().filters);
+      const filtersChanged =
+        JSON.stringify(filters) !== JSON.stringify(useStore.getState().filters);
       if (filtersChanged) {
         setFilters(filters);
         loadTransactions();
