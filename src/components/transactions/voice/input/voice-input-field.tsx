@@ -9,7 +9,7 @@ import { useVoiceRecognition } from "@/hooks/use-voice-recognition";
 import { useVoiceInputState } from "./use-voice-input-state";
 import { VoiceInputControls } from "./voice-input-controls";
 
-export interface VoiceInputFieldProps {
+interface VoiceInputFieldProps {
   onConfirm: (value: string) => void;
   onCancel: () => void;
   onBack?: () => void;

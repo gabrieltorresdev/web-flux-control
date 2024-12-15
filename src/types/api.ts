@@ -17,7 +17,7 @@ export type ApiResponse<T> = {
   data: T;
 };
 
-export interface ApiPaginatedResponse<T> extends ApiResponse<T> {
+interface ApiPaginatedResponse<T> extends ApiResponse<T> {
   meta: {
     current_page: number;
     last_page: number;
@@ -37,4 +37,4 @@ export type CreateTransactionDTO = {
   title: string;
 };
 
-export type UpdateTransactionDTO = CreateTransactionDTO;
+type UpdateTransactionDTO = CreateTransactionDTO;

@@ -9,8 +9,3 @@ export const categorySchema = z.object({
 export const categoryInputSchema = categorySchema.omit({
   id: true,
 });
-
-export const categoryArraySchema = z.array(categorySchema);
-
-export type CategorySchema = z.infer<typeof categorySchema>;
-export type CategoryInputSchema = z.infer<typeof categoryInputSchema>;

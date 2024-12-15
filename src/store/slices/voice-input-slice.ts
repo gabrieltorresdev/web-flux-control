@@ -1,12 +1,12 @@
 import { StateCreator } from "zustand";
 
-export interface VoiceInputState {
+interface VoiceInputState {
   transcript: string;
   editedValue: string | null;
   isEditing: boolean;
 }
 
-export interface VoiceInputActions {
+interface VoiceInputActions {
   setTranscript: (value: string) => void;
   setEditedValue: (value: string) => void;
   startEditing: () => void;

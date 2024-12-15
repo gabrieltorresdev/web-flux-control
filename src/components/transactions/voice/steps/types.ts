@@ -1,4 +1,4 @@
-export interface StepProps {
+interface StepProps {
   onNext: (data: Record<string, any>) => void;
   onCancel: () => void;
   onBack?: () => void;
