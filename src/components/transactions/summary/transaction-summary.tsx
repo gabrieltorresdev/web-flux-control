@@ -2,9 +2,9 @@
 
 import { memo } from "react";
 import { ArrowDownRight, ArrowUpRight, Wallet } from "lucide-react";
-import type { TransactionSummary as Summary } from "@/hooks/use-transactions";
 import { SummaryCard } from "./summary-card";
 import { SummarySkeleton } from "./summary-skeleton";
+import type { TransactionSummary as Summary } from "@/types/transaction";
 
 interface TransactionSummaryProps {
   summary: Summary;
