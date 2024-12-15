@@ -1,0 +1,5 @@
+{
+    "entry": ["index.{js,ts}", "src/index.{js,ts}"],
+    "project": ["**/*.{js,ts}"],
+    "ignore": ["src/components/ui/*"]
+}
