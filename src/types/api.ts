@@ -36,5 +36,3 @@ export type CreateTransactionDTO = {
   dateTime: string;
   title: string;
 };
-
-type UpdateTransactionDTO = CreateTransactionDTO;

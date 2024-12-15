@@ -2,23 +2,26 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 
-export function useVoiceRecognition(onTranscriptChange?: (transcript: string) => void) {
+export function useVoiceRecognition(
+  onTranscriptChange?: (transcript: string) => void
+) {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isSupported, setIsSupported] = useState(true);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = true;
         recognition.lang = "pt-BR";
-        
+
         recognition.onresult = (event) => {
           const current = event.resultIndex;
           const transcript = event.results[current][0].transcript;
@@ -49,7 +52,9 @@ export function useVoiceRecognition(onTranscriptChange?: (transcript: string) =>
         recognitionRef.current = recognition;
       } else {
         setIsSupported(false);
-        setError(new Error("Reconhecimento de voz não suportado neste navegador"));
+        setError(
+          new Error("Reconhecimento de voz não suportado neste navegador")
+        );
       }
     }
 
