@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import { AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +13,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useVoiceSteps } from "./steps/use-voice-steps";
 import { TransactionSummary } from "./summary/transaction-summary";
 import { useToast } from "@/hooks/use-toast";
@@ -82,16 +80,19 @@ export function VoiceTransactionDialog({
     }
   }, [formData, onSubmit, toast, handleClose]);
 
-  const handleStepComplete = useCallback((data: Record<string, any>) => {
-    Object.entries(data).forEach(([key, value]) => {
-      updateField(key, value);
-    });
+  const handleStepComplete = useCallback(
+    (data: Record<string, any>) => {
+      Object.entries(data).forEach(([key, value]) => {
+        updateField(key, value);
+      });
 
-    const hasMoreSteps = nextStep();
-    if (!hasMoreSteps) {
-      setShowSummary(true);
-    }
-  }, [updateField, nextStep]);
+      const hasMoreSteps = nextStep();
+      if (!hasMoreSteps) {
+        setShowSummary(true);
+      }
+    },
+    [updateField, nextStep]
+  );
 
   const handleBack = useCallback(() => {
     if (showSummary) {
@@ -101,13 +102,16 @@ export function VoiceTransactionDialog({
     previousStep();
   }, [showSummary, previousStep]);
 
-  const handleUpdateField = useCallback((field: keyof TransactionInput, value: string) => {
-    if (field === "amount") {
-      updateField(field, parseFloat(value));
-    } else {
-      updateField(field, value);
-    }
-  }, [updateField]);
+  const handleUpdateField = useCallback(
+    (field: keyof TransactionInput, value: string) => {
+      if (field === "amount") {
+        updateField(field, parseFloat(value));
+      } else {
+        updateField(field, value);
+      }
+    },
+    [updateField]
+  );
 
   const selectedCategory = categories.find((c) => c.id === formData.categoryId);
 

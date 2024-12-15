@@ -42,7 +42,7 @@ export default function Home() {
 
   const handleCreateTransaction = useCallback(
     async (data: TransactionInput) => {
-      const transaction = await createTransaction(data);
+      await createTransaction(data);
       toast({
         title: "Transação criada",
         description: "A transação foi criada com sucesso.",
@@ -50,7 +50,7 @@ export default function Home() {
       setSelectedDate(undefined);
       setShowForm(false);
       // Reload data after creating transaction
-      loadTransactions();
+      await loadTransactions();
     },
     [createTransaction, toast, loadTransactions]
   );

@@ -5,14 +5,14 @@ export type DateResult = {
 };
 
 export type DateMatch = {
-  day?: number;
-  month?: number;
-  year?: number;
+  day: number;
+  month: number;
+  year: number;
   hours: number;
   minutes: number;
   period?: string;
   relative?: {
-    type: 'day' | 'week' | 'month';
+    type: "day" | "week" | "month";
     value: number;
   };
 };
