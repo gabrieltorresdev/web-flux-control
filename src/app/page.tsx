@@ -12,9 +12,10 @@ import { ActiveFilters } from "../components/transactions/filters/active-filters
 import { useTransactions } from "../hooks/use-transactions";
 import type { Transaction, TransactionInput } from "../types/transaction";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Mic, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import { VoiceTransactionDialog } from "@/components/transactions/voice/voice-transaction-dialog";
 
 export default function Home() {
   const { toast } = useToast();
@@ -25,12 +26,18 @@ export default function Home() {
     updateTransaction,
     deleteTransaction,
     hasMore,
+    hasPrevious,
     loadMore,
+    loadPrevious,
     isLoading,
     isLoadingMore,
+    isLoadingPrevious,
+    error,
+    loadTransactions,
   } = useTransactions();
 
   const [showForm, setShowForm] = useState(false);
+  const [showVoiceDialog, setShowVoiceDialog] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<
     Transaction | undefined
   >();
@@ -51,8 +58,10 @@ export default function Home() {
       });
       setSelectedDate(undefined);
       setShowForm(false);
+      // Reload data after creating transaction
+      loadTransactions();
     },
-    [createTransaction, toast]
+    [createTransaction, toast, loadTransactions]
   );
 
   const handleEditTransaction = useCallback(
@@ -65,9 +74,11 @@ export default function Home() {
         });
         setEditingTransaction(undefined);
         setShowForm(false);
+        // Reload data after updating transaction
+        loadTransactions();
       }
     },
-    [editingTransaction, updateTransaction, toast]
+    [editingTransaction, updateTransaction, toast, loadTransactions]
   );
 
   const handleDeleteTransaction = useCallback(
@@ -78,8 +89,10 @@ export default function Home() {
         description: "A transação foi excluída com sucesso.",
         variant: "destructive",
       });
+      // Reload data after deleting transaction
+      loadTransactions();
     },
-    [deleteTransaction, toast]
+    [deleteTransaction, toast, loadTransactions]
   );
 
   const handleEdit = useCallback((transaction: Transaction) => {
@@ -126,10 +139,23 @@ export default function Home() {
         <h1 className="text-2xl font-bold">Transações</h1>
       </div>
 
-      <TransactionSummary summary={summary} isLoading={isLoading} />
+      <TransactionSummary 
+        summary={summary} 
+        isLoading={isLoading}
+        error={error}
+      />
 
       <div className="flex flex-col gap-4">
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button
+            onClick={() => setShowVoiceDialog(true)}
+            size="sm"
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            <Mic className="w-4 h-4 mr-2" />
+            Nova transação por voz
+          </Button>
           <Button
             onClick={handleNewTransaction}
             size="sm"
@@ -157,9 +183,14 @@ export default function Home() {
             onEditTransaction={handleEdit}
             onAddTransaction={handleAddTransaction}
             hasMore={hasMore}
+            hasPrevious={hasPrevious}
             onLoadMore={loadMore}
+            onLoadPrevious={loadPrevious}
             isLoading={isLoading}
             isLoadingMore={isLoadingMore}
+            isLoadingPrevious={isLoadingPrevious}
+            error={error}
+            onRetry={loadTransactions}
           />
         </Card>
       </div>
@@ -171,14 +202,23 @@ export default function Home() {
           editingTransaction ? handleEditTransaction : handleCreateTransaction
         }
         initialData={
-          editingTransaction ||
-          (selectedDate
-            ? ({
-                date: selectedDate,
-                time: getCurrentDateTime().time,
-              } as Transaction)
-            : undefined)
+          editingTransaction
+            ? {
+                amount: editingTransaction?.amount,
+                title: editingTransaction?.title,
+                category: editingTransaction?.category.id,
+                date: editingTransaction?.date ?? selectedDate,
+                time: editingTransaction?.time ?? getCurrentDateTime().time,
+                type: editingTransaction.category.type,
+              }
+            : undefined
         }
+      />
+
+      <VoiceTransactionDialog
+        isOpen={showVoiceDialog}
+        onClose={() => setShowVoiceDialog(false)}
+        onSubmit={handleCreateTransaction}
       />
     </div>
   );

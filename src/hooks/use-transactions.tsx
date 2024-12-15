@@ -1,148 +1,55 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Transaction, TransactionInput } from "../types/transaction";
-import { TransactionService } from "../services/transaction-service";
+import { useStore } from "@/store";
+import { useTransactionSummaryQuery } from "./queries/use-transaction-query";
+import { TransactionService } from "@/services/transaction-service";
 import { useToast } from "./use-toast";
+import type { TransactionInput } from "@/types/transaction";
 
 const service = new TransactionService();
-const ITEMS_PER_PAGE = 10;
-const LOAD_DELAY = 1000;
-
-export type TransactionSummary = {
-  income: number;
-  expense: number;
-  total: number;
-};
-
-const defaultSummary: TransactionSummary = {
-  income: 0,
-  expense: 0,
-  total: 0,
-};
 
 export function useTransactions() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isInitialMount = useRef(true);
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [summary, setSummary] = useState<TransactionSummary>(defaultSummary);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const {
+    transactions,
+    isLoading,
+    isLoadingMore,
+    isLoadingPrevious,
+    hasMore,
+    hasPrevious,
+    error,
+    loadTransactions,
+    loadMore,
+    loadPrevious,
+    setFilters,
+  } = useStore();
 
-  const fetchTransactions = useCallback(async () => {
-    try {
-      await new Promise((r) => setTimeout(r, LOAD_DELAY));
-      setIsLoading(true);
-      const allTransactions = await service.getAll();
+  const filters = {
+    page: searchParams.get("page") || "1",
+    perPage: searchParams.get("perPage") || "15",
+    search: searchParams.get("search") ?? undefined,
+    categoryId: searchParams.get("categoryId") ?? undefined,
+    type: (searchParams.get("type") as "income" | "expense") ?? undefined,
+    startDate: searchParams.get("startDate") ?? undefined,
+    endDate: searchParams.get("endDate") ?? undefined,
+  };
 
-      // Get filters from URL
-      const category = searchParams.get("category");
-      const type = searchParams.get("type") as "income" | "expense" | null;
-      const search = searchParams.get("search");
-      const fromDate = searchParams.get("from");
-      const toDate = searchParams.get("to");
-
-      let filteredData = allTransactions;
-
-      // Apply filters
-      if (category) {
-        filteredData = filteredData.filter((t) => t.category === category);
-      }
-      if (type) {
-        filteredData = filteredData.filter((t) => t.type === type);
-      }
-      if (search) {
-        filteredData = filteredData.filter((t) =>
-          t.description.toLowerCase().includes(search.toLowerCase())
-        );
-      }
-      if (fromDate) {
-        filteredData = filteredData.filter((t) => t.date >= fromDate);
-      }
-      if (toDate) {
-        filteredData = filteredData.filter((t) => t.date <= toDate);
-      }
-
-      // Calculate summary
-      const calculatedSummary = filteredData.reduce(
-        (acc, transaction) => {
-          const amount = Math.abs(transaction.amount);
-          if (transaction.type === "income") {
-            acc.income += amount;
-          } else {
-            acc.expense += amount;
-          }
-          acc.total = acc.income - acc.expense;
-          return acc;
-        },
-        { ...defaultSummary }
-      );
-
-      const start = 0;
-      const end = page * ITEMS_PER_PAGE;
-      const paginatedData = filteredData.slice(start, end);
-
-      setTransactions(paginatedData);
-      setSummary(calculatedSummary);
-      setHasMore(paginatedData.length < filteredData.length);
-    } catch (error) {
-      console.error("Error fetching transactions:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as transações.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, toast, searchParams]);
-
-  // Set default date range on mount if not present
-  useEffect(() => {
-    if (!searchParams.has("from") && !searchParams.has("to")) {
-      const now = new Date();
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-      updateFilters({
-        from: firstDay.toISOString(),
-        to: lastDay.toISOString(),
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
-
-  const loadMore = useCallback(async () => {
-    if (isLoadingMore || !hasMore) return;
-
-    try {
-      setIsLoadingMore(true);
-      await new Promise((resolve) => setTimeout(resolve, LOAD_DELAY));
-      setPage((prev) => prev + 1);
-    } catch {
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar mais transações.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [isLoadingMore, hasMore, toast]);
+  const {
+    data: summary = { income: 0, expense: 0, total: 0 },
+    isLoading: isSummaryLoading,
+  } = useTransactionSummaryQuery(filters.startDate, filters.endDate);
 
   const updateFilters = useCallback(
-    (filters: Record<string, string | undefined>) => {
+    (newFilters: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
 
-      Object.entries(filters).forEach(([key, value]) => {
+      Object.entries(newFilters).forEach(([key, value]) => {
         if (value) {
           params.set(key, value);
         } else {
@@ -150,64 +57,112 @@ export function useTransactions() {
         }
       });
 
-      // Reset page when filters change
-      setPage(1);
+      if (!newFilters.page) {
+        params.delete("page");
+      }
+
       router.push(`?${params.toString()}`);
     },
     [router, searchParams]
   );
 
+  // Handle initial date range setup
+  useEffect(() => {
+    if (isInitialMount.current && !searchParams.has("startDate") && !searchParams.has("endDate")) {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      updateFilters({
+        startDate: firstDay.toISOString(),
+        endDate: lastDay.toISOString(),
+      });
+    }
+    isInitialMount.current = false;
+  }, [searchParams, updateFilters]);
+
+  // Handle filter changes
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      const filtersChanged = JSON.stringify(filters) !== JSON.stringify(useStore.getState().filters);
+      if (filtersChanged) {
+        setFilters(filters);
+        loadTransactions();
+      }
+    }
+  }, [filters, setFilters, loadTransactions]);
+
   const createTransaction = useCallback(
     async (data: TransactionInput) => {
       try {
-        const newTransaction = await service.create(data);
-        await fetchTransactions(); // Refresh the list after creating
-        return newTransaction;
+        const result = await service.create(data);
+        loadTransactions();
+        return result;
       } catch (error) {
         console.error("Error creating transaction:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar a transação.",
+          variant: "destructive",
+        });
         throw error;
       }
     },
-    [fetchTransactions]
+    [toast, loadTransactions]
   );
 
   const updateTransaction = useCallback(
     async (id: string, data: TransactionInput) => {
       try {
-        const updatedTransaction = await service.update(id, data);
-        await fetchTransactions(); // Refresh the list after updating
-        return updatedTransaction;
+        const result = await service.update(id, data);
+        loadTransactions();
+        return result;
       } catch (error) {
         console.error("Error updating transaction:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível atualizar a transação.",
+          variant: "destructive",
+        });
         throw error;
       }
     },
-    [fetchTransactions]
+    [toast, loadTransactions]
   );
 
   const deleteTransaction = useCallback(
     async (id: string) => {
       try {
         await service.delete(id);
-        await fetchTransactions(); // Refresh the list after deleting
+        loadTransactions();
       } catch (error) {
         console.error("Error deleting transaction:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível excluir a transação.",
+          variant: "destructive",
+        });
         throw error;
       }
     },
-    [fetchTransactions]
+    [toast, loadTransactions]
   );
 
   return {
     transactions,
     summary,
-    isLoading,
+    isLoading: isLoading || isSummaryLoading,
     isLoadingMore,
+    isLoadingPrevious,
+    error,
     hasMore,
+    hasPrevious,
     loadMore,
+    loadPrevious,
     updateFilters,
     createTransaction,
     updateTransaction,
     deleteTransaction,
+    loadTransactions,
   };
 }

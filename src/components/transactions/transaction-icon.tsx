@@ -1,23 +1,13 @@
 import React, { memo } from "react";
-import { Coffee, ShoppingCart, Briefcase, Gift, Car, Home } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const categoryIcons = {
-  food: Coffee,
-  shopping: ShoppingCart,
-  work: Briefcase,
-  gift: Gift,
-  transport: Car,
-  home: Home,
-} as const;
-
 type TransactionIconProps = {
-  category: string;
   type: "income" | "expense";
 };
 
-function TransactionIconComponent({ category, type }: TransactionIconProps) {
-  const Icon = categoryIcons[category as keyof typeof categoryIcons] || Coffee;
+function TransactionIconComponent({ type }: TransactionIconProps) {
+  const Icon = type === "income" ? ArrowUpRight : ArrowDownRight;
 
   return (
     <div

@@ -1,24 +1,34 @@
-import { CATEGORIES } from "@/types/transaction";
-
-export type Category = {
-  value: string;
-  label: string;
-};
+import { Category, CategoryInput } from "@/types/category";
+import { ApiCategoryService } from "./api/category-service";
 
 export class CategoryService {
-  async search(query?: string): Promise<Category[]> {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  private apiService: ApiCategoryService;
 
-    const categories = Object.entries(CATEGORIES).map(([value, label]) => ({
-      value,
-      label,
-    }));
+  constructor() {
+    this.apiService = new ApiCategoryService();
+  }
 
-    if (!query) return categories;
+  async getAll(): Promise<Category[]> {
+    return this.apiService.getAll();
+  }
 
-    return categories.filter((category) =>
-      category.label.toLowerCase().includes(query.toLowerCase())
-    );
+  async search(query?: string, type?: Category["type"]): Promise<Category[]> {
+    return this.apiService.search(query, type);
+  }
+
+  async getById(id: string): Promise<Category | null> {
+    return this.apiService.getById(id);
+  }
+
+  async create(category: CategoryInput): Promise<Category> {
+    return this.apiService.create(category);
+  }
+
+  async update(id: string, data: Partial<CategoryInput>): Promise<Category> {
+    return this.apiService.update(id, data);
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.apiService.delete(id);
   }
 }

@@ -41,7 +41,7 @@ export default function RootLayout({
               <div className="flex-1 overflow-y-auto p-6 relative">
                 <Suspense
                   fallback={
-                    <div className="flex place-items-center">
+                    <div className="flex h-full place-items-center">
                       Carregando aplicação...
                     </div>
                   }

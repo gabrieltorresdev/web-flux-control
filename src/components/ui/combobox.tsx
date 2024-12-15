@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,13 +10,13 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { CommandList } from "cmdk";
 
 export type ComboboxOption = {
   value: string;
@@ -24,7 +26,7 @@ export type ComboboxOption = {
 interface ComboboxProps {
   options: ComboboxOption[];
   value?: string;
-  onValueChange: (value: string) => void;
+  onValueChange: (value: string, label: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
   onSearch?: (value: string) => void;
@@ -42,7 +44,10 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedOption = options.find((option) => option.value === value);
+  const selectedOption = React.useMemo(
+    () => options.find((option) => option.value === value),
+    [options, value]
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -62,28 +67,18 @@ export function Combobox({
           <CommandInput
             placeholder={searchPlaceholder}
             onValueChange={onSearch}
-            className="h-9"
           />
           <CommandEmpty>
-            {isLoading ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="space-y-2 w-full px-4">
-                  <div className="h-4 bg-gray-200 rounded animate-pulse w-full" />
-                  <div className="h-4 bg-gray-200 rounded animate-pulse w-full" />
-                </div>
-              </div>
-            ) : (
-              "Nenhum resultado encontrado."
-            )}
+            {isLoading ? "Carregando..." : "Nenhuma opção encontrada."}
           </CommandEmpty>
-          <CommandList>
-            <CommandGroup className="max-h-[200px] overflow-auto">
+          <CommandGroup className="max-h-60 overflow-auto">
+            <CommandList>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.value}
                   onSelect={() => {
-                    onValueChange(option.value === value ? "" : option.value);
+                    onValueChange(option.value, option.label);
                     setOpen(false);
                   }}
                 >
@@ -96,8 +91,8 @@ export function Combobox({
                   {option.label}
                 </CommandItem>
               ))}
-            </CommandGroup>
-          </CommandList>
+            </CommandList>
+          </CommandGroup>
         </Command>
       </PopoverContent>
     </Popover>

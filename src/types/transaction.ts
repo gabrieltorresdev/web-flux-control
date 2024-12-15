@@ -1,21 +1,30 @@
+import { Category } from "./category";
+
 export type Transaction = {
   id: string;
-  description: string;
+  title: string;
   amount: number;
-  category: string;
+  category: Category;
   date: string;
   time: string;
-  type: "income" | "expense";
-  lastModified?: Date;
 };
 
-export type TransactionInput = Omit<Transaction, "id" | "lastModified">;
+export interface TransactionInput extends Omit<Transaction, "id" | "category"> {
+  categoryId: string;
+}
 
-export const CATEGORIES = {
-  food: "Alimentação",
-  shopping: "Compras",
-  work: "Trabalho",
-  gift: "Presente",
-  transport: "Transporte",
-  home: "Casa",
-} as const;
+export type TransactionFilters = {
+  page?: string;
+  perPage?: string;
+  search?: string;
+  categoryId?: string;
+  type?: "income" | "expense";
+  startDate?: string;
+  endDate?: string;
+};
+
+export type TransactionSummary = {
+  income: number;
+  expense: number;
+  total: number;
+};

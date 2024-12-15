@@ -23,6 +23,7 @@ function TransactionItemComponent({
 }: TransactionItemProps) {
   const [showActions, setShowActions] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isRecentlyModified, setIsRecentlyModified] = useState(false);
   const isMobile = useIsMobile();
 
   const formattedTime = React.useMemo(() => {
@@ -49,13 +50,10 @@ function TransactionItemComponent({
     (e: React.MouseEvent) => {
       e.stopPropagation();
       onEdit(transaction);
+      setIsRecentlyModified(true);
     },
     [transaction, onEdit]
   );
-
-  const isRecentlyModified =
-    transaction.lastModified &&
-    new Date().getTime() - new Date(transaction.lastModified).getTime() < 5000;
 
   return (
     <>
@@ -66,17 +64,14 @@ function TransactionItemComponent({
         )}
         onClick={() => isMobile && setShowActions(true)}
       >
-        <TransactionIcon
-          category={transaction.category}
-          type={transaction.type}
-        />
+        <TransactionIcon type={transaction.category.type} />
 
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-foreground truncate">
-            {transaction.description}
+            {transaction.title}
           </h3>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="capitalize">{transaction.category}</span>
+            <span className="capitalize">{transaction.category.name}</span>
             <span className="opacity-25">•</span>
             <time>{formattedTime}</time>
           </div>
@@ -85,7 +80,7 @@ function TransactionItemComponent({
         <div className="flex items-center gap-2">
           <TransactionAmount
             amount={transaction.amount}
-            type={transaction.type}
+            type={transaction.category.type}
           />
           <div className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button

@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useCallback, useRef, memo } from "react";
+import React, { memo } from "react";
 import { Plus } from "lucide-react";
 import type { Transaction } from "../../types/transaction";
 import { TransactionItem } from "./transaction-item";
-import { TransactionSkeleton } from "./transaction-skeleton";
+import { TransactionListSkeleton } from "./list/transaction-list-skeleton";
 import { Button } from "../ui/button";
+import { Card } from "../ui/card";
 import { cn } from "@/lib/utils";
+import { formatDateForInput } from "@/lib/utils/date";
+import { useToast } from "@/hooks/use-toast";
 
 type GroupedTransactions = {
   [key: string]: Transaction[];
@@ -18,9 +21,14 @@ type TransactionListProps = {
   onEditTransaction: (transaction: Transaction) => void;
   onAddTransaction: (date: string) => void;
   hasMore: boolean;
-  onLoadMore: () => void;
+  hasPrevious: boolean;
+  onLoadMore: () => Promise<void>;
+  onLoadPrevious: () => Promise<void>;
   isLoading: boolean;
   isLoadingMore: boolean;
+  isLoadingPrevious: boolean;
+  error: Error | null;
+  onRetry: () => void;
 };
 
 function TransactionListComponent({
@@ -29,27 +37,42 @@ function TransactionListComponent({
   onEditTransaction,
   onAddTransaction,
   hasMore,
+  hasPrevious,
   onLoadMore,
+  onLoadPrevious,
   isLoading,
   isLoadingMore,
+  isLoadingPrevious,
+  error,
+  onRetry,
 }: TransactionListProps) {
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastElementRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (isLoadingMore) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          onLoadMore();
-        }
+  const { toast } = useToast();
+
+  // Show error toast when error occurs
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro ao carregar transações",
+        description: "Tentando novamente em alguns segundos...",
+        variant: "destructive",
       });
-      if (node) observer.current.observe(node);
-    },
-    [hasMore, onLoadMore, isLoadingMore]
-  );
+
+      const timer = setTimeout(() => {
+        onRetry();
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, onRetry, toast]);
 
   const groupedTransactions = React.useMemo(() => {
-    return transactions.reduce((groups: GroupedTransactions, transaction) => {
+    const groups: GroupedTransactions = {};
+    
+    const sortedTransactions = [...transactions].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    sortedTransactions.forEach(transaction => {
       const date = new Date(transaction.date).toLocaleDateString("pt-BR", {
         year: "numeric",
         month: "long",
@@ -61,98 +84,89 @@ function TransactionListComponent({
         groups[date] = [];
       }
 
-      groups[date].push(transaction);
-      return groups;
-    }, {});
+      const exists = groups[date].some(t => t.id === transaction.id);
+      if (!exists) {
+        groups[date].push(transaction);
+      }
+    });
+
+    return groups;
   }, [transactions]);
 
   if (isLoading && transactions.length === 0) {
-    return (
-      <div>
-        {Array.from({ length: 2 }).map((_, index) => (
-          <TransactionSkeleton key={`transaction-skeleton-${index}`} />
-        ))}
-      </div>
-    );
+    return <TransactionListSkeleton />;
   }
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">Nenhuma transação encontrada.</p>
+      <div className="p-6">
+        <p className="text-center text-muted-foreground">
+          Nenhuma transação encontrada.
+        </p>
       </div>
     );
   }
 
   return (
     <div>
-      {Object.entries(groupedTransactions).map(
-        ([date, transactions], groupIndex, groupArray) => (
-          <div
-            key={date}
-            className={cn(
-              "border-t border-border pt-1.5",
-              groupIndex === 0 && "border-none pt-0"
-            )}
+      {hasPrevious && (
+        <div className="flex justify-center py-4">
+          <Button
+            variant="outline"
+            onClick={onLoadPrevious}
+            disabled={isLoadingPrevious}
+            className="w-full sm:w-auto"
           >
-            <div className="z-[5] flex items-center justify-between px-3 pb-1.5">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xs font-medium opacity-40">{date}</h2>
-              </div>
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => {
-                  const [day, month, year] = date
-                    .split(" de ")
-                    .map((part, index) => {
-                      if (index === 1) {
-                        const months = {
-                          janeiro: "01",
-                          fevereiro: "02",
-                          março: "03",
-                          abril: "04",
-                          maio: "05",
-                          junho: "06",
-                          julho: "07",
-                          agosto: "08",
-                          setembro: "09",
-                          outubro: "10",
-                          novembro: "11",
-                          dezembro: "12",
-                        };
-                        return months[part as keyof typeof months];
-                      }
-                      return part;
-                    });
-                  onAddTransaction(`${year}-${month}-${day.padStart(2, "0")}`);
-                }}
-                className="w-6 h-6 rounded-full"
-              >
-                <Plus />
-              </Button>
+            {isLoadingPrevious ? "Carregando..." : "Carregar anteriores"}
+          </Button>
+        </div>
+      )}
+
+      {Object.entries(groupedTransactions).map(([date, dateTransactions], groupIndex) => (
+        <div
+          key={`group-${date}`}
+          className={cn(
+            "border-t border-border pt-1.5",
+            groupIndex === 0 && "border-none pt-0"
+          )}
+        >
+          <div className="z-[5] flex items-center justify-between px-3 pb-1.5">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-medium opacity-40">{date}</h2>
             </div>
-            <div>
-              {transactions.map((transaction, index) => (
-                <div
-                  key={transaction.id}
-                  ref={
-                    groupIndex === groupArray.length - 1 &&
-                    index === transactions.length - 1
-                      ? lastElementRef
-                      : null
-                  }
-                >
-                  <TransactionItem
-                    transaction={transaction}
-                    onDelete={onDeleteTransaction}
-                    onEdit={onEditTransaction}
-                  />
-                </div>
-              ))}
-            </div>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => onAddTransaction(formatDateForInput(date))}
+              className="w-6 h-6 rounded-full"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
-        )
+          <div>
+            {dateTransactions.map((transaction) => (
+              <TransactionItem
+                key={`${transaction.id}-${transaction.date}`}
+                transaction={transaction}
+                onDelete={onDeleteTransaction}
+                onEdit={onEditTransaction}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {hasMore && (
+        <div className="flex justify-center py-4">
+          <Button
+            variant="outline"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="w-full sm:w-auto"
+          >
+            {isLoadingMore ? "Carregando..." : "Carregar mais"}
+          </Button>
+        </div>
       )}
 
       {!hasMore && transactions.length > 0 && (

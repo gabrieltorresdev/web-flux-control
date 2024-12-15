@@ -25,7 +25,8 @@ const categoryService = new CategoryService();
 export type TransactionFilters = {
   search?: string;
   dateRange?: DateRange;
-  category?: string;
+  categoryId?: string;
+  categoryName?: string;
   type?: "income" | "expense";
 };
 
@@ -53,6 +54,11 @@ function TransactionFiltersComponent({
     queryFn: () => categoryService.search(categorySearch),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  const mappedCategories = categories.map((category) => ({
+    value: category.id,
+    label: category.name,
+  }));
 
   return (
     <div className="flex gap-2">
@@ -90,9 +96,11 @@ function TransactionFiltersComponent({
             <div className="space-y-4">
               <Label>Categoria</Label>
               <Combobox
-                options={categories}
-                value={filters.category}
-                onValueChange={handleCategoryChange}
+                options={mappedCategories}
+                value={filters.categoryId}
+                onValueChange={(value, label) =>
+                  handleCategoryChange(value, label)
+                }
                 placeholder="Selecione uma categoria..."
                 searchPlaceholder="Buscar categoria..."
                 onSearch={setCategorySearch}

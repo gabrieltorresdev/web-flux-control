@@ -24,20 +24,24 @@ export function useFilterHandlers(
       onFilterChange({ ...filters, dateRange });
       if (dateRange?.from && dateRange?.to) {
         updateFilters({
-          from: dateRange.from.toISOString(),
-          to: dateRange.to.toISOString(),
+          startDate: dateRange.from.toISOString(),
+          endDate: dateRange.to.toISOString(),
         });
       } else {
-        updateFilters({ from: undefined, to: undefined });
+        updateFilters({ startDate: undefined, endDate: undefined });
       }
     },
     [filters, onFilterChange, updateFilters]
   );
 
   const handleCategoryChange = useCallback(
-    (value: string) => {
-      onFilterChange({ ...filters, category: value || undefined });
-      updateFilters({ category: value || undefined });
+    (value: string, label?: string) => {
+      onFilterChange({
+        ...filters,
+        categoryId: value || undefined,
+        categoryName: label,
+      });
+      updateFilters({ categoryId: value || undefined });
     },
     [filters, onFilterChange, updateFilters]
   );
@@ -55,10 +59,10 @@ export function useFilterHandlers(
     onFilterChange({});
     updateFilters({
       search: undefined,
-      category: undefined,
+      categoryId: undefined,
       type: undefined,
-      from: undefined,
-      to: undefined,
+      startDate: undefined,
+      endDate: undefined,
     });
   }, [onFilterChange, updateFilters]);
 

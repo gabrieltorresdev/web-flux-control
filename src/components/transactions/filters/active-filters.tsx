@@ -5,9 +5,9 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { TransactionFilters } from "./transaction-filters";
-import { CATEGORIES } from "@/types/transaction";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Card, CardContent } from "@/components/ui/card";
+import { DateRange } from "react-day-picker";
 
 type ActiveFiltersProps = {
   filters: TransactionFilters;
@@ -16,7 +16,6 @@ type ActiveFiltersProps = {
 
 export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
   const { updateFilters } = useTransactions();
-  const hasFilters = Object.keys(filters).length > 0;
 
   const handleRemoveFilter = (key: keyof TransactionFilters) => {
     onFilterRemove(key);
@@ -26,10 +25,10 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
         updateFilters({ search: undefined });
         break;
       case "dateRange":
-        updateFilters({ from: undefined, to: undefined });
+        updateFilters({ startDate: undefined, endDate: undefined });
         break;
-      case "category":
-        updateFilters({ category: undefined });
+      case "categoryId":
+        updateFilters({ categoryId: undefined });
         break;
       case "type":
         updateFilters({ type: undefined });
@@ -37,7 +36,19 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
     }
   };
 
-  if (!hasFilters) {
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (key === "dateRange") {
+      value = value as DateRange;
+      return value?.from && value?.to;
+    }
+
+    if (key === "categoryName") return false;
+
+    value = value as string;
+    return value && value.length > 0;
+  });
+
+  if (!hasActiveFilters) {
     return (
       <Card className="bg-blue-50 border-blue-100">
         <CardContent className="p-4">
@@ -80,14 +91,14 @@ export function ActiveFilters({ filters, onFilterRemove }: ActiveFiltersProps) {
         </Badge>
       )}
 
-      {filters.category && (
+      {filters.categoryId && filters.categoryName && (
         <Badge variant="secondary" className="gap-1 py-1 px-2">
-          Categoria: {CATEGORIES[filters.category as keyof typeof CATEGORIES]}
+          Categoria: {filters.categoryName}
           <Button
             variant="ghost"
             size="icon"
             className="h-4 w-4 p-0 hover:bg-transparent"
-            onClick={() => handleRemoveFilter("category")}
+            onClick={() => handleRemoveFilter("categoryId")}
           >
             <X className="h-3 w-3" />
           </Button>

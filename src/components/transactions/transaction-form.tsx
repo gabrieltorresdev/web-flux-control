@@ -2,12 +2,9 @@
 
 import React, { memo, useEffect } from "react";
 import { X } from "lucide-react";
-import { Transaction, TransactionInput } from "../../types/transaction";
-import { CategoryService } from "@/services/category-service";
-import { useQuery } from "@tanstack/react-query";
-import { Combobox } from "../ui/combobox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useCategoryLoader } from "@/hooks/use-category-loader";
 import {
   transactionSchema,
   type TransactionFormData,
@@ -24,20 +21,22 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Combobox } from "../ui/combobox";
+import type { TransactionInput } from "@/types/transaction";
 
 type TransactionFormProps = {
   isVisible: boolean;
   onClose: () => void;
   onSubmit: (data: TransactionInput) => Promise<void>;
-  initialData?: Transaction;
+  initialData?: TransactionFormData;
 };
 
 const getDefaultValues = () => ({
-  description: "",
+  title: "",
   amount: 0,
   category: "",
   type: "expense" as const,
-  date: new Date().toISOString(),
+  date: new Date().toISOString().split("T")[0],
   time: new Date().toLocaleTimeString("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
@@ -51,12 +50,27 @@ function TransactionFormComponent({
   onSubmit,
   initialData,
 }: TransactionFormProps) {
-  const [categorySearch, setCategorySearch] = React.useState("");
+  const {
+    categories,
+    isLoading: isCategoriesLoading,
+    loadCategories,
+    updateSearch,
+    updateType,
+  } = useCategoryLoader();
 
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: initialData || getDefaultValues(),
   });
+
+  const selectedType = form.watch("type");
+
+  // Load categories when form becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      loadCategories(selectedType);
+    }
+  }, [isVisible, selectedType, loadCategories]);
 
   // Reset form when initialData changes or when form is closed
   useEffect(() => {
@@ -67,15 +81,25 @@ function TransactionFormComponent({
     }
   }, [isVisible, initialData, form.reset]);
 
-  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
-    queryKey: ["categories", categorySearch],
-    queryFn: () => new CategoryService().search(categorySearch),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  // Update category type when it changes
+  useEffect(() => {
+    updateType(selectedType);
+  }, [selectedType, updateType]);
+
+  const mappedCategories = categories.map((category) => ({
+    value: category.id,
+    label: category.name,
+  }));
 
   const handleSubmit = async (data: TransactionFormData) => {
     try {
-      await onSubmit(data);
+      await onSubmit({
+        amount: data.amount,
+        categoryId: data.category,
+        date: data.date,
+        time: data.time,
+        title: data.title,
+      });
       onClose();
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -107,10 +131,10 @@ function TransactionFormComponent({
           >
             <FormField
               control={form.control}
-              name="description"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>Título</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -140,28 +164,6 @@ function TransactionFormComponent({
 
             <FormField
               control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria</FormLabel>
-                  <FormControl>
-                    <Combobox
-                      options={categories}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Selecione uma categoria..."
-                      searchPlaceholder="Buscar categoria..."
-                      onSearch={setCategorySearch}
-                      isLoading={isCategoriesLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="type"
               render={({ field }) => (
                 <FormItem>
@@ -181,6 +183,32 @@ function TransactionFormComponent({
                         <Label htmlFor="type-expense">Saída</Label>
                       </div>
                     </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Categoria</FormLabel>
+                  <FormControl>
+                    <Combobox
+                      options={mappedCategories}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder={
+                        selectedType
+                          ? "Selecione uma categoria..."
+                          : "Selecione o tipo primeiro"
+                      }
+                      searchPlaceholder="Buscar categoria..."
+                      onSearch={updateSearch}
+                      isLoading={isCategoriesLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
