@@ -29,6 +29,7 @@ function TransactionSummaryComponent({
         icon={ArrowUpRight}
         variant="income"
         hasError={!!error}
+        isLoading={isLoading}
       />
       <SummaryCard
         title="Saídas"
@@ -36,6 +37,7 @@ function TransactionSummaryComponent({
         icon={ArrowDownRight}
         variant="expense"
         hasError={!!error}
+        isLoading={isLoading}
       />
       <SummaryCard
         title="Total"
@@ -43,6 +45,7 @@ function TransactionSummaryComponent({
         icon={Wallet}
         variant="default"
         hasError={!!error}
+        isLoading={isLoading}
       />
     </div>
   );

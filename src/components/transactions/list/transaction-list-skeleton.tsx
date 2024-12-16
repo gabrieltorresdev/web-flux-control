@@ -1,7 +1,6 @@
 "use client";
 
 import { memo } from "react";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function TransactionListSkeletonComponent() {
@@ -13,7 +12,7 @@ function TransactionListSkeletonComponent() {
             <Skeleton className="h-4 w-36" />
             <Skeleton className="h-6 w-6 rounded-full" />
           </div>
-          
+
           {Array.from({ length: 3 }).map((_, itemIndex) => (
             <div
               key={`transaction-skeleton-${groupIndex}-${itemIndex}`}
