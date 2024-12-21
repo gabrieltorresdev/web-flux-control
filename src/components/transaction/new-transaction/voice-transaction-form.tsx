@@ -19,7 +19,6 @@ import { CreateTransactionInput } from "@/src/types/transaction";
 import { AiTransactionService } from "@/src/services/ai/ai-transaction-service";
 import { CategoryService } from "@/src/services/category-service";
 import { TransactionForm } from "./transaction-form";
-import { MockGoogleGenerativeAiService } from "@/src/services/ai/providers/mocks/mock-google-generative-ai-service";
 import {
   FieldErrors,
   UseFormGetValues,
@@ -28,6 +27,7 @@ import {
   UseFormReset,
 } from "react-hook-form";
 import { CreateCategoryDialog } from "@/src/components/category/create-category-dialog";
+import { GoogleGenerativeAiService } from "@/src/services/ai/providers/google-generative-ai-service";
 
 interface VoiceTransactionFormProps {
   onDataChange: (hasData: boolean) => void;
@@ -259,9 +259,7 @@ const useTranscriptConversion = (
   const [lastProcessedTranscript, setLastProcessedTranscript] = useState("");
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
 
-  const aiService = new AiTransactionService(
-    new MockGoogleGenerativeAiService()
-  );
+  const aiService = new AiTransactionService(new GoogleGenerativeAiService());
   const categoryService = new CategoryService();
 
   const convertTranscriptMutation = useMutation({
