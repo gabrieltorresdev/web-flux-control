@@ -39,13 +39,6 @@ interface VoiceTransactionFormProps {
   reset: UseFormReset<CreateTransactionInput>;
 }
 
-interface VoiceRecordButtonProps {
-  listening: boolean;
-  startListening: () => Promise<void>;
-  stopListening: () => Promise<void>;
-  disabled: boolean;
-}
-
 export const VoiceTransactionForm = memo(
   ({
     onDataChange,
@@ -95,7 +88,7 @@ export const VoiceTransactionForm = memo(
         setSuggestedCategory("");
         setShowCreateCategoryDialog(false);
       },
-      [setValue, setSuggestedCategory, setShowCreateCategoryDialog]
+      [setValue]
     );
 
     const handleConvertTranscript = useCallback(() => {
@@ -177,9 +170,7 @@ export const VoiceTransactionForm = memo(
               errors={errors}
               getValues={getValues}
               suggestedCategory={suggestedCategory}
-              onCreateCategory={(categoryName) => {
-                setSuggestedCategory(categoryName);
-              }}
+              onCreateCategory={setSuggestedCategory}
             />
           )}
           <Button variant="outline" onClick={handleBack} className="w-full">
@@ -199,7 +190,6 @@ export const VoiceTransactionForm = memo(
   }
 );
 
-// Componente para o status de gravação
 const RecordingStatus = memo(() => (
   <div className="flex items-center gap-1.5 h-8">
     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -207,7 +197,6 @@ const RecordingStatus = memo(() => (
   </div>
 ));
 
-// Componente para o botão de reset
 const ResetButton = memo(
   ({ onClick, disabled }: { onClick: () => void; disabled: boolean }) => (
     <Button
@@ -263,25 +252,6 @@ const MicrophoneButton = memo(
   )
 );
 
-export const VoiceRecordButton = memo(
-  ({
-    listening,
-    startListening,
-    stopListening,
-    disabled,
-  }: VoiceRecordButtonProps) => (
-    <Button
-      variant={listening ? "destructive" : "default"}
-      onClick={listening ? stopListening : startListening}
-      className="w-full h-full"
-      disabled={disabled}
-    >
-      {listening ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
-    </Button>
-  )
-);
-
-// Hook customizado para gerenciar a conversão de transcrição
 const useTranscriptConversion = (
   transcript: string,
   setValue: UseFormSetValue<CreateTransactionInput>
@@ -289,23 +259,28 @@ const useTranscriptConversion = (
   const [lastProcessedTranscript, setLastProcessedTranscript] = useState("");
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
 
+  const aiService = new AiTransactionService(
+    new MockGoogleGenerativeAiService()
+  );
+  const categoryService = new CategoryService();
+
   const convertTranscriptMutation = useMutation({
     mutationFn: async (): Promise<CreateTransactionInput> => {
       if (
         transcript === lastProcessedTranscript &&
         convertTranscriptMutation.data
       ) {
-        return Promise.resolve(convertTranscriptMutation.data);
+        return convertTranscriptMutation.data;
       }
 
       setLastProcessedTranscript(transcript);
-      const aiTransaction = await new AiTransactionService(
-        new MockGoogleGenerativeAiService()
-      ).convertTranscriptToNewTransaction(transcript);
+      const aiTransaction = await aiService.convertTranscriptToNewTransaction(
+        transcript
+      );
 
       let categoryId = "";
       try {
-        const categoryResponse = await new CategoryService().findByName(
+        const categoryResponse = await categoryService.findByName(
           aiTransaction.category
         );
         categoryId = categoryResponse?.data?.id;
@@ -327,9 +302,9 @@ const useTranscriptConversion = (
   return { convertTranscriptMutation, suggestedCategory, setSuggestedCategory };
 };
 
+// Definindo displayNames para melhor debugging
 RecordingStatus.displayName = "RecordingStatus";
 ResetButton.displayName = "ResetButton";
 RecordingInstruction.displayName = "RecordingInstruction";
 MicrophoneButton.displayName = "MicrophoneButton";
 VoiceTransactionForm.displayName = "VoiceTransactionForm";
-VoiceRecordButton.displayName = "VoiceRecordButton";
