@@ -3,7 +3,7 @@ import { ApiPaginatedResponse } from "./service";
 
 export interface Transaction {
   id: string;
-  category: Category;
+  category?: Category;
   title: string;
   dateTime: Date;
   amount: number;

@@ -1,4 +1,4 @@
-import { Transaction } from "@/src/types/transaction";
+import { CreateTransactionInput, Transaction } from "@/src/types/transaction";
 import {
   Dialog,
   DialogContent,
@@ -33,12 +33,12 @@ export function EditTransactionDialog({
     formState: { errors },
     getValues,
     setValue,
-  } = useForm({
+  } = useForm<CreateTransactionInput>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       title: transaction.title,
       amount: transaction.amount,
-      categoryId: transaction.category.id,
+      categoryId: transaction.category?.id,
       dateTime: new Date(transaction.dateTime),
     },
   });
@@ -49,6 +49,7 @@ export function EditTransactionDialog({
         id: transaction.id,
         ...data,
         dateTime: data.dateTime,
+        categoryId: data.categoryId!,
       });
       onOpenChange(false);
       toast({

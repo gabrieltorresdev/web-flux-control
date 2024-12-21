@@ -39,6 +39,13 @@ interface VoiceTransactionFormProps {
   reset: UseFormReset<CreateTransactionInput>;
 }
 
+interface VoiceRecordButtonProps {
+  listening: boolean;
+  startListening: () => Promise<void>;
+  stopListening: () => Promise<void>;
+  disabled: boolean;
+}
+
 export const VoiceTransactionForm = memo(
   ({
     onDataChange,
@@ -216,7 +223,6 @@ const ResetButton = memo(
   )
 );
 
-// Componente para a instrução inicial
 const RecordingInstruction = memo(() => (
   <div className="flex items-center gap-1.5 h-8">
     <MousePointerClick className="h-4 w-4 text-muted-foreground" />
@@ -224,7 +230,6 @@ const RecordingInstruction = memo(() => (
   </div>
 ));
 
-// Componente para o botão de microfone
 const MicrophoneButton = memo(
   ({
     listening,
@@ -255,6 +260,24 @@ const MicrophoneButton = memo(
         )}
       </Button>
     </div>
+  )
+);
+
+export const VoiceRecordButton = memo(
+  ({
+    listening,
+    startListening,
+    stopListening,
+    disabled,
+  }: VoiceRecordButtonProps) => (
+    <Button
+      variant={listening ? "destructive" : "default"}
+      onClick={listening ? stopListening : startListening}
+      className="w-full h-full"
+      disabled={disabled}
+    >
+      {listening ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+    </Button>
   )
 );
 
@@ -309,3 +332,4 @@ ResetButton.displayName = "ResetButton";
 RecordingInstruction.displayName = "RecordingInstruction";
 MicrophoneButton.displayName = "MicrophoneButton";
 VoiceTransactionForm.displayName = "VoiceTransactionForm";
+VoiceRecordButton.displayName = "VoiceRecordButton";

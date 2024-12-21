@@ -1,6 +1,6 @@
 import { CategoryService } from "@/src/services/category-service";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CreateCategoryInput } from "../types/category";
+import { Category, CreateCategoryInput } from "../types/category";
 
 export function useCategories(searchTerm?: string) {
   return useQuery({
@@ -21,5 +21,17 @@ export function useFindCategoryByName(name: string) {
     queryKey: ["category", name],
     queryFn: () => new CategoryService().findByName(name),
     enabled: !!name,
+  });
+}
+
+export function useDeleteCategory() {
+  return useMutation({
+    mutationFn: (id: string) => new CategoryService().delete(id),
+  });
+}
+
+export function useUpdateCategory() {
+  return useMutation({
+    mutationFn: (data: Category) => new CategoryService().update(data),
   });
 }

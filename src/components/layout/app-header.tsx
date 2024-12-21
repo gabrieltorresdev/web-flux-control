@@ -1,14 +1,18 @@
+"use client";
+
 import { NavigationMenu, NavigationMenuList } from "../ui/navigation-menu";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Tags } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/src/lib/utils";
-import { headers } from "next/headers";
+import { usePathname } from "next/navigation";
 
-const menuItems = [{ icon: LayoutDashboard, label: "Dashboard", href: "/" }];
+const menuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: Tags, label: "Categorias", href: "/categories" },
+];
 
-export async function AppHeader() {
-  const heads = await headers();
-  const pathname = heads.get("x-current-path");
+export function AppHeader() {
+  const pathname = usePathname();
 
   return (
     <div className="sticky top-0 z-10 px-4 border-b-2 bg-white">
@@ -25,14 +29,20 @@ export async function AppHeader() {
               const isActive = pathname === item.href;
 
               return (
-                <Link key={item.href} href={item.href}>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    isActive &&
+                      "before:absolute before:bottom-0 before:bg-primary before:h-0.5 before:inset-x-0 relative"
+                  )}
+                >
                   <div
                     className={cn(
                       "flex items-center gap-2 px-3 py-1.5 mb-3 rounded-lg text-sm font-medium",
                       "transition-colors duration-200",
                       "text-gray-600 hover:bg-gray-100 hover:text-primary",
-                      isActive &&
-                        "text-gray-950 bg-gray-100 before:absolute before:bottom-0 before:bg-primary before:h-0.5 before:inset-x-0"
+                      isActive && "text-gray-950 bg-gray-100"
                     )}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />

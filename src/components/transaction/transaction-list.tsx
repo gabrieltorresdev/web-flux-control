@@ -1,47 +1,66 @@
-import { formatDateHeader } from "@/src/lib/utils/transactions";
-import { Transaction } from "@/src/types/transaction";
-import { memo } from "react";
-import { Suspense } from "react";
+import { memo, Suspense } from "react";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
 import { TransactionService } from "@/src/services/transaction-service";
-import { groupTransactionsByDate } from "@/src/lib/utils/transactions";
+import {
+  formatDateHeader,
+  groupTransactionsByDate,
+} from "@/src/lib/utils/transactions";
 import { ChevronRight, CircleDollarSign } from "lucide-react";
 import { Card } from "../ui/card";
 import { TransactionItem } from "./transaction-item";
 import { formatNumberToBRL } from "@/src/lib/utils";
+import { Transaction } from "@/src/types/transaction";
+import { ApiPaginatedResponse } from "@/src/types/service";
+import { getQueryClient } from "@/src/lib/get-query-client";
 
 interface TransactionGroupProps {
   date: Date;
   transactions: Transaction[];
 }
 
-async function getTransactions() {
-  const { data } = await new TransactionService().findAllPaginated();
-  return groupTransactionsByDate(data);
-}
-
 export const TransactionList = memo(async () => {
+  const queryClient = getQueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["transactions"],
+    queryFn: () => new TransactionService().findAllPaginated(),
+  });
+
   return (
     <Suspense fallback={<LoadingState />}>
-      <TransactionListContent />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <TransactionListContent queryClient={queryClient} />
+      </HydrationBoundary>
     </Suspense>
   );
 });
 
-export async function TransactionListContent() {
-  const groupedTransactions = await getTransactions();
+const TransactionListContent = memo(
+  ({ queryClient }: { queryClient: QueryClient }) => {
+    const transactionsResponse = queryClient.getQueryData<
+      ApiPaginatedResponse<Transaction[]>
+    >(["transactions"]);
 
-  if (!groupedTransactions.length) {
-    return <EmptyState />;
+    const transactions = transactionsResponse?.data ?? [];
+    const groupedTransactions = groupTransactionsByDate(transactions);
+
+    if (!groupedTransactions.length) {
+      return <EmptyState />;
+    }
+
+    return (
+      <div className="animate-in fade-in-50 duration-500 space-y-3 max-w-3xl">
+        {groupedTransactions.map((group) => (
+          <TransactionGroup key={group.date.toISOString()} {...group} />
+        ))}
+      </div>
+    );
   }
-
-  return (
-    <div className="animate-in fade-in-50 duration-500 space-y-3 max-w-3xl">
-      {groupedTransactions.map((group) => (
-        <TransactionGroup key={group.date.toISOString()} {...group} />
-      ))}
-    </div>
-  );
-}
+);
 
 const EmptyState = memo(() => (
   <div
@@ -95,7 +114,7 @@ const TransactionGroup = memo(
     const dailyBalance = transactions.reduce((acc, transaction) => {
       return (
         acc +
-        (transaction.category.type === "income"
+        (transaction.category?.type === "income"
           ? transaction.amount
           : -transaction.amount)
       );
@@ -135,7 +154,8 @@ const TransactionGroup = memo(
   }
 );
 
+TransactionList.displayName = "TransactionList";
+TransactionListContent.displayName = "TransactionListContent";
 TransactionGroup.displayName = "TransactionGroup";
 EmptyState.displayName = "EmptyState";
 LoadingState.displayName = "LoadingState";
-TransactionList.displayName = "TransactionList";

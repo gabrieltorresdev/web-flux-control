@@ -88,7 +88,7 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
 
 const TransactionContent = memo(
   ({ transaction, isMobile, handleDelete }: TransactionContentProps) => {
-    const isIncome = transaction.category.type === "income";
+    const isIncome = transaction.category?.type === "income";
 
     return (
       <div className="flex items-center gap-3">
@@ -111,7 +111,7 @@ const TransactionContent = memo(
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground">
-              {transaction.category.name}
+              {transaction.category?.name}
             </span>
           </div>
         </div>

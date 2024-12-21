@@ -34,4 +34,15 @@ export class CategoryService {
       data
     );
   }
+
+  public async delete(id: string): Promise<void> {
+    this.httpClient.delete(getBackendApiUrl(`${this.route}/${id}`));
+  }
+
+  public async update(data: Category): Promise<ApiResponse<Category>> {
+    return this.httpClient.put<ApiResponse<Category>, Category>(
+      `${getBackendApiUrl(this.route)}/${data.id}`,
+      data
+    );
+  }
 }
