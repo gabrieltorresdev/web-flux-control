@@ -37,6 +37,7 @@ interface VoiceTransactionFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
   setValue: UseFormSetValue<CreateTransactionInput>;
   reset: UseFormReset<CreateTransactionInput>;
+  isSubmitting?: boolean;
 }
 
 export const VoiceTransactionForm = memo(
@@ -48,6 +49,7 @@ export const VoiceTransactionForm = memo(
     onSubmit,
     setValue,
     reset,
+    isSubmitting,
   }: VoiceTransactionFormProps) => {
     const [transcript, setTranscript] = useState("");
     const [showCreateCategoryDialog, setShowCreateCategoryDialog] =
@@ -171,6 +173,7 @@ export const VoiceTransactionForm = memo(
               getValues={getValues}
               suggestedCategory={suggestedCategory}
               onCreateCategory={setSuggestedCategory}
+              isSubmitting={isSubmitting}
             />
           )}
           <Button variant="outline" onClick={handleBack} className="w-full">

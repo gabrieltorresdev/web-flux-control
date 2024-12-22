@@ -17,6 +17,7 @@ interface ManualTransactionFormProps {
   getValues: UseFormGetValues<CreateTransactionInput>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   setValue: UseFormSetValue<CreateTransactionInput>;
+  isSubmitting?: boolean;
 }
 
 export const ManualTransactionForm = memo(
@@ -27,6 +28,7 @@ export const ManualTransactionForm = memo(
     getValues,
     onSubmit,
     setValue,
+    isSubmitting,
   }: ManualTransactionFormProps) => {
     const formValues = getValues();
 
@@ -43,6 +45,7 @@ export const ManualTransactionForm = memo(
           errors={errors}
           getValues={getValues}
           setValue={setValue}
+          isSubmitting={isSubmitting}
         />
       </div>
     );

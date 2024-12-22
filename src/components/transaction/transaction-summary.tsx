@@ -1,17 +1,11 @@
+"use client";
+
+import * as React from "react";
 import { Card } from "../ui/card";
-import { memo, Suspense } from "react";
-import { Skeleton } from "../ui/skeleton";
-import { TransactionService } from "@/src/services/transaction-service";
 import { formatNumberToBRL } from "@/src/lib/utils";
 import { ArrowDownRight, ArrowUpRight, Coins } from "lucide-react";
-import {
-  HydrationBoundary,
-  QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
-import { TransactionSummary as TransactionSummaryType } from "@/src/types/transaction";
-import { ApiResponse } from "@/src/types/service";
-import { getQueryClient } from "@/src/lib/get-query-client";
+import { useTransactionSummary } from "@/src/hooks/use-transactions";
+import { Skeleton } from "../ui/skeleton";
 
 type SummaryCardProps = {
   title: string;
@@ -19,52 +13,39 @@ type SummaryCardProps = {
   type: "income" | "expense" | "total";
 };
 
-export const TransactionSummary = memo(async () => {
-  const queryClient = getQueryClient();
+export const TransactionSummary = React.memo(function TransactionSummary() {
+  const {
+    data: summaryResponse,
+    isLoading,
+    isFetching,
+  } = useTransactionSummary();
 
-  await queryClient.prefetchQuery({
-    queryKey: ["transactions", "summary"],
-    queryFn: () => new TransactionService().getSummary(),
-  });
+  if (isLoading || isFetching) {
+    return <TransactionSummarySkeleton />;
+  }
+
+  const summary = summaryResponse?.data;
 
   return (
-    <Suspense fallback={<TransactionSummarySkeleton />}>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <TransactionSummaryContent queryClient={queryClient} />
-      </HydrationBoundary>
-    </Suspense>
+    <Card className="p-3 md:p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SummaryCard
+          title="Entradas"
+          value={summary?.income ?? 0}
+          type="income"
+        />
+        <SummaryCard
+          title="Saídas"
+          value={summary?.expense ?? 0}
+          type="expense"
+        />
+        <SummaryCard title="Total" value={summary?.total ?? 0} type="total" />
+      </div>
+    </Card>
   );
 });
 
-const TransactionSummaryContent = memo(
-  ({ queryClient }: { queryClient: QueryClient }) => {
-    const summaryResponse = queryClient.getQueryData<
-      ApiResponse<TransactionSummaryType>
-    >(["transactions", "summary"]);
-
-    const summary = summaryResponse?.data;
-
-    return (
-      <Card className="p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <SummaryCard
-            title="Entradas"
-            value={summary?.income ?? 0}
-            type="income"
-          />
-          <SummaryCard
-            title="Saídas"
-            value={summary?.expense ?? 0}
-            type="expense"
-          />
-          <SummaryCard title="Total" value={summary?.total ?? 0} type="total" />
-        </div>
-      </Card>
-    );
-  }
-);
-
-const TransactionSummarySkeleton = memo(() => {
+const TransactionSummarySkeleton = React.memo(() => {
   return (
     <Card className="p-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -94,7 +75,7 @@ const styles = {
   },
 } as const;
 
-const SummaryCard = memo(({ title, value, type }: SummaryCardProps) => {
+const SummaryCard = React.memo(({ title, value, type }: SummaryCardProps) => {
   const Icon = styles[type].icon;
   const textColor =
     type === "total" ? styles[type].color(value) : styles[type].color;
@@ -113,6 +94,5 @@ const SummaryCard = memo(({ title, value, type }: SummaryCardProps) => {
 });
 
 SummaryCard.displayName = "SummaryCard";
-TransactionSummaryContent.displayName = "TransactionSummaryContent";
 TransactionSummary.displayName = "TransactionSummary";
 TransactionSummarySkeleton.displayName = "TransactionSummarySkeleton";

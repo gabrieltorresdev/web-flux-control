@@ -80,6 +80,7 @@ export function EditTransactionDialog({
           errors={errors}
           getValues={getValues}
           setValue={setValue}
+          isSubmitting={updateTransaction.isPending}
         />
       </DialogContent>
     </Dialog>

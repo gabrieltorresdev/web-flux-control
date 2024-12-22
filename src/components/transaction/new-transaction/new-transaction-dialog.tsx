@@ -30,6 +30,7 @@ import { transactionSchema } from "@/src/lib/validations/transaction";
 import { CreateTransactionInput } from "@/src/types/transaction";
 import { useCreateTransaction } from "@/src/hooks/use-transactions";
 import { toast } from "@/src/hooks/use-toast";
+import { Label } from "../../ui/label";
 
 export function NewTransactionDialog() {
   const [currentTab, setCurrentTab] = useState("voice");
@@ -53,20 +54,15 @@ export function NewTransactionDialog() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await createTransaction.mutateAsync({
-        ...data,
-        dateTime: data.dateTime,
-      });
-
+      await createTransaction.mutateAsync(data);
+      reset();
       toast({
         title: "Transação criada",
         description: "A transação foi criada com sucesso.",
       });
-
-      reset();
     } catch {
       toast({
-        title: "Erro ao criar transação",
+        title: "Erro ao criar a transação",
         description: "Ocorreu um erro ao criar a transação.",
         variant: "destructive",
       });
@@ -113,10 +109,17 @@ export function NewTransactionDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2">
-          <Plus className="h-5 w-5" />
-          Nova Transação
-        </Button>
+        <div className="flex items-center gap-2">
+          <Label className="text-sm">Adicionar Transação</Label>
+
+          <Button
+            size="sm"
+            className="gap-2 h-8 w-8 rounded-full p-0 pointer-events-none"
+            variant="outline"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] p-0">
         <DialogHeader className="p-6 pb-0">
@@ -179,6 +182,7 @@ export function NewTransactionDialog() {
               getValues={getValues}
               onSubmit={onSubmit}
               setValue={setValue}
+              isSubmitting={createTransaction.isPending}
             />
           </TabsContent>
         </Tabs>

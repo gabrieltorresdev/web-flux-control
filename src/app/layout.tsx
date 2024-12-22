@@ -22,7 +22,7 @@ export default function RootLayout({
           <Suspense fallback={<LoadingState />}>
             <main className="flex-1 flex flex-col bg-gray-100/70  min-h-screen w-full">
               <AppHeader />
-              <div className="flex-1 overflow-y-auto p-6 relative">
+              <div className="flex-1 overflow-y-auto p-3 md:p-6 relative">
                 {children}
               </div>
             </main>

@@ -15,13 +15,13 @@ export function AppHeader() {
   const pathname = usePathname();
 
   return (
-    <div className="sticky top-0 z-10 px-4 border-b-2 bg-white">
-      <header className="h-12 flex items-center w-full">
+    <div className="sticky top-0 z-20 px-3 md:px-4 border-b-2 bg-white">
+      <header className="h-10 md:h-12 flex items-center w-full">
         <div className="flex-1">
-          <h1 className="text-xl font-semibold">FluxControl</h1>
+          <h1 className="text-base md:text-xl font-semibold">FluxControl</h1>
         </div>
       </header>
-      <div className="hidden md:block">
+      <div>
         <NavigationMenu>
           <NavigationMenuList>
             {menuItems.map((item) => {
@@ -39,7 +39,7 @@ export function AppHeader() {
                 >
                   <div
                     className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 mb-3 rounded-lg text-sm font-medium",
+                      "flex items-center gap-2 p-1 px-1.5 mb-1.5 md:px-3 md:py-1.5 md:mb-3 rounded-lg text-sm font-medium",
                       "transition-colors duration-200",
                       "text-gray-600 hover:bg-gray-100 hover:text-primary",
                       isActive && "text-gray-950 bg-gray-100"

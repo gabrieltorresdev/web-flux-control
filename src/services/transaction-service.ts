@@ -15,9 +15,11 @@ export class TransactionService {
     this.route = "transactions";
   }
 
-  public async findAllPaginated(
+  async findAllPaginated(
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null,
+    search?: string
   ): Promise<ApiTransactionPaginatedList> {
     const params = new URLSearchParams();
     if (startDate) {
@@ -26,30 +28,23 @@ export class TransactionService {
     if (endDate) {
       params.append("endDate", endDate.toISOString());
     }
+    if (categoryId) {
+      params.append("categoryId", categoryId);
+    }
+    if (search) {
+      params.append("search", search);
+    }
 
     return this.httpClient.get<ApiTransactionPaginatedList>(
       `${getBackendApiUrl(this.route)}?${params.toString()}`
     );
   }
 
-  public async create(transaction: CreateTransactionInput) {
-    return this.httpClient.post(getBackendApiUrl(this.route), transaction);
-  }
-
-  public async update(id: string, transaction: CreateTransactionInput) {
-    return this.httpClient.put(
-      `${getBackendApiUrl(this.route)}/${id}`,
-      transaction
-    );
-  }
-
-  public async delete(id: string) {
-    return this.httpClient.delete(`${getBackendApiUrl(this.route)}/${id}`);
-  }
-
-  public async getSummary(
+  async getSummary(
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null,
+    search?: string
   ): Promise<ApiTransactionSummaryResponse> {
     const params = new URLSearchParams();
     if (startDate) {
@@ -58,9 +53,27 @@ export class TransactionService {
     if (endDate) {
       params.append("endDate", endDate.toISOString());
     }
+    if (categoryId) {
+      params.append("categoryId", categoryId);
+    }
+    if (search) {
+      params.append("search", search);
+    }
 
     return this.httpClient.get<ApiTransactionSummaryResponse>(
       `${getBackendApiUrl(this.route)}/summary?${params.toString()}`
     );
+  }
+
+  async create(input: CreateTransactionInput) {
+    return this.httpClient.post(getBackendApiUrl(this.route), input);
+  }
+
+  async update(id: string, input: CreateTransactionInput) {
+    return this.httpClient.put(`${getBackendApiUrl(this.route)}/${id}`, input);
+  }
+
+  async delete(id: string) {
+    return this.httpClient.delete(`${getBackendApiUrl(this.route)}/${id}`);
   }
 }

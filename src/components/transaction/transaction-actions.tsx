@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVertical, Pencil, Trash } from "lucide-react";
+import { MoreVertical, Pencil, Trash, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,7 +116,11 @@ export function TransactionActions({
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              Excluir
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Excluir"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

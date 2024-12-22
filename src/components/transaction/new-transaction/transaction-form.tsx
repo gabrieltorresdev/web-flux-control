@@ -39,9 +39,10 @@ interface TransactionFormProps {
   register: UseFormRegister<CreateTransactionInput>;
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
-  suggestedCategory?: string;
-  onCreateCategory?: (categoryName: string) => void;
   setValue: UseFormSetValue<CreateTransactionInput>;
+  suggestedCategory?: string;
+  onCreateCategory?: (name: string) => void;
+  isSubmitting?: boolean;
 }
 
 const categoryService = new CategoryService();
@@ -55,6 +56,7 @@ export const TransactionForm = memo(
     suggestedCategory,
     onCreateCategory,
     setValue,
+    isSubmitting = false,
   }: TransactionFormProps) => {
     const [formState, setFormState] = useState({
       open: false,
@@ -63,7 +65,6 @@ export const TransactionForm = memo(
       isSearching: false,
       showCreateDialog: false,
       isVisible: false,
-      isSubmitting: false,
       submitSuccess: false,
     });
 
@@ -189,17 +190,6 @@ export const TransactionForm = memo(
       },
       [setValue]
     );
-
-    const renderSubmitButton = () => {
-      if (formState.isSubmitting) {
-        return formState.submitSuccess ? (
-          <Check className="h-5 w-5 text-white animate-in fade-in-50" />
-        ) : (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        );
-      }
-      return "Salvar Transação";
-    };
 
     return (
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
@@ -358,12 +348,12 @@ export const TransactionForm = memo(
         </div>
 
         {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={formState.isSubmitting}
-        >
-          {renderSubmitButton()}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            "Salvar Transação"
+          )}
         </Button>
 
         {/* Create Category Dialog */}

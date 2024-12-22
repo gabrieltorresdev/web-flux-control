@@ -1,68 +1,51 @@
-import { memo, Suspense } from "react";
-import {
-  HydrationBoundary,
-  QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
-import { TransactionService } from "@/src/services/transaction-service";
-import {
-  formatDateHeader,
-  groupTransactionsByDate,
-} from "@/src/lib/utils/transactions";
+"use client";
+
+import * as React from "react";
 import { ChevronRight, CircleDollarSign } from "lucide-react";
 import { Card } from "../ui/card";
 import { TransactionItem } from "./transaction-item";
 import { formatNumberToBRL } from "@/src/lib/utils";
 import { Transaction } from "@/src/types/transaction";
-import { ApiPaginatedResponse } from "@/src/types/service";
-import { getQueryClient } from "@/src/lib/get-query-client";
+import {
+  formatDateHeader,
+  groupTransactionsByDate,
+} from "@/src/lib/utils/transactions";
+import { useTransactions } from "@/src/hooks/use-transactions";
+import { Skeleton } from "../ui/skeleton";
 
 interface TransactionGroupProps {
   date: Date;
   transactions: Transaction[];
 }
 
-export const TransactionList = memo(async () => {
-  const queryClient = getQueryClient();
+export const TransactionList = React.memo(function TransactionList() {
+  const {
+    data: transactionsResponse,
+    isLoading,
+    isFetching,
+  } = useTransactions();
 
-  await queryClient.prefetchQuery({
-    queryKey: ["transactions"],
-    queryFn: () => new TransactionService().findAllPaginated(),
-  });
+  if (isLoading || isFetching) {
+    return <LoadingState />;
+  }
+
+  const transactions = transactionsResponse?.data ?? [];
+  const groupedTransactions = groupTransactionsByDate(transactions);
 
   return (
-    <Suspense fallback={<LoadingState />}>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <TransactionListContent queryClient={queryClient} />
-      </HydrationBoundary>
-    </Suspense>
+    <div className="animate-in fade-in-50 duration-500 space-y-3">
+      {groupedTransactions.length > 0 ? (
+        groupedTransactions.map((group) => (
+          <TransactionGroup key={group.date.toISOString()} {...group} />
+        ))
+      ) : (
+        <EmptyState />
+      )}
+    </div>
   );
 });
 
-const TransactionListContent = memo(
-  ({ queryClient }: { queryClient: QueryClient }) => {
-    const transactionsResponse = queryClient.getQueryData<
-      ApiPaginatedResponse<Transaction[]>
-    >(["transactions"]);
-
-    const transactions = transactionsResponse?.data ?? [];
-    const groupedTransactions = groupTransactionsByDate(transactions);
-
-    if (!groupedTransactions.length) {
-      return <EmptyState />;
-    }
-
-    return (
-      <div className="animate-in fade-in-50 duration-500 space-y-3 max-w-3xl">
-        {groupedTransactions.map((group) => (
-          <TransactionGroup key={group.date.toISOString()} {...group} />
-        ))}
-      </div>
-    );
-  }
-);
-
-const EmptyState = memo(() => (
+const EmptyState = React.memo(() => (
   <div
     className="flex flex-col items-center justify-center h-64 space-y-4 animate-in fade-in-50"
     role="status"
@@ -77,39 +60,43 @@ const EmptyState = memo(() => (
   </div>
 ));
 
-const LoadingState = memo(() => (
-  <div className="space-y-3 animate-pulse">
+const LoadingState = React.memo(() => (
+  <div className="space-y-3">
     {[...Array(2)].map((_, groupIndex) => (
       <section key={groupIndex} className="space-y-3">
-        <div className="sticky top-0 z-10 bg-gray-100/70 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div className="h-6 w-32 bg-gray-200 rounded"></div>
-            <div className="h-5 w-5 bg-gray-200 rounded"></div>
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-32" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-5" />
           </div>
         </div>
-        <div className="divide-y divide-gray-200">
+        <Card className="overflow-hidden">
           {[...Array(3)].map((_, itemIndex) => (
             <div
               key={itemIndex}
-              className="p-3 flex items-center justify-between gap-3"
+              className="flex items-center justify-between p-4 border-b last:border-b-0"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <Skeleton className="w-10 h-10 rounded-full" />
                 <div className="space-y-2">
-                  <div className="h-5 w-32 bg-gray-200 rounded"></div>
-                  <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-24" />
                 </div>
               </div>
-              <div className="h-6 w-24 bg-gray-200 rounded"></div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
             </div>
           ))}
-        </div>
+        </Card>
       </section>
     ))}
   </div>
 ));
 
-const TransactionGroup = memo(
+const TransactionGroup = React.memo(
   ({ date, transactions }: TransactionGroupProps) => {
     const dailyBalance = transactions.reduce((acc, transaction) => {
       return (
@@ -155,7 +142,6 @@ const TransactionGroup = memo(
 );
 
 TransactionList.displayName = "TransactionList";
-TransactionListContent.displayName = "TransactionListContent";
 TransactionGroup.displayName = "TransactionGroup";
 EmptyState.displayName = "EmptyState";
 LoadingState.displayName = "LoadingState";
