@@ -1,6 +1,8 @@
 import { Category } from "./category";
 import { ApiPaginatedResponse } from "./service";
 
+export type { Category };
+
 export interface Transaction {
   id: string;
   category?: Category;
@@ -12,6 +14,11 @@ export interface Transaction {
 export interface AiTransactionInput
   extends Omit<Transaction, "id" | "category"> {
   category: string;
+}
+
+export interface PaginationParams {
+  page?: number;
+  per_page?: number;
 }
 
 export type ApiTransactionPaginatedList = ApiPaginatedResponse<Transaction[]>;

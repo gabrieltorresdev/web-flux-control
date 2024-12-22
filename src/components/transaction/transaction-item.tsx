@@ -136,7 +136,8 @@ const TransactionContent = memo(
               isIncome ? "text-green-600" : "text-red-600"
             )}
           >
-            {isIncome ? "+" : "-"}R$ {formattedAmount}
+            {isIncome ? "+" : "-"}
+            {formattedAmount}
           </p>
           <time
             dateTime={new Date(transaction.dateTime).toISOString()}

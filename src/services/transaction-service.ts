@@ -4,6 +4,7 @@ import {
   ApiTransactionPaginatedList,
   ApiTransactionSummaryResponse,
   CreateTransactionInput,
+  PaginationParams,
 } from "@/src/types/transaction";
 
 export class TransactionService {
@@ -19,7 +20,8 @@ export class TransactionService {
     startDate?: Date,
     endDate?: Date,
     categoryId?: string | null,
-    search?: string
+    search?: string,
+    pagination?: PaginationParams
   ): Promise<ApiTransactionPaginatedList> {
     const params = new URLSearchParams();
     if (startDate) {
@@ -33,6 +35,12 @@ export class TransactionService {
     }
     if (search) {
       params.append("search", search);
+    }
+    if (pagination?.page) {
+      params.append("page", pagination.page.toString());
+    }
+    if (pagination?.per_page) {
+      params.append("per_page", pagination.per_page.toString());
     }
 
     return this.httpClient.get<ApiTransactionPaginatedList>(

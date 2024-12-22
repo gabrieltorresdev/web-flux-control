@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, CircleDollarSign } from "lucide-react";
+import { ChevronRight, CircleDollarSign, Loader2 } from "lucide-react";
 import { Card } from "../ui/card";
 import { TransactionItem } from "./transaction-item";
 import { formatNumberToBRL } from "@/src/lib/utils";
@@ -12,6 +12,7 @@ import {
 } from "@/src/lib/utils/transactions";
 import { useTransactions } from "@/src/hooks/use-transactions";
 import { Skeleton } from "../ui/skeleton";
+import { useInView } from "react-intersection-observer";
 
 interface TransactionGroupProps {
   date: Date;
@@ -19,24 +20,53 @@ interface TransactionGroupProps {
 }
 
 export const TransactionList = React.memo(function TransactionList() {
-  const { data: response, isLoading, isFetching } = useTransactions();
+  const { ref: loadMoreRef, inView } = useInView();
 
-  const transactions = response?.transactions?.data ?? [];
+  const {
+    data,
+    isLoading,
+    isFetching,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useTransactions({ per_page: 10 });
+
+  React.useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const transactions = data?.transactions?.data ?? [];
   const groupedTransactions = React.useMemo(
     () => groupTransactionsByDate(transactions),
     [transactions]
   );
 
-  if (isLoading || isFetching) {
+  if (isLoading || (isFetching && !isFetchingNextPage)) {
     return <LoadingState />;
   }
 
   return (
     <div className="animate-in fade-in-50 duration-500 space-y-3">
       {groupedTransactions.length > 0 ? (
-        groupedTransactions.map((group) => (
-          <TransactionGroup key={group.date.toISOString()} {...group} />
-        ))
+        <>
+          {groupedTransactions.map((group) => (
+            <TransactionGroup key={group.date.toISOString()} {...group} />
+          ))}
+          {hasNextPage && (
+            <div
+              ref={loadMoreRef}
+              className="flex justify-center py-4"
+              role="status"
+              aria-label="Carregando mais transações"
+            >
+              {isFetchingNextPage && (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              )}
+            </div>
+          )}
+        </>
       ) : (
         <EmptyState />
       )}
