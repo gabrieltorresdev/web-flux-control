@@ -2,9 +2,10 @@
 
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { memo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Transaction } from "@/src/types/transaction";
 import { format } from "date-fns";
+import { formatNumberToBRL } from "@/src/lib/utils";
 import { TransactionActions } from "./transaction-actions";
 import { useDeleteTransaction } from "@/src/hooks/use-transactions";
 import { useToast } from "@/src/hooks/use-toast";
@@ -33,7 +34,7 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
       await deleteTransaction.mutateAsync(transaction.id);
       toast({
@@ -47,7 +48,7 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
         variant: "destructive",
       });
     }
-  };
+  }, [deleteTransaction, toast, transaction.id]);
 
   if (isMobile) {
     return (
@@ -88,7 +89,20 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
 
 const TransactionContent = memo(
   ({ transaction, isMobile, handleDelete }: TransactionContentProps) => {
-    const isIncome = transaction.category?.type === "income";
+    const isIncome = useMemo(
+      () => transaction.category?.type === "income",
+      [transaction.category?.type]
+    );
+
+    const formattedAmount = useMemo(
+      () => formatNumberToBRL(Math.abs(transaction.amount)),
+      [transaction.amount]
+    );
+
+    const formattedTime = useMemo(
+      () => format(new Date(transaction.dateTime), "HH:mm"),
+      [transaction.dateTime]
+    );
 
     return (
       <div className="flex items-center gap-3">
@@ -122,13 +136,13 @@ const TransactionContent = memo(
               isIncome ? "text-green-600" : "text-red-600"
             )}
           >
-            {isIncome ? "+" : "-"}R$ {Math.abs(transaction.amount).toFixed(2)}
+            {isIncome ? "+" : "-"}R$ {formattedAmount}
           </p>
           <time
             dateTime={new Date(transaction.dateTime).toISOString()}
             className="text-xs text-muted-foreground"
           >
-            {format(new Date(transaction.dateTime), "HH:mm")}
+            {formattedTime}
           </time>
         </div>
         {!isMobile && (

@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card } from "../ui/card";
 import { formatNumberToBRL } from "@/src/lib/utils";
 import { ArrowDownRight, ArrowUpRight, Coins } from "lucide-react";
-import { useTransactionSummary } from "@/src/hooks/use-transactions";
+import { useTransactions } from "@/src/hooks/use-transactions";
 import { Skeleton } from "../ui/skeleton";
 
 type SummaryCardProps = {
@@ -14,17 +14,13 @@ type SummaryCardProps = {
 };
 
 export const TransactionSummary = React.memo(function TransactionSummary() {
-  const {
-    data: summaryResponse,
-    isLoading,
-    isFetching,
-  } = useTransactionSummary();
+  const { data: response, isLoading, isFetching } = useTransactions();
 
   if (isLoading || isFetching) {
     return <TransactionSummarySkeleton />;
   }
 
-  const summary = summaryResponse?.data;
+  const summary = response?.summary?.data;
 
   return (
     <Card className="p-3 md:p-6">

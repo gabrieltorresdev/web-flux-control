@@ -19,18 +19,17 @@ interface TransactionGroupProps {
 }
 
 export const TransactionList = React.memo(function TransactionList() {
-  const {
-    data: transactionsResponse,
-    isLoading,
-    isFetching,
-  } = useTransactions();
+  const { data: response, isLoading, isFetching } = useTransactions();
+
+  const transactions = response?.transactions?.data ?? [];
+  const groupedTransactions = React.useMemo(
+    () => groupTransactionsByDate(transactions),
+    [transactions]
+  );
 
   if (isLoading || isFetching) {
     return <LoadingState />;
   }
-
-  const transactions = transactionsResponse?.data ?? [];
-  const groupedTransactions = groupTransactionsByDate(transactions);
 
   return (
     <div className="animate-in fade-in-50 duration-500 space-y-3">
@@ -60,52 +59,64 @@ const EmptyState = React.memo(() => (
   </div>
 ));
 
-const LoadingState = React.memo(() => (
-  <div className="space-y-3">
-    {[...Array(1)].map((_, groupIndex) => (
-      <section key={groupIndex} className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-6 w-32" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-5" />
+const LoadingState = React.memo(() => {
+  const [itemCount, setItemCount] = React.useState(3);
+
+  React.useEffect(() => {
+    setItemCount(window.innerHeight > 800 ? 5 : 3);
+  }, []);
+
+  return (
+    <div className="space-y-3">
+      {[...Array(1)].map((_, groupIndex) => (
+        <section key={groupIndex} className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-32" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-20" />
+              <ChevronRight className="h-5 w-5 text-gray-400" />
+            </div>
           </div>
-        </div>
-        <Card className="overflow-hidden">
-          {[...Array(3)].map((_, itemIndex) => (
-            <div
-              key={itemIndex}
-              className="flex items-center justify-between p-4 border-b last:border-b-0"
-            >
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-10 h-10 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-32" />
-                  <Skeleton className="h-4 w-24" />
+          <Card className="overflow-hidden">
+            {[...Array(itemCount)].map((_, itemIndex) => (
+              <div
+                key={itemIndex}
+                className="flex items-center justify-between p-4 border-b last:border-b-0"
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-10 h-10 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-8 w-8 rounded" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-8 w-8 rounded" />
-              </div>
-            </div>
-          ))}
-        </Card>
-      </section>
-    ))}
-  </div>
-));
+            ))}
+          </Card>
+        </section>
+      ))}
+    </div>
+  );
+});
 
 const TransactionGroup = React.memo(
   ({ date, transactions }: TransactionGroupProps) => {
-    const dailyBalance = transactions.reduce((acc, transaction) => {
-      return (
-        acc +
-        (transaction.category?.type === "income"
-          ? transaction.amount
-          : -transaction.amount)
-      );
-    }, 0);
+    const dailyBalance = React.useMemo(
+      () =>
+        transactions.reduce(
+          (acc, transaction) =>
+            acc +
+            (transaction.category?.type === "income"
+              ? transaction.amount
+              : -transaction.amount),
+          0
+        ),
+      [transactions]
+    );
 
     return (
       <section
@@ -120,7 +131,7 @@ const TransactionGroup = React.memo(
           <div className="flex items-center gap-2">
             <span
               className={`text-sm font-medium ${
-                dailyBalance >= 0 ? "text-green-500" : "text-red-500"
+                dailyBalance >= 0 ? "text-green-600" : "text-red-600"
               }`}
             >
               {formatNumberToBRL(dailyBalance)}

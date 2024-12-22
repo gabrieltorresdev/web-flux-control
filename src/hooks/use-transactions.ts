@@ -60,15 +60,28 @@ export function useTransactions() {
       categoryId,
       search,
     ],
-    queryFn: () =>
-      new TransactionService().findAllPaginated(
-        startDate,
-        endDate,
-        categoryId,
-        search || undefined
-      ),
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const [transactions, summary] = await Promise.all([
+        new TransactionService().findAllPaginated(
+          startDate,
+          endDate,
+          categoryId,
+          search || undefined
+        ),
+        new TransactionService().getSummary(
+          startDate,
+          endDate,
+          categoryId,
+          search || undefined
+        ),
+      ]);
+      return {
+        transactions,
+        summary,
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
   });
 }
 

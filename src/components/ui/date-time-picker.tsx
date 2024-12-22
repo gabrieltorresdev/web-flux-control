@@ -8,7 +8,7 @@ import {
 } from "@/src/components/ui/popover";
 import { cn } from "@/src/lib/utils";
 import { add, format } from "date-fns";
-import { type Locale, enUS } from "date-fns/locale";
+import { type Locale, ptBR } from "date-fns/locale";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -256,7 +256,7 @@ function Calendar({
   ...props
 }: CalendarProps & { yearRange?: number }) {
   const MONTHS = React.useMemo(() => {
-    let locale: Pick<Locale, "options" | "localize" | "formatLong"> = enUS;
+    let locale: Pick<Locale, "options" | "localize" | "formatLong"> = ptBR;
     const { options, localize, formatLong } = props.locale || {};
     if (options && localize && formatLong) {
       locale = {
@@ -266,7 +266,7 @@ function Calendar({
       };
     }
     return genMonths(locale);
-  }, []);
+  }, [props.locale]);
 
   const YEARS = React.useMemo(() => genYears(yearRange), []);
   const disableLeftNavigation = () => {
@@ -730,7 +730,7 @@ const DateTimePicker = React.forwardRef<
 >(
   (
     {
-      locale = enUS,
+      locale = ptBR,
       defaultPopupValue = new Date(new Date().setHours(0, 0, 0, 0)),
       value,
       onChange,
@@ -739,7 +739,7 @@ const DateTimePicker = React.forwardRef<
       disabled = false,
       displayFormat,
       granularity = "second",
-      placeholder = "Pick a date",
+      placeholder = "Selecione uma data e hora",
       className,
       ...props
     },
@@ -803,17 +803,21 @@ const DateTimePicker = React.forwardRef<
     const initHourFormat = {
       hour24:
         displayFormat?.hour24 ??
-        `PPP HH:mm${!granularity || granularity === "second" ? ":ss" : ""}`,
+        `PPP' às 'HH:mm${
+          !granularity || granularity === "second" ? ":ss" : ""
+        }`,
       hour12:
         displayFormat?.hour12 ??
-        `PP hh:mm${!granularity || granularity === "second" ? ":ss" : ""} b`,
+        `PPP' às 'hh:mm${
+          !granularity || granularity === "second" ? ":ss" : ""
+        } b`,
     };
 
-    let loc = enUS;
+    let loc = ptBR;
     const { options, localize, formatLong } = locale;
     if (options && localize && formatLong) {
       loc = {
-        ...enUS,
+        ...ptBR,
         options,
         localize,
         formatLong,
