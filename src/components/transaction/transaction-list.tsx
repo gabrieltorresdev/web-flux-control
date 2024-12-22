@@ -62,7 +62,7 @@ const EmptyState = React.memo(() => (
 
 const LoadingState = React.memo(() => (
   <div className="space-y-3">
-    {[...Array(2)].map((_, groupIndex) => (
+    {[...Array(1)].map((_, groupIndex) => (
       <section key={groupIndex} className="space-y-3">
         <div className="flex items-center justify-between">
           <Skeleton className="h-6 w-32" />

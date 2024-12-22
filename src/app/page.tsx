@@ -4,7 +4,6 @@ import { TransactionSummary } from "@/src/components/transaction/transaction-sum
 import { MonthFilter } from "@/src/components/transaction/month-filter";
 import { TransactionFilters } from "@/src/components/transaction/filters/transaction-filters";
 import { type TransactionFilters as TransactionFiltersType } from "@/src/types/filters";
-import { Separator } from "../components/ui/separator";
 
 interface HomeProps {
   searchParams: Promise<Partial<TransactionFiltersType>>;

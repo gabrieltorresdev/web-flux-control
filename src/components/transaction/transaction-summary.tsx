@@ -47,12 +47,18 @@ export const TransactionSummary = React.memo(function TransactionSummary() {
 
 const TransactionSummarySkeleton = React.memo(() => {
   return (
-    <Card className="p-6">
+    <Card className="p-3 md:p-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-8 w-32" />
+          <div
+            key={i}
+            className="flex items-center justify-between sm:block space-y-0 sm:space-y-1"
+          >
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4 rounded-full" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-7 sm:h-8 w-24 sm:w-28" />
           </div>
         ))}
       </div>
