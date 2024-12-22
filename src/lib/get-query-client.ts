@@ -9,9 +9,17 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        retry: 1,
+      },
+      mutations: {
+        retry: 1,
+        onError: (error: unknown) => {
+          console.error("Mutation error:", error);
+        },
       },
       dehydrate: {
-        // include pending queries in dehydration
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) ||
           query.state.status === "pending",
@@ -24,14 +32,24 @@ let browserQueryClient: QueryClient | undefined = undefined;
 
 export function getQueryClient() {
   if (isServer) {
-    // Server: always make a new query client
     return makeQueryClient();
   } else {
-    // Browser: make a new query client if we don't already have one
-    // This is very important, so we don't re-make a new client if React
-    // suspends during the initial render. This may not be needed if we
-    // have a suspense boundary BELOW the creation of the query client
     if (!browserQueryClient) browserQueryClient = makeQueryClient();
     return browserQueryClient;
   }
 }
+
+export const queryKeys = {
+  transactions: {
+    all: ["transactions"] as const,
+    list: (params: Record<string, unknown>) =>
+      [...queryKeys.transactions.all, params] as const,
+    detail: (id: string) => [...queryKeys.transactions.all, id] as const,
+  },
+  categories: {
+    all: ["categories"] as const,
+    list: (params?: { search?: string }) =>
+      [...queryKeys.categories.all, params] as const,
+    detail: (id: string) => [...queryKeys.categories.all, id] as const,
+  },
+} as const;

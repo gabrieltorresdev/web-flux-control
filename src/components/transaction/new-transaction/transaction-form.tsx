@@ -104,7 +104,12 @@ export const TransactionForm = memo(
       }
     }, [handleVisibilityChange]);
 
-    const { data: categoriesResponse, isLoading } = useQuery({
+    const {
+      data: categoriesResponse,
+      isLoading,
+      isError,
+      refetch,
+    } = useQuery({
       queryKey: ["categories", debouncedSearchTerm],
       queryFn: async () => {
         setFormState((prev) => ({ ...prev, isSearching: true }));
@@ -225,6 +230,15 @@ export const TransactionForm = memo(
             {showLoading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : isError ? (
+              <div className="flex flex-col items-center gap-2 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Erro ao carregar categorias
+                </p>
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Tentar novamente
+                </Button>
               </div>
             ) : (
               <>

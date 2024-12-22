@@ -9,15 +9,17 @@ import {
   UseFormRegister,
   UseFormSetValue,
 } from "react-hook-form";
+import { useDebounce } from "@/src/hooks/lib/use-debounce";
 
 interface ManualTransactionFormProps {
   onDataChange: (hasData: boolean) => void;
   register: UseFormRegister<CreateTransactionInput>;
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
   setValue: UseFormSetValue<CreateTransactionInput>;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
   isSubmitting?: boolean;
+  saveDraft: () => void;
 }
 
 export const ManualTransactionForm = memo(
@@ -26,16 +28,24 @@ export const ManualTransactionForm = memo(
     register,
     errors,
     getValues,
-    onSubmit,
     setValue,
-    isSubmitting,
+    onSubmit,
+    isSubmitting = false,
+    saveDraft,
   }: ManualTransactionFormProps) => {
     const formValues = getValues();
+    const debouncedFormValues = useDebounce(formValues, 500);
 
     useEffect(() => {
       const hasData = Object.values(formValues).some((value) => value);
       onDataChange(hasData);
     }, [formValues, onDataChange]);
+
+    useEffect(() => {
+      if (Object.values(debouncedFormValues).some((value) => value)) {
+        saveDraft();
+      }
+    }, [debouncedFormValues, saveDraft]);
 
     return (
       <div>

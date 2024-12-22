@@ -6,9 +6,13 @@ import {
   ApiTransactionSummaryResponse,
   Transaction,
 } from "@/src/types/transaction";
-import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getQueryClient } from "../lib/get-query-client";
+import { queryKeys } from "../lib/get-query-client";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 type TransactionQueryData = {
@@ -67,16 +71,17 @@ export function useTransactions(initialPagination?: PaginationParams) {
   const { startDate, endDate } = getDateRangeFromParams(searchParams);
   const categoryId = searchParams.get("categoryId");
   const search = searchParams.get("search");
-  const queryClient = getQueryClient();
+  const queryClient = useQueryClient();
+
+  const queryKey = queryKeys.transactions.list({
+    month: searchParams.get("month"),
+    year: searchParams.get("year"),
+    categoryId,
+    search,
+  });
 
   const transactionsQuery = useInfiniteQuery({
-    queryKey: [
-      "transactions",
-      searchParams.get("month"),
-      searchParams.get("year"),
-      categoryId,
-      search,
-    ],
+    queryKey,
     queryFn: async ({ pageParam = 1 }) => {
       const pagination: PaginationParams = {
         page: pageParam,
@@ -103,13 +108,7 @@ export function useTransactions(initialPagination?: PaginationParams) {
       if (transactions.meta.current_page < transactions.meta.last_page) {
         const nextPage = transactions.meta.current_page + 1;
         queryClient.prefetchInfiniteQuery({
-          queryKey: [
-            "transactions",
-            searchParams.get("month"),
-            searchParams.get("year"),
-            categoryId,
-            search,
-          ],
+          queryKey,
           queryFn: async () => {
             const [nextTransactions, nextSummary] = await Promise.all([
               new TransactionService().findAllPaginated(
@@ -151,8 +150,8 @@ export function useTransactions(initialPagination?: PaginationParams) {
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
   });
 
   const aggregatedData = transactionsQuery.data?.pages.reduce<{
@@ -161,7 +160,7 @@ export function useTransactions(initialPagination?: PaginationParams) {
   }>(
     (acc, page) => ({
       transactions: {
-        data: [...(acc.transactions.data || []), ...page.transactions.data],
+        data: [...acc.transactions.data, ...page.transactions.data],
         meta: page.transactions.meta,
         message: page.transactions.message,
       },
@@ -193,21 +192,23 @@ export function useTransactions(initialPagination?: PaginationParams) {
     hasNextPage: transactionsQuery.hasNextPage,
     fetchNextPage: transactionsQuery.fetchNextPage,
     isFetchingNextPage: transactionsQuery.isFetchingNextPage,
+    isError: transactionsQuery.isError,
+    refetch: transactionsQuery.refetch,
   };
 }
 
 export function useCreateTransaction() {
-  const queryClient = getQueryClient();
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   return useMutation({
     mutationFn: (data: CreateTransactionInput) =>
       new TransactionService().create(data),
     onMutate: async (newTransaction) => {
-      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
 
       const previousData = queryClient.getQueriesData<TransactionQueryData>({
-        queryKey: ["transactions"],
+        queryKey: queryKeys.transactions.all,
       });
 
       const updater: QueryUpdater = (old) =>
@@ -249,7 +250,7 @@ export function useCreateTransaction() {
         });
 
       queryClient.setQueriesData<TransactionQueryData>(
-        { queryKey: ["transactions"] },
+        { queryKey: queryKeys.transactions.all },
         updater
       );
 
@@ -258,30 +259,33 @@ export function useCreateTransaction() {
     onError: (err, newTransaction, context) => {
       if (context?.previousData) {
         queryClient.setQueriesData(
-          { queryKey: ["transactions"] },
+          { queryKey: queryKeys.transactions.all },
           context.previousData
         );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.transactions.all,
+        refetchType: "none",
+      });
       router.refresh();
     },
   });
 }
 
 export function useUpdateTransaction() {
-  const queryClient = getQueryClient();
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   return useMutation({
     mutationFn: ({ id, ...data }: CreateTransactionInput & { id: string }) =>
       new TransactionService().update(id, data),
     onMutate: async (updatedTransaction) => {
-      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
 
       const previousData = queryClient.getQueriesData<TransactionQueryData>({
-        queryKey: ["transactions"],
+        queryKey: queryKeys.transactions.all,
       });
 
       const updater: QueryUpdater = (old) =>
@@ -307,7 +311,7 @@ export function useUpdateTransaction() {
         }));
 
       queryClient.setQueriesData<TransactionQueryData>(
-        { queryKey: ["transactions"] },
+        { queryKey: queryKeys.transactions.all },
         updater
       );
 
@@ -316,29 +320,32 @@ export function useUpdateTransaction() {
     onError: (err, updatedTransaction, context) => {
       if (context?.previousData) {
         queryClient.setQueriesData(
-          { queryKey: ["transactions"] },
+          { queryKey: queryKeys.transactions.all },
           context.previousData
         );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.transactions.all,
+        refetchType: "none",
+      });
       router.refresh();
     },
   });
 }
 
 export function useDeleteTransaction() {
-  const queryClient = getQueryClient();
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   return useMutation({
     mutationFn: (id: string) => new TransactionService().delete(id),
     onMutate: async (deletedId) => {
-      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
 
       const previousData = queryClient.getQueriesData<TransactionQueryData>({
-        queryKey: ["transactions"],
+        queryKey: queryKeys.transactions.all,
       });
 
       const updater: QueryUpdater = (old) =>
@@ -357,7 +364,7 @@ export function useDeleteTransaction() {
         }));
 
       queryClient.setQueriesData<TransactionQueryData>(
-        { queryKey: ["transactions"] },
+        { queryKey: queryKeys.transactions.all },
         updater
       );
 
@@ -366,13 +373,16 @@ export function useDeleteTransaction() {
     onError: (err, deletedId, context) => {
       if (context?.previousData) {
         queryClient.setQueriesData(
-          { queryKey: ["transactions"] },
+          { queryKey: queryKeys.transactions.all },
           context.previousData
         );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.transactions.all,
+        refetchType: "none",
+      });
       router.refresh();
     },
   });

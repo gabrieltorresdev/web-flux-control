@@ -6,6 +6,7 @@ import { formatNumberToBRL } from "@/src/lib/utils";
 import { ArrowDownRight, ArrowUpRight, Coins } from "lucide-react";
 import { useTransactions } from "@/src/hooks/use-transactions";
 import { Skeleton } from "../ui/skeleton";
+import { ErrorState } from "../ui/error-state";
 
 type SummaryCardProps = {
   title: string;
@@ -14,7 +15,23 @@ type SummaryCardProps = {
 };
 
 export const TransactionSummary = React.memo(function TransactionSummary() {
-  const { data: response, isLoading, isFetching } = useTransactions();
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useTransactions();
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Erro ao carregar resumo"
+        description="Não foi possível carregar o resumo das transações. Por favor, tente novamente."
+        onRetry={() => refetch()}
+      />
+    );
+  }
 
   if (isLoading || isFetching) {
     return <TransactionSummarySkeleton />;

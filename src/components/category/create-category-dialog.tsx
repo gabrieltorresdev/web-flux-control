@@ -21,11 +21,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CreateCategoryInput } from "@/src/types/category";
 import { useCreateCategory } from "@/src/hooks/use-categories";
 import { cn } from "@/src/lib/utils";
+import { useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const createCategorySchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  type: z.enum(["income", "expense"]),
+});
 
 interface CreateCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (categoryId: string, categoryName: string) => void;
+  onSuccess: (categoryId: string, categoryName: string) => void;
   defaultCategoryName?: string;
 }
 
@@ -38,57 +46,43 @@ export function CreateCategoryDialog({
   const {
     register,
     handleSubmit,
-    reset,
+    setValue,
     formState: { errors },
+    reset,
   } = useForm<CreateCategoryInput>({
+    resolver: zodResolver(createCategorySchema),
     defaultValues: {
-      name: defaultCategoryName || "",
       type: "expense",
+      name: "",
     },
   });
 
   const queryClient = useQueryClient();
-
   const createCategory = useCreateCategory();
 
+  // Resetar o formulário quando o diálogo for aberto
+  useEffect(() => {
+    if (open) {
+      reset({
+        type: "expense",
+        name: defaultCategoryName || "",
+      });
+    }
+  }, [open, defaultCategoryName, reset]);
+
   const onSubmit = handleSubmit(async (data) => {
-    if (!data.name.trim()) {
+    try {
+      const response = await createCategory.mutateAsync(data);
+      onSuccess(response.data.id, data.name);
+      onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    } catch {
       toast({
-        title: "Nome obrigatório",
-        description: "Digite um nome para a categoria",
+        title: "Erro ao criar categoria",
+        description: "Ocorreu um erro ao criar a categoria.",
         variant: "destructive",
       });
-      return;
     }
-
-    createCategory.mutate(
-      {
-        name: data.name.trim(),
-        type: data.type,
-      },
-      {
-        onSuccess: (response) => {
-          if (response?.data) {
-            reset();
-
-            onSuccess?.(response.data.id, response.data.name);
-            onOpenChange(false);
-            queryClient.invalidateQueries({ queryKey: ["categories"] });
-            toast({
-              title: "Categoria criada",
-              description: "Categoria criada com sucesso",
-            });
-          }
-        },
-        onError: () => {
-          toast({
-            title: "Erro ao criar categoria",
-            description: "Ocorreu um erro ao criar a categoria",
-            variant: "destructive",
-          });
-        },
-      }
-    );
   });
 
   return (
@@ -122,9 +116,7 @@ export function CreateCategoryDialog({
             <Select
               defaultValue="expense"
               onValueChange={(value) =>
-                register("type").onChange({
-                  target: { value, name: "type" },
-                })
+                setValue("type", value as "income" | "expense")
               }
             >
               <SelectTrigger className="h-12 text-base">

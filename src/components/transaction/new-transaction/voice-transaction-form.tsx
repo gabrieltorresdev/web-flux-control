@@ -12,6 +12,8 @@ import {
   Mic,
   SendHorizonal,
   ArrowLeft,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useMutation } from "@tanstack/react-query";
@@ -24,20 +26,21 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
-  UseFormReset,
 } from "react-hook-form";
 import { CreateCategoryDialog } from "@/src/components/category/create-category-dialog";
 import { GoogleGenerativeAiService } from "@/src/services/ai/providers/google-generative-ai-service";
+import { useDebounce } from "@/src/hooks/lib/use-debounce";
 
 interface VoiceTransactionFormProps {
   onDataChange: (hasData: boolean) => void;
   register: UseFormRegister<CreateTransactionInput>;
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
   setValue: UseFormSetValue<CreateTransactionInput>;
-  reset: UseFormReset<CreateTransactionInput>;
-  isSubmitting?: boolean;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  saveDraft: (transcript?: string, suggestedCategory?: string) => void;
+  loadTranscript: () => string | undefined;
+  loadSuggestedCategory: () => string | undefined;
 }
 
 export const VoiceTransactionForm = memo(
@@ -46,10 +49,11 @@ export const VoiceTransactionForm = memo(
     register,
     errors,
     getValues,
-    onSubmit,
     setValue,
-    reset,
-    isSubmitting,
+    onSubmit,
+    saveDraft,
+    loadTranscript,
+    loadSuggestedCategory,
   }: VoiceTransactionFormProps) => {
     const [transcript, setTranscript] = useState("");
     const [showCreateCategoryDialog, setShowCreateCategoryDialog] =
@@ -61,7 +65,6 @@ export const VoiceTransactionForm = memo(
       transcript: currentTranscript,
       startListening,
       stopListening,
-      resetTranscript,
       speechRecognitionSupported,
       isMicrophoneAvailable,
     } = useVoiceRecognition();
@@ -70,13 +73,35 @@ export const VoiceTransactionForm = memo(
       convertTranscriptMutation,
       suggestedCategory,
       setSuggestedCategory,
-    } = useTranscriptConversion(transcript, setValue);
+    } = useTranscriptConversion(transcript, setValue, loadSuggestedCategory);
+
+    // Carregar transcript e categoria sugerida salvos
+    useEffect(() => {
+      const savedTranscript = loadTranscript();
+      const savedSuggestedCategory = loadSuggestedCategory();
+      if (savedTranscript) {
+        setTranscript(savedTranscript);
+      }
+      if (savedSuggestedCategory) {
+        setSuggestedCategory(savedSuggestedCategory);
+      }
+    }, [loadTranscript, loadSuggestedCategory, setSuggestedCategory]);
+
+    // Salvar transcript e categoria sugerida com debounce
+    const debouncedTranscript = useDebounce(transcript, 500);
+
+    useEffect(() => {
+      if (debouncedTranscript) {
+        saveDraft(debouncedTranscript, suggestedCategory);
+      }
+    }, [debouncedTranscript, saveDraft, suggestedCategory]);
 
     useEffect(() => {
       if (currentTranscript && !listening) {
-        setTranscript((prev) =>
-          prev ? `${prev} ${currentTranscript}` : currentTranscript
-        );
+        const newTranscript = transcript
+          ? `${transcript} ${currentTranscript}`
+          : currentTranscript;
+        setTranscript(newTranscript);
       }
     }, [currentTranscript, listening]);
 
@@ -85,13 +110,82 @@ export const VoiceTransactionForm = memo(
     }, [transcript, onDataChange]);
 
     const handleCategoryCreated = useCallback(
-      (categoryId: string) => {
+      (categoryId: string, categoryName: string) => {
         setValue("categoryId", categoryId);
-        setSuggestedCategory("");
+        // Se o nome da categoria foi modificado, salvar ambos os nomes
+        if (categoryName !== suggestedCategory) {
+          saveDraft(transcript, `${suggestedCategory}|${categoryName}`);
+        } else {
+          saveDraft(transcript, `${categoryName}|${categoryName}`);
+        }
         setShowCreateCategoryDialog(false);
       },
-      [setValue]
+      [setValue, saveDraft, transcript, suggestedCategory]
     );
+
+    // Função para verificar se a categoria sugerida já foi criada
+    const isSuggestedCategoryCreated = useCallback(() => {
+      const categoryId = getValues("categoryId");
+      return categoryId && categoryId.length > 0;
+    }, [getValues]);
+
+    // Função para extrair os nomes da categoria do draft
+    const getSuggestedCategoryNames = useCallback(() => {
+      if (!suggestedCategory) return { original: "", created: "" };
+      const [original, created] = suggestedCategory.split("|");
+      return { original, created: created || original };
+    }, [suggestedCategory]);
+
+    // Renderiza o estado da categoria sugerida
+    const SuggestedCategoryState = useCallback(() => {
+      if (!suggestedCategory) return null;
+
+      const { original, created } = getSuggestedCategoryNames();
+      const wasModified = original !== created;
+      const isCreated = isSuggestedCategoryCreated();
+
+      return (
+        <div className="mt-4 rounded-lg border bg-muted p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-2">
+              {isCreated ? (
+                <Check className="h-4 w-4 text-green-500 mt-1 sm:mt-0" />
+              ) : (
+                <MousePointerClick className="h-4 w-4 mt-1 sm:mt-0" />
+              )}
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Categoria sugerida pela IA: <strong>{original}</strong>
+                </p>
+                {wasModified && isCreated && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                    <p className="text-xs text-muted-foreground">
+                      Modificada para: <strong>{created}</strong>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            {!isCreated && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => setShowCreateCategoryDialog(true)}
+              >
+                Criar categoria
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }, [
+      suggestedCategory,
+      getSuggestedCategoryNames,
+      isSuggestedCategoryCreated,
+    ]);
 
     const handleConvertTranscript = useCallback(() => {
       convertTranscriptMutation.mutate(undefined, {
@@ -99,15 +193,9 @@ export const VoiceTransactionForm = memo(
       });
     }, [convertTranscriptMutation]);
 
-    const handleReset = useCallback(() => {
-      setTranscript("");
-      resetTranscript();
-    }, [resetTranscript]);
-
     const handleBack = useCallback(() => {
       setFormVisible(false);
-      reset();
-    }, [reset]);
+    }, []);
 
     return (
       <div className="relative">
@@ -121,9 +209,6 @@ export const VoiceTransactionForm = memo(
         >
           <div className="flex flex-col items-center gap-2">
             {listening && <RecordingStatus />}
-            {!listening && transcript.length > 0 && (
-              <ResetButton onClick={handleReset} disabled={!transcript} />
-            )}
             {!listening && !transcript && <RecordingInstruction />}
             <MicrophoneButton
               listening={listening}
@@ -165,28 +250,34 @@ export const VoiceTransactionForm = memo(
           )}
         >
           {formVisible && (
-            <TransactionForm
-              setValue={setValue}
-              onSubmit={onSubmit}
-              register={register}
-              errors={errors}
-              getValues={getValues}
-              suggestedCategory={suggestedCategory}
-              onCreateCategory={setSuggestedCategory}
-              isSubmitting={isSubmitting}
-            />
+            <>
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                className="w-full sm:w-auto"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+
+              <TransactionForm
+                onSubmit={onSubmit}
+                register={register}
+                errors={errors}
+                getValues={getValues}
+                setValue={setValue}
+              />
+
+              <SuggestedCategoryState />
+            </>
           )}
-          <Button variant="outline" onClick={handleBack} className="w-full">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
         </div>
 
         <CreateCategoryDialog
           open={showCreateCategoryDialog}
           onOpenChange={setShowCreateCategoryDialog}
           onSuccess={handleCategoryCreated}
-          defaultCategoryName={suggestedCategory}
+          defaultCategoryName={getSuggestedCategoryNames().original}
         />
       </div>
     );
@@ -257,9 +348,9 @@ const MicrophoneButton = memo(
 
 const useTranscriptConversion = (
   transcript: string,
-  setValue: UseFormSetValue<CreateTransactionInput>
+  setValue: UseFormSetValue<CreateTransactionInput>,
+  loadSuggestedCategory: () => string | undefined
 ) => {
-  const [lastProcessedTranscript, setLastProcessedTranscript] = useState("");
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
 
   const aiService = new AiTransactionService(new GoogleGenerativeAiService());
@@ -267,14 +358,32 @@ const useTranscriptConversion = (
 
   const convertTranscriptMutation = useMutation({
     mutationFn: async (): Promise<CreateTransactionInput> => {
-      if (
-        transcript === lastProcessedTranscript &&
-        convertTranscriptMutation.data
-      ) {
-        return convertTranscriptMutation.data;
+      // Verificar se já existe um rascunho com o mesmo transcript
+      const draft = localStorage.getItem("transaction_draft");
+      if (draft) {
+        try {
+          const parsedDraft = JSON.parse(draft) as {
+            form: CreateTransactionInput;
+            transcript?: string;
+            suggestedCategory?: string;
+          };
+          // Só reutilizar o draft se o transcript for exatamente igual e houver dados do formulário
+          if (
+            parsedDraft.transcript === transcript &&
+            parsedDraft.form &&
+            Object.keys(parsedDraft.form).length > 0
+          ) {
+            if (parsedDraft.suggestedCategory) {
+              setSuggestedCategory(parsedDraft.suggestedCategory);
+            }
+            return parsedDraft.form;
+          }
+        } catch (error) {
+          console.error("Error parsing draft:", error);
+        }
       }
 
-      setLastProcessedTranscript(transcript);
+      // Se não houver rascunho válido, converter o transcript
       const aiTransaction = await aiService.convertTranscriptToNewTransaction(
         transcript
       );
@@ -299,6 +408,14 @@ const useTranscriptConversion = (
       setValue("categoryId", transaction.categoryId);
     },
   });
+
+  // Carregar categoria sugerida salva ao montar o componente
+  useEffect(() => {
+    const savedCategory = loadSuggestedCategory();
+    if (savedCategory) {
+      setSuggestedCategory(savedCategory);
+    }
+  }, [loadSuggestedCategory]);
 
   return { convertTranscriptMutation, suggestedCategory, setSuggestedCategory };
 };

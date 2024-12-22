@@ -59,7 +59,12 @@ export const CategoryFilter = React.memo(function CategoryFilter({
   const [selectedId, setSelectedId] = React.useState(initialCategoryId);
   const isMobile = useIsMobile();
 
-  const { data: categoriesResponse, isLoading } = useQuery({
+  const {
+    data: categoriesResponse,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["categories"],
     queryFn: () => categoryService.findAllPaginated(),
     staleTime: Infinity, // Mantem o cache válido até uma mutação explícita
@@ -112,43 +117,52 @@ export const CategoryFilter = React.memo(function CategoryFilter({
             <Loader2 className="h-5 w-5 animate-spin" />
             <span>Carregando categorias...</span>
           </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center gap-2">
+            <p>Erro ao carregar categorias</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Tentar novamente
+            </Button>
+          </div>
         ) : (
           "Nenhuma categoria encontrada."
         )}
       </CommandEmpty>
-      <CommandGroup className="max-h-[300px] overflow-auto">
-        <CommandList>
-          <CommandItem
-            value="all"
-            onSelect={() => handleSelectCategory(null)}
-            className="py-3 text-base"
-          >
-            <Check
-              className={cn(
-                "mr-2 h-4 w-4",
-                !selectedId ? "opacity-100" : "opacity-0"
-              )}
-            />
-            Todas as categorias
-          </CommandItem>
-          {filteredCategories.map((category) => (
+      {!isError && (
+        <CommandGroup className="max-h-[300px] overflow-auto">
+          <CommandList>
             <CommandItem
-              key={category.id}
-              value={category.name}
-              onSelect={() => handleSelectCategory(category.id)}
+              value="all"
+              onSelect={() => handleSelectCategory(null)}
               className="py-3 text-base"
             >
               <Check
                 className={cn(
                   "mr-2 h-4 w-4",
-                  selectedId === category.id ? "opacity-100" : "opacity-0"
+                  !selectedId ? "opacity-100" : "opacity-0"
                 )}
               />
-              {category.name}
+              Todas as categorias
             </CommandItem>
-          ))}
-        </CommandList>
-      </CommandGroup>
+            {filteredCategories.map((category) => (
+              <CommandItem
+                key={category.id}
+                value={category.name}
+                onSelect={() => handleSelectCategory(category.id)}
+                className="py-3 text-base"
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    selectedId === category.id ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {category.name}
+              </CommandItem>
+            ))}
+          </CommandList>
+        </CommandGroup>
+      )}
     </Command>
   );
 

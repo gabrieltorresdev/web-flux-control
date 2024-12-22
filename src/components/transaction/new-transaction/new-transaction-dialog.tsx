@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -31,6 +31,7 @@ import { CreateTransactionInput } from "@/src/types/transaction";
 import { useCreateTransaction } from "@/src/hooks/use-transactions";
 import { toast } from "@/src/hooks/use-toast";
 import { Label } from "../../ui/label";
+import { useDraftTransaction } from "@/src/hooks/use-draft-transaction";
 
 export function NewTransactionDialog() {
   const [currentTab, setCurrentTab] = useState("voice");
@@ -46,16 +47,42 @@ export function NewTransactionDialog() {
     getValues,
     setValue,
     formState: { errors },
+    watch,
   } = useForm<CreateTransactionInput>({
     resolver: zodResolver(transactionSchema),
   });
 
   const createTransaction = useCreateTransaction();
+  const { saveDraft, clearDraft, loadTranscript, loadSuggestedCategory } =
+    useDraftTransaction(setValue, reset, getValues);
+
+  // Salvar rascunho quando houver mudanças no formulário
+  useEffect(() => {
+    const subscription = watch(() => {
+      if (hasManualData || hasVoiceData) {
+        // Preservar o transcript ao salvar o rascunho
+        const currentTranscript = loadTranscript();
+        const currentSuggestedCategory = loadSuggestedCategory();
+        saveDraft(currentTranscript, currentSuggestedCategory);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [
+    watch,
+    saveDraft,
+    hasManualData,
+    hasVoiceData,
+    loadTranscript,
+    loadSuggestedCategory,
+  ]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       await createTransaction.mutateAsync(data);
+      clearDraft();
       reset();
+      setHasVoiceData(false);
+      setHasManualData(false);
       toast({
         title: "Transação criada",
         description: "A transação foi criada com sucesso.",
@@ -92,14 +119,13 @@ export function NewTransactionDialog() {
       setCurrentTab(pendingTabChange);
       setPendingTabChange(null);
       setShowAlert(false);
-      reset();
       if (pendingTabChange === "voice") {
         setHasManualData(false);
       } else {
         setHasVoiceData(false);
       }
     }
-  }, [pendingTabChange, reset]);
+  }, [pendingTabChange]);
 
   const cancelTabChange = useCallback(() => {
     setPendingTabChange(null);
@@ -171,18 +197,21 @@ export function NewTransactionDialog() {
               errors={errors}
               getValues={getValues}
               onSubmit={onSubmit}
-              reset={reset}
+              saveDraft={saveDraft}
+              loadTranscript={loadTranscript}
+              loadSuggestedCategory={loadSuggestedCategory}
             />
           </TabsContent>
           <TabsContent value="manual">
             <ManualTransactionForm
+              setValue={setValue}
               onDataChange={setHasManualData}
               register={register}
               errors={errors}
               getValues={getValues}
               onSubmit={onSubmit}
-              setValue={setValue}
               isSubmitting={createTransaction.isPending}
+              saveDraft={saveDraft}
             />
           </TabsContent>
         </Tabs>

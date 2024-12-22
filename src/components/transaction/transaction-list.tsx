@@ -13,6 +13,7 @@ import {
 import { useTransactions } from "@/src/hooks/use-transactions";
 import { Skeleton } from "../ui/skeleton";
 import { useInView } from "react-intersection-observer";
+import { ErrorState } from "../ui/error-state";
 
 interface TransactionGroupProps {
   date: Date;
@@ -29,6 +30,8 @@ export const TransactionList = React.memo(function TransactionList() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    isError,
+    refetch,
   } = useTransactions({ per_page: 10 });
 
   React.useEffect(() => {
@@ -42,6 +45,16 @@ export const TransactionList = React.memo(function TransactionList() {
     () => groupTransactionsByDate(transactions),
     [transactions]
   );
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Erro ao carregar transações"
+        description="Não foi possível carregar a lista de transações. Por favor, tente novamente."
+        onRetry={() => refetch()}
+      />
+    );
+  }
 
   if (isLoading || (isFetching && !isFetchingNextPage)) {
     return <LoadingState />;

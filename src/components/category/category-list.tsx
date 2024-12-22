@@ -14,6 +14,7 @@ import {
 import { Button } from "../ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { ErrorState } from "../ui/error-state";
 
 interface CategoryGroupProps {
   title: string;
@@ -21,8 +22,23 @@ interface CategoryGroupProps {
 }
 
 export const CategoryList = memo(() => {
-  const { data: categoriesResponse, isLoading } = useCategories();
+  const {
+    data: categoriesResponse,
+    isLoading,
+    isError,
+    refetch,
+  } = useCategories();
   const categories = categoriesResponse?.data ?? [];
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Erro ao carregar categorias"
+        description="Não foi possível carregar a lista de categorias. Por favor, tente novamente."
+        onRetry={() => refetch()}
+      />
+    );
+  }
 
   if (isLoading) {
     return <CategoryListSkeleton />;
