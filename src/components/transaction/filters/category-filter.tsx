@@ -22,6 +22,16 @@ import { cn } from "@/src/lib/utils";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { useQueryParams } from "@/src/hooks/use-search-params";
 import { TransactionFilters } from "@/src/types/filters";
+import { useIsMobile } from "@/src/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/src/components/ui/sheet";
+import { useQuery } from "@tanstack/react-query";
+import { CategoryService } from "@/src/services/category-service";
 
 interface CategoryFilterProps {
   initialCategoryId?: string;
@@ -38,14 +48,23 @@ const CategoryFilterSkeleton = React.memo(() => (
 
 CategoryFilterSkeleton.displayName = "CategoryFilterSkeleton";
 
+const categoryService = new CategoryService();
+
 export const CategoryFilter = React.memo(function CategoryFilter({
   initialCategoryId,
 }: CategoryFilterProps) {
   const { setParam } = useQueryParams<TransactionFilters>();
-  const { data: categoriesResponse, isLoading } = useCategories();
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
   const [selectedId, setSelectedId] = React.useState(initialCategoryId);
+  const isMobile = useIsMobile();
+
+  const { data: categoriesResponse, isLoading } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => categoryService.findAllPaginated(),
+    staleTime: Infinity, // Mantem o cache válido até uma mutação explícita
+    gcTime: 24 * 60 * 60 * 1000, // 24 horas de cache
+  });
 
   const categories = categoriesResponse?.data ?? [];
 
@@ -69,13 +88,81 @@ export const CategoryFilter = React.memo(function CategoryFilter({
     (categoryId: string | null) => {
       setSelectedId(categoryId ?? undefined);
       setParam("categoryId", categoryId);
+      setOpen(false);
+      setSearchValue("");
     },
     [setParam]
   );
 
-  if (isLoading) {
+  if (isLoading && !categories.length) {
     return <CategoryFilterSkeleton />;
   }
+
+  const content = (
+    <Command className="w-full">
+      <CommandInput
+        placeholder="Buscar categoria..."
+        value={searchValue}
+        onValueChange={setSearchValue}
+        className="h-12 text-base"
+      />
+      <CommandEmpty className="py-6 text-center text-sm">
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Carregando categorias...</span>
+          </div>
+        ) : (
+          "Nenhuma categoria encontrada."
+        )}
+      </CommandEmpty>
+      <CommandGroup className="max-h-[300px] overflow-auto">
+        <CommandList>
+          <CommandItem
+            value="all"
+            onSelect={() => handleSelectCategory(null)}
+            className="py-3 text-base"
+          >
+            <Check
+              className={cn(
+                "mr-2 h-4 w-4",
+                !selectedId ? "opacity-100" : "opacity-0"
+              )}
+            />
+            Todas as categorias
+          </CommandItem>
+          {filteredCategories.map((category) => (
+            <CommandItem
+              key={category.id}
+              value={category.name}
+              onSelect={() => handleSelectCategory(category.id)}
+              className="py-3 text-base"
+            >
+              <Check
+                className={cn(
+                  "mr-2 h-4 w-4",
+                  selectedId === category.id ? "opacity-100" : "opacity-0"
+                )}
+              />
+              {category.name}
+            </CommandItem>
+          ))}
+        </CommandList>
+      </CommandGroup>
+    </Command>
+  );
+
+  const trigger = (
+    <Button
+      variant="outline"
+      role="combobox"
+      aria-expanded={open}
+      className={cn("w-full justify-between", isMobile && "h-12 text-base")}
+    >
+      {selectedCategory ?? "Todas as categorias"}
+      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+    </Button>
+  );
 
   return (
     <div className="space-y-1.5 flex flex-col justify-between">
@@ -93,62 +180,22 @@ export const CategoryFilter = React.memo(function CategoryFilter({
         )}
       </div>
 
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between"
-          >
-            {selectedCategory ?? "Todas as categorias"}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
-          <Command>
-            <CommandInput
-              placeholder="Buscar categoria..."
-              value={searchValue}
-              onValueChange={setSearchValue}
-              className="h-9"
-            />
-            <CommandEmpty className="py-6 text-center text-sm">
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Carregando categorias...</span>
-                </div>
-              ) : (
-                "Nenhuma categoria encontrada."
-              )}
-            </CommandEmpty>
-            <CommandGroup className="max-h-[200px] overflow-auto">
-              <CommandList>
-                {filteredCategories.map((category) => (
-                  <CommandItem
-                    key={category.id}
-                    value={category.name}
-                    onSelect={() => {
-                      handleSelectCategory(category.id);
-                      setOpen(false);
-                      setSearchValue("");
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        selectedId === category.id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {category.name}
-                  </CommandItem>
-                ))}
-              </CommandList>
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      {isMobile ? (
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>{trigger}</SheetTrigger>
+          <SheetContent side="bottom" className="h-[85vh]">
+            <SheetHeader>
+              <SheetTitle>Filtrar por Categoria</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4">{content}</div>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+          <PopoverContent className="w-full p-0">{content}</PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 });

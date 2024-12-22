@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { CreateCategoryInput } from "@/src/types/category";
 import { useCreateCategory } from "@/src/hooks/use-categories";
+import { cn } from "@/src/lib/utils";
 
 interface CreateCategoryDialogProps {
   open: boolean;
@@ -99,13 +100,18 @@ export function CreateCategoryDialog({
             Crie uma nova categoria para organizar suas finanças
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Nome</label>
             <Input
               {...register("name")}
               placeholder="Ex: Alimentação"
-              className={errors.name && "border-red-500"}
+              className={cn(
+                "h-12 text-base px-4",
+                errors.name && "border-red-500"
+              )}
+              autoComplete="off"
+              autoCapitalize="words"
             />
             {errors.name && (
               <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -121,22 +127,26 @@ export function CreateCategoryDialog({
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-12 text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="expense">Despesa</SelectItem>
-                <SelectItem value="income">Receita</SelectItem>
+                <SelectItem value="expense" className="py-3 text-base">
+                  Despesa
+                </SelectItem>
+                <SelectItem value="income" className="py-3 text-base">
+                  Receita
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button
             type="submit"
-            className="w-full"
+            className="w-full h-12 text-base"
             disabled={createCategory.isPending}
           >
             {createCategory.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
             ) : null}
             Criar Categoria
           </Button>

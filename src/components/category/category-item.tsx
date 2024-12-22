@@ -3,7 +3,13 @@
 import { Category } from "@/src/types/category";
 import { memo, useState } from "react";
 import { Button } from "../ui/button";
-import { MoreVertical, Pencil, Trash } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  MoreVertical,
+  Pencil,
+  Trash,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +30,15 @@ import { EditCategoryDialog } from "@/src/components/category/edit-category-dial
 import { useDeleteCategory } from "@/src/hooks/use-categories";
 import { useToast } from "@/src/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/src/lib/utils";
+import { useIsMobile } from "@/src/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
 
 interface CategoryItemProps {
   category: Category;
@@ -33,10 +48,12 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const deleteCategory = useDeleteCategory();
+  const isMobile = useIsMobile();
 
   const handleDelete = async () => {
     try {
@@ -56,13 +73,67 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
     } finally {
       setIsDeleting(false);
       setShowDeleteAlert(false);
+      setIsDrawerOpen(false);
     }
   };
 
-  return (
-    <>
-      <div className="flex items-center justify-between p-4 group">
-        <span className="font-medium">{category.name}</span>
+  const isIncome = category.type === "income";
+
+  const CategoryActions = () => (
+    <div className="flex items-center justify-center gap-4 py-2">
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={() => {
+          setShowEditDialog(true);
+          setIsDrawerOpen(false);
+        }}
+        className="flex-1 gap-2"
+      >
+        <Pencil className="h-5 w-5" />
+        Editar
+      </Button>
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={() => {
+          setShowDeleteAlert(true);
+          setIsDrawerOpen(false);
+        }}
+        className="flex-1 gap-2 text-red-600 hover:text-red-600 hover:border-red-600"
+        disabled={category.is_default}
+      >
+        <Trash className="h-5 w-5" />
+        Excluir
+      </Button>
+    </div>
+  );
+
+  const Content = () => (
+    <div className="flex items-center gap-3">
+      <div
+        className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+          isIncome ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+        )}
+        aria-hidden="true"
+      >
+        {isIncome ? (
+          <ArrowUpRight className="h-5 w-5" />
+        ) : (
+          <ArrowDownRight className="h-5 w-5" />
+        )}
+      </div>
+      <div className="flex-1">
+        <h3 className="font-medium text-gray-900 line-clamp-1 break-all">
+          {category.name}
+        </h3>
+        <span className="text-xs text-muted-foreground">
+          {isIncome ? "Receita" : "Despesa"}
+          {category.is_default && " • Padrão"}
+        </span>
+      </div>
+      {!isMobile && (
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -93,7 +164,31 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <DrawerTrigger asChild>
+            <div className="group transition-all duration-200 active:bg-gray-50 p-3 touch-manipulation">
+              <Content />
+            </div>
+          </DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>Ações da Categoria</DrawerTitle>
+            </DrawerHeader>
+            <CategoryActions />
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <div className="group transition-all duration-200 hover:bg-gray-50 p-3">
+          <Content />
+        </div>
+      )}
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>

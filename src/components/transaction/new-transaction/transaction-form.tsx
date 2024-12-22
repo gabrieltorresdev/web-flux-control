@@ -33,6 +33,14 @@ import {
 } from "../../ui/command";
 import { CreateCategoryDialog } from "../../category/create-category-dialog";
 import { DateTimePicker } from "../../ui/date-time-picker";
+import { useIsMobile } from "@/src/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../../ui/sheet";
 
 interface TransactionFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -68,6 +76,7 @@ export const TransactionForm = memo(
       submitSuccess: false,
     });
 
+    const isMobile = useIsMobile();
     const formRef = useRef<HTMLFormElement>(null);
     const queryClient = useQueryClient();
     const debouncedSearchTerm = useDebounce(formState.searchTerm, 500);
@@ -191,16 +200,124 @@ export const TransactionForm = memo(
       [setValue]
     );
 
+    const CategorySelector = () => {
+      const content = (
+        <Command shouldFilter={false} className="w-full">
+          <CommandItem
+            onSelect={() =>
+              setFormState((prev) => ({
+                ...prev,
+                showCreateDialog: true,
+              }))
+            }
+            className="border-b text-blue-500 rounded-none cursor-pointer"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Criar nova categoria
+          </CommandItem>
+          <CommandInput
+            placeholder="Buscar categoria..."
+            value={formState.searchTerm}
+            onValueChange={handleSearchChange}
+            className="h-12"
+          />
+          <CommandList className="max-h-[300px]">
+            {showLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : (
+              <>
+                {categories?.length > 0 &&
+                  categories.map((category: Category) => (
+                    <CommandItem
+                      key={category.id}
+                      value={category.id}
+                      onSelect={(value) =>
+                        handleCategorySelect(value, category.name)
+                      }
+                      className="py-3"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          formState.selectedCategory !== category.name &&
+                            "hidden"
+                        )}
+                      />
+                      {category.name}
+                    </CommandItem>
+                  ))}
+              </>
+            )}
+          </CommandList>
+        </Command>
+      );
+
+      if (isMobile) {
+        return (
+          <Sheet
+            open={formState.open}
+            onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
+          >
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={formState.open}
+                className="w-full justify-between h-12"
+              >
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  {formState.selectedCategory || "Selecione uma categoria"}
+                </div>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[85vh]">
+              <SheetHeader>
+                <SheetTitle>Selecionar Categoria</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">{content}</div>
+            </SheetContent>
+          </Sheet>
+        );
+      }
+
+      return (
+        <Popover
+          open={formState.open}
+          onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
+        >
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={formState.open}
+              className="w-full justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                {formState.selectedCategory || "Selecione uma categoria"}
+              </div>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">{content}</PopoverContent>
+        </Popover>
+      );
+    };
+
     return (
-      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
         {/* Title Input */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Título</label>
           <div className="relative">
-            <CircleDollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+            <CircleDollarSign className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
             <Input
               {...register("title")}
-              className="pl-10"
+              className="pl-10 h-12 text-base"
               placeholder="Ex: Compras no Mercado"
             />
           </div>
@@ -213,12 +330,13 @@ export const TransactionForm = memo(
         <div className="space-y-2">
           <label className="text-sm font-medium">Valor</label>
           <div className="relative">
-            <ArrowUpDown className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+            <ArrowUpDown className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
             <Input
               {...register("amount", { valueAsNumber: true })}
               type="number"
+              inputMode="decimal"
               step="0.01"
-              className="pl-10"
+              className="pl-10 h-12 text-base"
               placeholder="0.00"
             />
           </div>
@@ -230,75 +348,7 @@ export const TransactionForm = memo(
         {/* Category Selection */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Categoria</label>
-          <Popover
-            open={formState.open}
-            onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={formState.open}
-                className="w-full justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
-                  {formState.selectedCategory || "Selecione uma categoria"}
-                </div>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
-              <Command shouldFilter={false}>
-                <CommandItem
-                  onSelect={() =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      showCreateDialog: true,
-                    }))
-                  }
-                  className="border-b text-blue-500 rounded-none cursor-pointer"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar nova categoria
-                </CommandItem>
-                <CommandInput
-                  placeholder="Buscar categoria..."
-                  value={formState.searchTerm}
-                  onValueChange={handleSearchChange}
-                />
-                <CommandList>
-                  {showLoading ? (
-                    <div className="flex items-center justify-center py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  ) : (
-                    <>
-                      {categories?.length > 0 &&
-                        categories.map((category: Category) => (
-                          <CommandItem
-                            key={category.id}
-                            value={category.id}
-                            onSelect={(value) =>
-                              handleCategorySelect(value, category.name)
-                            }
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formState.selectedCategory !== category.name &&
-                                  "hidden"
-                              )}
-                            />
-                            {category.name}
-                          </CommandItem>
-                        ))}
-                    </>
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <CategorySelector />
           {errors.categoryId && (
             <p className="text-sm text-red-500">{errors.categoryId.message}</p>
           )}
@@ -306,7 +356,7 @@ export const TransactionForm = memo(
 
         {/* Suggested Category */}
         {suggestedCategory && (
-          <div className="mt-2 rounded-md bg-muted p-3">
+          <div className="mt-2 rounded-md bg-muted p-4">
             <div className="flex gap-2 items-center justify-between text-sm text-muted-foreground">
               <p>
                 Categoria sugerida pela IA: <strong>{suggestedCategory}</strong>
@@ -348,7 +398,11 @@ export const TransactionForm = memo(
         </div>
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          className="w-full h-12 text-base"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (

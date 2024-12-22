@@ -12,7 +12,8 @@ import {
   CollapsibleTrigger,
 } from "../ui/collapsible";
 import { Button } from "../ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@/src/lib/utils";
 
 interface CategoryGroupProps {
   title: string;
@@ -45,22 +46,34 @@ export const CategoryList = memo(() => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="animate-in fade-in-50 duration-500 space-y-6">
       {/* Default Categories */}
       {(defaultExpenseCategories.length > 0 ||
         defaultIncomeCategories.length > 0) && (
         <Collapsible>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Categorias padrão</p>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-0 h-auto">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </CollapsibleTrigger>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-gray-700">
+                Categorias padrão
+              </h2>
+              <span className="text-sm text-muted-foreground">
+                (
+                {defaultExpenseCategories.length +
+                  defaultIncomeCategories.length}
+                )
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-0 h-auto">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
           </div>
-          <CollapsibleContent className="mt-2">
-            <Card className="bg-muted/30">
-              <div className="divide-y divide-muted">
+          <CollapsibleContent className="mt-3">
+            <Card className="overflow-hidden">
+              <div className="divide-y">
                 {defaultExpenseCategories.map((category) => (
                   <CategoryItem key={category.id} category={category} />
                 ))}
@@ -93,8 +106,18 @@ const CategoryGroup = memo(({ title, categories }: CategoryGroupProps) => {
 
   return (
     <section className="space-y-3">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <Card>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold text-gray-700">{title}</h2>
+          <span className="text-sm text-muted-foreground">
+            ({categories.length})
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
+        </div>
+      </div>
+      <Card className="overflow-hidden">
         <div className="divide-y">
           {categories.map((category) => (
             <CategoryItem key={category.id} category={category} />
@@ -106,7 +129,7 @@ const CategoryGroup = memo(({ title, categories }: CategoryGroupProps) => {
 });
 
 const EmptyState = memo(() => (
-  <div className="flex flex-col items-center justify-center h-64 space-y-4">
+  <div className="flex flex-col items-center justify-center h-64 space-y-4 animate-in fade-in-50">
     <Tag className="h-12 w-12 text-muted-foreground/50" />
     <p className="text-muted-foreground text-center">
       Nenhuma categoria encontrada
@@ -117,22 +140,29 @@ const EmptyState = memo(() => (
 const CategoryListSkeleton = memo(() => (
   <div className="space-y-6">
     {[...Array(2)].map((_, groupIndex) => (
-      <div key={groupIndex} className="space-y-3">
-        <div className="h-7 w-24 bg-gray-200 rounded animate-pulse" />
-        <Card>
+      <section key={groupIndex} className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+            <div className="h-5 w-8 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="h-5 w-5 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <Card className="overflow-hidden">
           <div className="divide-y">
             {[...Array(3)].map((_, itemIndex) => (
-              <div
-                key={itemIndex}
-                className="p-4 flex items-center justify-between"
-              >
-                <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
-                <div className="h-8 w-20 bg-gray-200 rounded animate-pulse" />
+              <div key={itemIndex} className="p-3 flex items-center gap-3">
+                <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
               </div>
             ))}
           </div>
         </Card>
-      </div>
+      </section>
     ))}
   </div>
 ));
