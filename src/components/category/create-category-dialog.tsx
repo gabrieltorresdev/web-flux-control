@@ -24,10 +24,12 @@ import { cn } from "@/src/lib/utils";
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { IconPicker } from "./icon-picker";
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   type: z.enum(["income", "expense"]),
+  icon: z.string().optional(),
 });
 
 interface CreateCategoryDialogProps {
@@ -47,6 +49,7 @@ export function CreateCategoryDialog({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
     reset,
   } = useForm<CreateCategoryInput>({
@@ -54,11 +57,14 @@ export function CreateCategoryDialog({
     defaultValues: {
       type: "expense",
       name: "",
+      icon: undefined,
     },
   });
 
   const queryClient = useQueryClient();
   const createCategory = useCreateCategory();
+
+  const selectedIcon = watch("icon");
 
   // Resetar o formulário quando o diálogo for aberto
   useEffect(() => {
@@ -66,6 +72,7 @@ export function CreateCategoryDialog({
       reset({
         type: "expense",
         name: defaultCategoryName || "",
+        icon: undefined,
       });
     }
   }, [open, defaultCategoryName, reset]);
@@ -131,6 +138,13 @@ export function CreateCategoryDialog({
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ícone</label>
+            <IconPicker
+              value={selectedIcon}
+              onChange={(value) => setValue("icon", value)}
+            />
           </div>
           <Button
             type="submit"

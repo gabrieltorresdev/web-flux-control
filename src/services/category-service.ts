@@ -9,7 +9,7 @@ export class CategoryService {
 
   constructor() {
     this.httpClient = new HttpClient();
-    this.route = "transactions-categories";
+    this.route = "categories";
   }
 
   public async findAllPaginated(

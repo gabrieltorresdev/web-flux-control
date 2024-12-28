@@ -1,39 +1,49 @@
 import { Category } from "./category";
-import { ApiPaginatedResponse } from "./service";
-
-export type { Category };
 
 export interface Transaction {
   id: string;
-  category?: Category;
   title: string;
-  dateTime: Date;
   amount: number;
+  dateTime: Date;
+  category?: Category;
 }
 
-export interface AiTransactionInput
-  extends Omit<Transaction, "id" | "category"> {
-  category: string;
+export interface CreateTransactionInput {
+  title: string;
+  amount: number;
+  dateTime: Date;
+  categoryId?: string;
+}
+
+export interface ApiTransactionResponse {
+  data: Transaction;
+}
+
+export interface ApiTransactionListResponse {
+  data: Transaction[];
+}
+
+export interface ApiTransactionSummaryResponse {
+  data: {
+    totalIncome: number;
+    totalExpense: number;
+    balance: number;
+  };
+}
+
+export interface ApiTransactionPaginatedList {
+  data: Transaction[];
+  meta: {
+    current_page: number;
+    from: number;
+    last_page: number;
+    per_page: number;
+    to: number;
+    total: number;
+  };
 }
 
 export interface PaginationParams {
   page?: number;
   per_page?: number;
-}
-
-export type ApiTransactionPaginatedList = ApiPaginatedResponse<Transaction[]>;
-
-export interface CreateTransactionInput
-  extends Omit<Transaction, "id" | "category"> {
-  categoryId: string;
-}
-
-export interface TransactionSummary {
-  income: number;
-  expense: number;
-  total: number;
-}
-
-export interface ApiTransactionSummaryResponse {
-  data: TransactionSummary;
 }

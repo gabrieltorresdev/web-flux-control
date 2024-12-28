@@ -20,7 +20,6 @@ import {
   CircleDollarSign,
   Loader2,
   Plus,
-  Tag,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
@@ -41,6 +40,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../../ui/sheet";
+import { CategorySelectItem } from "../../category/category-select-item";
 
 interface TransactionFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -250,74 +250,79 @@ export const TransactionForm = memo(
                       onSelect={(value) =>
                         handleCategorySelect(value, category.name)
                       }
-                      className="py-3"
+                      className="py-2"
                     >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          formState.selectedCategory !== category.name &&
-                            "hidden"
-                        )}
-                      />
-                      {category.name}
+                      <CategorySelectItem category={category} />
+                      {getValues("categoryId") === category.id && (
+                        <Check className="ml-auto h-4 w-4 opacity-50" />
+                      )}
                     </CommandItem>
                   ))}
+                {categories?.length === 0 && (
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma categoria encontrada
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </CommandList>
         </Command>
       );
 
-      if (isMobile) {
-        return (
-          <Sheet
-            open={formState.open}
-            onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
-          >
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={formState.open}
-                className="w-full justify-between h-12"
-              >
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
-                  {formState.selectedCategory || "Selecione uma categoria"}
-                </div>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[85vh]">
-              <SheetHeader>
-                <SheetTitle>Selecionar Categoria</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4">{content}</div>
-            </SheetContent>
-          </Sheet>
-        );
-      }
+      const trigger = (
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={formState.open}
+          className={cn(
+            "w-full justify-between h-12 text-base",
+            errors.categoryId && "border-red-500"
+          )}
+        >
+          {getValues("categoryId") && categories ? (
+            categories.find((cat) => cat.id === getValues("categoryId")) ? (
+              <CategorySelectItem
+                category={
+                  categories.find(
+                    (cat) => cat.id === getValues("categoryId")
+                  ) as Category
+                }
+                showType={false}
+              />
+            ) : (
+              "Selecione uma categoria"
+            )
+          ) : (
+            "Selecione uma categoria"
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      );
 
-      return (
+      return isMobile ? (
+        <Sheet
+          open={formState.open}
+          onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
+        >
+          <SheetTrigger asChild>{trigger}</SheetTrigger>
+          <SheetContent side="bottom" className="h-[400px]">
+            <SheetHeader>
+              <SheetTitle>Selecione uma categoria</SheetTitle>
+            </SheetHeader>
+            {content}
+          </SheetContent>
+        </Sheet>
+      ) : (
         <Popover
           open={formState.open}
           onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
         >
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={formState.open}
-              className="w-full justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4" />
-                {formState.selectedCategory || "Selecione uma categoria"}
-              </div>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0">{content}</PopoverContent>
+          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+            {content}
+          </PopoverContent>
         </Popover>
       );
     };

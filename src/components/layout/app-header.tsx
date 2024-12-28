@@ -1,13 +1,14 @@
 "use client";
 
 import { NavigationMenu, NavigationMenuList } from "../ui/navigation-menu";
-import { LayoutDashboard, Tags } from "lucide-react";
+import { LayoutDashboard, Tags, PiggyBank } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/src/lib/utils";
 import { usePathname } from "next/navigation";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: PiggyBank, label: "Orçamentos", href: "/budget" },
   { icon: Tags, label: "Categorias", href: "/categories" },
 ];
 

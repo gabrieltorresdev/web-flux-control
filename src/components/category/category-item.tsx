@@ -3,13 +3,7 @@
 import { Category } from "@/src/types/category";
 import { memo, useState } from "react";
 import { Button } from "../ui/button";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  MoreVertical,
-  Pencil,
-  Trash,
-} from "lucide-react";
+import { MoreVertical, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +33,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
+import { CategoryIcon } from "./category-icon";
 
 interface CategoryItemProps {
   category: Category;
@@ -100,7 +95,10 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
           setShowDeleteAlert(true);
           setIsDrawerOpen(false);
         }}
-        className="flex-1 gap-2 text-red-600 hover:text-red-600 hover:border-red-600"
+        className={cn(
+          "flex-1 gap-2",
+          "text-red-600 hover:text-red-600 hover:border-red-600"
+        )}
         disabled={category.is_default}
       >
         <Trash className="h-5 w-5" />
@@ -111,19 +109,7 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
 
   const Content = () => (
     <div className="flex items-center gap-3">
-      <div
-        className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-          isIncome ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-        )}
-        aria-hidden="true"
-      >
-        {isIncome ? (
-          <ArrowUpRight className="h-5 w-5" />
-        ) : (
-          <ArrowDownRight className="h-5 w-5" />
-        )}
-      </div>
+      <CategoryIcon icon={category.icon} isIncome={isIncome} />
       <div className="flex-1">
         <h3 className="font-medium text-gray-900 line-clamp-1 break-all">
           {category.name}
@@ -173,7 +159,12 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
       {isMobile ? (
         <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
           <DrawerTrigger asChild>
-            <div className="group transition-all duration-200 active:bg-gray-50 p-3 touch-manipulation">
+            <div
+              className={cn(
+                "group transition-all duration-200 active:bg-gray-50 p-3 touch-manipulation",
+                "cursor-pointer"
+              )}
+            >
               <Content />
             </div>
           </DrawerTrigger>
@@ -185,7 +176,12 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
           </DrawerContent>
         </Drawer>
       ) : (
-        <div className="group transition-all duration-200 hover:bg-gray-50 p-3">
+        <div
+          className={cn(
+            "group transition-all duration-200 hover:bg-gray-50 p-3",
+            "cursor-pointer"
+          )}
+        >
           <Content />
         </div>
       )}

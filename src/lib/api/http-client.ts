@@ -24,7 +24,7 @@ export class HttpClient {
         body: options.body ? JSON.stringify(options.body) : undefined,
       });
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 201) {
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
           response.status,

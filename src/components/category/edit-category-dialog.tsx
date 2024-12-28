@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Category, CreateCategoryInput } from "@/src/types/category";
 import { useUpdateCategory } from "@/src/hooks/use-categories";
+import { IconPicker } from "./icon-picker";
 
 interface EditCategoryDialogProps {
   category: Category;
@@ -38,13 +39,18 @@ export function EditCategoryDialog({
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CreateCategoryInput>({
     defaultValues: {
       name: category.name,
       type: category.type,
+      icon: category.icon,
     },
   });
+
+  const selectedIcon = watch("icon");
 
   const updateCategory = useUpdateCategory();
 
@@ -64,6 +70,7 @@ export function EditCategoryDialog({
         name: data.name.trim(),
         type: data.type,
         is_default: category.is_default,
+        icon: data.icon,
       },
       {
         onSuccess: () => {
@@ -124,6 +131,13 @@ export function EditCategoryDialog({
                 <SelectItem value="income">Receita</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ícone</label>
+            <IconPicker
+              value={selectedIcon}
+              onChange={(value) => setValue("icon", value)}
+            />
           </div>
           <Button
             type="submit"
