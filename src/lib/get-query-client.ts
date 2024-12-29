@@ -43,13 +43,14 @@ export const queryKeys = {
   transactions: {
     all: ["transactions"] as const,
     list: (params: Record<string, unknown>) =>
-      [...queryKeys.transactions.all, params] as const,
-    detail: (id: string) => [...queryKeys.transactions.all, id] as const,
+      ["transactions", params] as const,
+    detail: (id: string) => ["transactions", id] as const,
+    summary: (params: Record<string, unknown>) =>
+      ["transactions", "summary", params] as const,
   },
   categories: {
     all: ["categories"] as const,
-    list: (params?: { search?: string }) =>
-      [...queryKeys.categories.all, params] as const,
-    detail: (id: string) => [...queryKeys.categories.all, id] as const,
+    list: (params?: Record<string, unknown>) => ["categories", params] as const,
+    detail: (id: string) => ["categories", id] as const,
   },
 } as const;

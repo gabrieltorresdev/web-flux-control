@@ -19,6 +19,9 @@ import {
 } from "../../ui/sheet";
 import { Badge } from "../../ui/badge";
 import { ScrollArea, ScrollBar } from "../../ui/scroll-area";
+import { useEffect, useState } from "react";
+import { Skeleton } from "../../ui/skeleton";
+import { CategoryBadge } from "./category-badge";
 
 interface TransactionFiltersProps {
   initialCategoryId?: string;
@@ -36,6 +39,11 @@ export function TransactionFilters({
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedCategoryId, setSelectedCategoryId] =
     React.useState(initialCategoryId);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const updateSearch = React.useCallback(
     (value: string) => {
@@ -63,6 +71,24 @@ export function TransactionFilters({
     setParam("search", null);
   }, [setParam]);
 
+  const handleCategoryChange = React.useCallback(
+    (categoryId: string | undefined) => {
+      setSelectedCategoryId(categoryId);
+    },
+    []
+  );
+
+  if (!isHydrated) {
+    return (
+      <Card className={className}>
+        <div className="flex items-center gap-3 p-3">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-8 w-8 shrink-0" />
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className={className}>
       <div className="flex items-center gap-3 p-3">
@@ -87,9 +113,9 @@ export function TransactionFilters({
               </Badge>
             )}
             {selectedCategoryId && (
-              <CategoryFilter
-                initialCategoryId={selectedCategoryId}
-                showAsBadge
+              <CategoryBadge
+                categoryId={selectedCategoryId}
+                onRemove={() => handleCategoryChange(undefined)}
               />
             )}
           </div>
@@ -127,7 +153,7 @@ export function TransactionFilters({
               </div>
               <CategoryFilter
                 initialCategoryId={selectedCategoryId}
-                onCategoryChange={setSelectedCategoryId}
+                onCategoryChange={handleCategoryChange}
               />
             </div>
           </SheetContent>

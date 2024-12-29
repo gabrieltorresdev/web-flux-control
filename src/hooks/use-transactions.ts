@@ -3,13 +3,13 @@ import {
   CreateTransactionInput,
   PaginationParams,
   ApiTransactionPaginatedList,
-  ApiTransactionSummaryResponse,
   Transaction,
 } from "@/src/types/transaction";
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
+  useQuery,
 } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { queryKeys } from "../lib/get-query-client";
@@ -18,7 +18,6 @@ import { startOfMonth, endOfMonth } from "date-fns";
 type TransactionQueryData = {
   pages: Array<{
     transactions: ApiTransactionPaginatedList;
-    summary: ApiTransactionSummaryResponse;
     nextPage?: number;
   }>;
 };
@@ -71,6 +70,8 @@ type MutationContext = {
 };
 
 const TRANSACTIONS_QUERY_KEY = queryKeys.transactions.all;
+const STALE_TIME = 30 * 1000; // 30 seconds
+const GC_TIME = 5 * 60 * 1000; // 5 minutes
 
 export function useTransactions(initialPagination?: PaginationParams) {
   const searchParams = useSearchParams();
@@ -86,54 +87,57 @@ export function useTransactions(initialPagination?: PaginationParams) {
     search,
   });
 
+  const summaryQueryKey = queryKeys.transactions.summary({
+    month: searchParams.get("month"),
+    year: searchParams.get("year"),
+    categoryId,
+    search,
+  });
+
+  const summaryQuery = useQuery({
+    queryKey: summaryQueryKey,
+    queryFn: () =>
+      new TransactionService().getSummary(
+        startDate,
+        endDate,
+        categoryId,
+        search || undefined
+      ),
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
+  });
+
   const transactionsQuery = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam = 1 }) => {
       const pagination: PaginationParams = {
         page: pageParam,
-        per_page: initialPagination?.per_page || 10,
+        perPage: initialPagination?.perPage || 10,
       };
 
-      const [transactions, summary] = await Promise.all([
-        new TransactionService().findAllPaginated(
-          startDate,
-          endDate,
-          categoryId,
-          search || undefined,
-          pagination
-        ),
-        new TransactionService().getSummary(
-          startDate,
-          endDate,
-          categoryId,
-          search || undefined
-        ),
-      ]);
+      const transactions = await new TransactionService().findAllPaginated(
+        startDate,
+        endDate,
+        categoryId,
+        search || undefined,
+        pagination
+      );
 
-      // Prefetch próxima página
       if (transactions.meta.current_page < transactions.meta.last_page) {
         const nextPage = transactions.meta.current_page + 1;
-        queryClient.prefetchInfiniteQuery({
+        void queryClient.prefetchInfiniteQuery({
           queryKey,
           queryFn: async () => {
-            const [nextTransactions, nextSummary] = await Promise.all([
-              new TransactionService().findAllPaginated(
+            const nextTransactions =
+              await new TransactionService().findAllPaginated(
                 startDate,
                 endDate,
                 categoryId,
                 search || undefined,
                 { ...pagination, page: nextPage }
-              ),
-              new TransactionService().getSummary(
-                startDate,
-                endDate,
-                categoryId,
-                search || undefined
-              ),
-            ]);
+              );
             return {
               transactions: nextTransactions,
-              summary: nextSummary,
               nextPage:
                 nextTransactions.meta.current_page <
                 nextTransactions.meta.last_page
@@ -147,7 +151,6 @@ export function useTransactions(initialPagination?: PaginationParams) {
 
       return {
         transactions,
-        summary,
         nextPage:
           transactions.meta.current_page < transactions.meta.last_page
             ? transactions.meta.current_page + 1
@@ -156,48 +159,43 @@ export function useTransactions(initialPagination?: PaginationParams) {
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 1,
-    staleTime: 30 * 1000, // 30 segundos
-    gcTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   });
 
-  const aggregatedData = transactionsQuery.data?.pages.reduce<{
-    transactions: ApiTransactionPaginatedList;
-    summary: ApiTransactionSummaryResponse;
-  }>(
-    (acc, page) => ({
-      transactions: {
-        data: [...acc.transactions.data, ...page.transactions.data],
-        meta: page.transactions.meta,
+  const aggregatedData = {
+    transactions: {
+      data:
+        transactionsQuery.data?.pages.flatMap(
+          (page) => page.transactions.data
+        ) ?? [],
+      meta: transactionsQuery.data?.pages[0]?.transactions.meta || {
+        current_page: 0,
+        last_page: 0,
+        perPage: 0,
+        total: 0,
+        from: 0,
+        to: 0,
       },
-      summary: page.summary,
-    }),
-    {
-      transactions: {
-        data: [],
-        meta: transactionsQuery.data?.pages[0]?.transactions.meta || {
-          current_page: 0,
-          last_page: 0,
-          per_page: 0,
-          total: 0,
-          from: 0,
-          to: 0,
-        },
-      },
-      summary: transactionsQuery.data?.pages[0]?.summary || {
-        data: { income: 0, expense: 0, total: 0 },
-      },
-    }
-  );
+    },
+    summary: summaryQuery.data || {
+      data: { income: 0, expense: 0, total: 0 },
+    },
+  };
 
   return {
     data: aggregatedData,
-    isLoading: transactionsQuery.isLoading,
+    isLoading: transactionsQuery.isLoading || summaryQuery.isLoading,
     isFetching: transactionsQuery.isFetching,
     hasNextPage: transactionsQuery.hasNextPage,
     fetchNextPage: transactionsQuery.fetchNextPage,
     isFetchingNextPage: transactionsQuery.isFetchingNextPage,
-    isError: transactionsQuery.isError,
-    refetch: transactionsQuery.refetch,
+    isError: transactionsQuery.isError || summaryQuery.isError,
+    error: transactionsQuery.error || summaryQuery.error,
+    refetch: () => {
+      void transactionsQuery.refetch();
+      void summaryQuery.refetch();
+    },
   };
 }
 
@@ -206,8 +204,8 @@ export function useCreateTransaction() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (data: CreateTransactionInput) =>
-      new TransactionService().create(data),
+    mutationFn: async (data: CreateTransactionInput) =>
+      await new TransactionService().create(data),
     onMutate: async (newTransaction) => {
       await queryClient.cancelQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
 
@@ -218,10 +216,8 @@ export function useCreateTransaction() {
       const updater: QueryUpdater = (old) =>
         updateQueryData(old, (page) => {
           const isIncome = newTransaction.categoryId.startsWith("income");
-          const amount = newTransaction.amount;
-
           const optimisticTransaction: Transaction = {
-            id: "temp-" + Date.now(),
+            id: `temp-${Date.now()}`,
             title: newTransaction.title,
             dateTime: newTransaction.dateTime,
             amount: newTransaction.amount,
@@ -243,13 +239,6 @@ export function useCreateTransaction() {
                 total: page.transactions.meta.total + 1,
               },
             },
-            summary: {
-              data: {
-                income: page.summary.data.income + (isIncome ? amount : 0),
-                expense: page.summary.data.expense + (!isIncome ? amount : 0),
-                total: page.summary.data.total + (isIncome ? amount : -amount),
-              },
-            },
           };
         });
 
@@ -269,7 +258,7 @@ export function useCreateTransaction() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
+      void queryClient.resetQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
       router.refresh();
     },
   });
@@ -280,8 +269,11 @@ export function useUpdateTransaction() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & CreateTransactionInput) =>
-      new TransactionService().update(id, data),
+    mutationFn: async ({
+      id,
+      ...data
+    }: { id: string } & CreateTransactionInput) =>
+      await new TransactionService().update(id, data),
     onMutate: async ({ id, ...updatedTransaction }) => {
       await queryClient.cancelQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
 
@@ -333,7 +325,7 @@ export function useUpdateTransaction() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
+      void queryClient.resetQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
       router.refresh();
     },
   });
@@ -344,7 +336,7 @@ export function useDeleteTransaction() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (id: string) => new TransactionService().delete(id),
+    mutationFn: async (id: string) => await new TransactionService().delete(id),
     onMutate: async (deletedId) => {
       await queryClient.cancelQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
 
@@ -383,7 +375,7 @@ export function useDeleteTransaction() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
+      void queryClient.resetQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
       router.refresh();
     },
   });

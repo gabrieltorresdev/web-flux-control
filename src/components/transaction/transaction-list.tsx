@@ -177,7 +177,7 @@ export const TransactionList = memo(function TransactionList() {
     isFetchingNextPage,
     isError,
     refetch,
-  } = useTransactions({ per_page: ITEMS_PER_PAGE });
+  } = useTransactions({ page: 1, perPage: ITEMS_PER_PAGE });
 
   useEffect(() => {
     const shouldFetchMore = inView && hasNextPage && !isFetchingNextPage;

@@ -39,8 +39,8 @@ export class TransactionService {
     if (pagination?.page) {
       params.append("page", pagination.page.toString());
     }
-    if (pagination?.per_page) {
-      params.append("per_page", pagination.per_page.toString());
+    if (pagination?.perPage) {
+      params.append("perPage", pagination.perPage.toString());
     }
 
     return this.httpClient.get<ApiTransactionPaginatedList>(

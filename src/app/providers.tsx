@@ -1,11 +1,7 @@
 "use client";
 
 import { ReactNode, Suspense } from "react";
-import {
-  HydrationBoundary,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { HydrationBoundary, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { getQueryClient } from "../lib/get-query-client";
 import { LoadingSpinner } from "../components/ui/loading-spinner";

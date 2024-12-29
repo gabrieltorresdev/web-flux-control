@@ -21,6 +21,7 @@ export const TransactionSummary = memo(function TransactionSummary() {
     isLoading,
     isFetching,
     isError,
+    error,
     refetch,
   } = useTransactions();
 
@@ -28,7 +29,10 @@ export const TransactionSummary = memo(function TransactionSummary() {
     return (
       <ErrorState
         title="Erro ao carregar resumo"
-        description="Não foi possível carregar o resumo das transações. Por favor, tente novamente."
+        description={
+          error?.message ||
+          "Não foi possível carregar o resumo das transações. Por favor, tente novamente."
+        }
         onRetry={() => refetch()}
       />
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, ReactNode } from "react";
 import {
   ResponsiveModal,
   ResponsiveModalTrigger,
@@ -34,10 +34,12 @@ import { useDraftTransaction } from "@/src/hooks/use-draft-transaction";
 
 interface NewTransactionDialogProps {
   initialDate?: Date;
+  children?: ReactNode;
 }
 
 export function NewTransactionDialog({
   initialDate,
+  children,
 }: NewTransactionDialogProps) {
   const [open, setOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState<"manual" | "voice">("manual");
@@ -142,13 +144,15 @@ export function NewTransactionDialog({
   return (
     <ResponsiveModal open={open} onOpenChange={setOpen}>
       <ResponsiveModalTrigger asChild>
-        <Button
-          size="lg"
-          className="rounded-full shadow-lg hover:shadow-xl transition-all duration-200 gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          <span className="font-medium">Nova transação</span>
-        </Button>
+        {children || (
+          <Button
+            size="lg"
+            className="rounded-full shadow-lg hover:shadow-xl transition-all duration-200 gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span className="font-medium">Nova transação</span>
+          </Button>
+        )}
       </ResponsiveModalTrigger>
 
       <ResponsiveModalContent>

@@ -44,13 +44,13 @@ export interface ApiTransactionPaginatedList {
     current_page: number;
     from: number;
     last_page: number;
-    per_page: number;
+    perPage: number;
     to: number;
     total: number;
   };
 }
 
 export interface PaginationParams {
-  page?: number;
-  per_page?: number;
+  page: number;
+  perPage: number;
 }
