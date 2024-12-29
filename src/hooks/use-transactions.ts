@@ -280,9 +280,9 @@ export function useUpdateTransaction() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateTransactionInput }) =>
+    mutationFn: ({ id, ...data }: { id: string } & CreateTransactionInput) =>
       new TransactionService().update(id, data),
-    onMutate: async ({ id, data: updatedTransaction }) => {
+    onMutate: async ({ id, ...updatedTransaction }) => {
       await queryClient.cancelQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
 
       const previousData = queryClient.getQueriesData<TransactionQueryData>({
@@ -298,11 +298,13 @@ export function useUpdateTransaction() {
               transaction.id === id
                 ? {
                     ...transaction,
-                    title: updatedTransaction.title,
-                    dateTime: updatedTransaction.dateTime,
-                    amount: updatedTransaction.amount,
+                    ...updatedTransaction,
                     category: {
-                      ...transaction.category!,
+                      ...(transaction.category || {
+                        name: "",
+                        type: "expense",
+                        is_default: false,
+                      }),
                       id: updatedTransaction.categoryId,
                     },
                   }
