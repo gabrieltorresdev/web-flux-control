@@ -66,6 +66,12 @@ function getDateRangeFromParams(searchParams: URLSearchParams): {
   };
 }
 
+type MutationContext = {
+  previousData: [readonly unknown[], TransactionQueryData | undefined][];
+};
+
+const TRANSACTIONS_QUERY_KEY = queryKeys.transactions.all;
+
 export function useTransactions(initialPagination?: PaginationParams) {
   const searchParams = useSearchParams();
   const { startDate, endDate } = getDateRangeFromParams(searchParams);
@@ -203,10 +209,10 @@ export function useCreateTransaction() {
     mutationFn: (data: CreateTransactionInput) =>
       new TransactionService().create(data),
     onMutate: async (newTransaction) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
 
       const previousData = queryClient.getQueriesData<TransactionQueryData>({
-        queryKey: queryKeys.transactions.all,
+        queryKey: TRANSACTIONS_QUERY_KEY,
       });
 
       const updater: QueryUpdater = (old) =>
@@ -248,25 +254,22 @@ export function useCreateTransaction() {
         });
 
       queryClient.setQueriesData<TransactionQueryData>(
-        { queryKey: queryKeys.transactions.all },
+        { queryKey: TRANSACTIONS_QUERY_KEY },
         updater
       );
 
       return { previousData };
     },
-    onError: (err, newTransaction, context) => {
+    onError: (err, newTransaction, context: MutationContext | undefined) => {
       if (context?.previousData) {
         queryClient.setQueriesData(
-          { queryKey: queryKeys.transactions.all },
+          { queryKey: TRANSACTIONS_QUERY_KEY },
           context.previousData
         );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.transactions.all,
-        refetchType: "none",
-      });
+      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
       router.refresh();
     },
   });
@@ -277,13 +280,13 @@ export function useUpdateTransaction() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: ({ id, ...data }: CreateTransactionInput & { id: string }) =>
+    mutationFn: ({ id, data }: { id: string; data: CreateTransactionInput }) =>
       new TransactionService().update(id, data),
-    onMutate: async (updatedTransaction) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
+    onMutate: async ({ id, data: updatedTransaction }) => {
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
 
       const previousData = queryClient.getQueriesData<TransactionQueryData>({
-        queryKey: queryKeys.transactions.all,
+        queryKey: TRANSACTIONS_QUERY_KEY,
       });
 
       const updater: QueryUpdater = (old) =>
@@ -292,7 +295,7 @@ export function useUpdateTransaction() {
           transactions: {
             ...page.transactions,
             data: page.transactions.data.map((transaction) =>
-              transaction.id === updatedTransaction.id
+              transaction.id === id
                 ? {
                     ...transaction,
                     title: updatedTransaction.title,
@@ -309,25 +312,26 @@ export function useUpdateTransaction() {
         }));
 
       queryClient.setQueriesData<TransactionQueryData>(
-        { queryKey: queryKeys.transactions.all },
+        { queryKey: TRANSACTIONS_QUERY_KEY },
         updater
       );
 
       return { previousData };
     },
-    onError: (err, updatedTransaction, context) => {
+    onError: (
+      err,
+      updatedTransaction,
+      context: MutationContext | undefined
+    ) => {
       if (context?.previousData) {
         queryClient.setQueriesData(
-          { queryKey: queryKeys.transactions.all },
+          { queryKey: TRANSACTIONS_QUERY_KEY },
           context.previousData
         );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.transactions.all,
-        refetchType: "none",
-      });
+      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
       router.refresh();
     },
   });
@@ -340,10 +344,10 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: (id: string) => new TransactionService().delete(id),
     onMutate: async (deletedId) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
 
       const previousData = queryClient.getQueriesData<TransactionQueryData>({
-        queryKey: queryKeys.transactions.all,
+        queryKey: TRANSACTIONS_QUERY_KEY,
       });
 
       const updater: QueryUpdater = (old) =>
@@ -362,25 +366,22 @@ export function useDeleteTransaction() {
         }));
 
       queryClient.setQueriesData<TransactionQueryData>(
-        { queryKey: queryKeys.transactions.all },
+        { queryKey: TRANSACTIONS_QUERY_KEY },
         updater
       );
 
       return { previousData };
     },
-    onError: (err, deletedId, context) => {
+    onError: (err, deletedId, context: MutationContext | undefined) => {
       if (context?.previousData) {
         queryClient.setQueriesData(
-          { queryKey: queryKeys.transactions.all },
+          { queryKey: TRANSACTIONS_QUERY_KEY },
           context.previousData
         );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.transactions.all,
-        refetchType: "none",
-      });
+      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
       router.refresh();
     },
   });
