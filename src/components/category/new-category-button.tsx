@@ -15,7 +15,13 @@ export function NewCategoryButton() {
         Nova Categoria
       </Button>
 
-      <CreateCategoryDialog open={showDialog} onOpenChange={setShowDialog} />
+      <CreateCategoryDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onSuccess={() => {
+          setShowDialog(false);
+        }}
+      />
     </>
   );
 }

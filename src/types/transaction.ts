@@ -5,14 +5,21 @@ export interface Transaction {
   title: string;
   amount: number;
   dateTime: Date;
-  category?: Category;
+  category: Category;
 }
 
 export interface CreateTransactionInput {
   title: string;
   amount: number;
   dateTime: Date;
-  categoryId?: string;
+  categoryId: string;
+}
+
+export interface AiTransactionInput {
+  title: string;
+  amount: number;
+  dateTime: Date;
+  category: string;
 }
 
 export interface ApiTransactionResponse {
@@ -25,9 +32,9 @@ export interface ApiTransactionListResponse {
 
 export interface ApiTransactionSummaryResponse {
   data: {
-    totalIncome: number;
-    totalExpense: number;
-    balance: number;
+    income: number;
+    expense: number;
+    total: number;
   };
 }
 

@@ -140,7 +140,8 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
   );
 
   const isEmojiSelected = value?.startsWith("emoji:");
-  const selectedEmoji = isEmojiSelected ? value.replace("emoji:", "") : null;
+  const selectedEmoji =
+    isEmojiSelected && value ? value.replace("emoji:", "") : null;
 
   return (
     <div className="space-y-2">

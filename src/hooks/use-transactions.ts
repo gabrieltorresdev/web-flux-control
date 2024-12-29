@@ -162,7 +162,6 @@ export function useTransactions(initialPagination?: PaginationParams) {
       transactions: {
         data: [...acc.transactions.data, ...page.transactions.data],
         meta: page.transactions.meta,
-        message: page.transactions.message,
       },
       summary: page.summary,
     }),
@@ -177,7 +176,6 @@ export function useTransactions(initialPagination?: PaginationParams) {
           from: 0,
           to: 0,
         },
-        message: transactionsQuery.data?.pages[0]?.transactions.message || "",
       },
       summary: transactionsQuery.data?.pages[0]?.summary || {
         data: { income: 0, expense: 0, total: 0 },
