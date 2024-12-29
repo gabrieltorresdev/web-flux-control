@@ -20,11 +20,12 @@ export class HttpClient {
 
       const response = await fetch(url, {
         ...options,
+        cache: "no-store",
         headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
       });
 
-      if (!response.ok && response.status !== 201) {
+      if (response.status >= 300) {
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
           response.status,
