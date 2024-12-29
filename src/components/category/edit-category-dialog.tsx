@@ -1,10 +1,10 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "../ui/responsive-modal";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -93,14 +93,14 @@ export function EditCategoryDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] w-[95vw] sm:w-full mx-auto">
-        <DialogHeader>
-          <DialogTitle>Editar Categoria</DialogTitle>
-          <DialogDescription>
+    <ResponsiveModal open={open} onOpenChange={onOpenChange}>
+      <ResponsiveModalContent className="sm:max-w-[425px] w-[95vw] sm:w-full mx-auto">
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Editar Categoria</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
             Edite os dados da categoria e clique em salvar para atualizar
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Nome</label>
@@ -150,7 +150,7 @@ export function EditCategoryDialog({
             Salvar Alterações
           </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

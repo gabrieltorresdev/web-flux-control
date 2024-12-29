@@ -12,36 +12,48 @@ interface HomeProps {
 export default async function Home({ searchParams }: HomeProps) {
   const { month, year, categoryId, search } = await searchParams;
 
+  const initialDate = (() => {
+    if (!month || !year) return new Date();
+
+    const parsedMonth = parseInt(month as string);
+    const parsedYear = parseInt(year as string);
+
+    if (isNaN(parsedMonth) || isNaN(parsedYear)) return new Date();
+
+    return new Date(parsedYear, parsedMonth - 1, 1);
+  })();
+
   return (
-    <section className="flex flex-col gap-3 w-full mx-auto max-w-3xl">
-      {/* Cabeçalho com título e botão */}
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-muted-foreground text-xs md:text-sm font-medium">
-          Minhas <strong className="text-primary">transações</strong>
-        </h1>
-        <div className="scale-90 md:scale-100 origin-right">
-          <MonthFilter initialMonth={month} initialYear={year} />
+    <section className="flex flex-col w-full h-full">
+      <div>
+        <div className="flex flex-col gap-2 max-w-3xl mx-auto w-full px-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-muted-foreground text-sm font-medium">
+              Minhas <strong className="text-primary">transações</strong>
+            </h1>
+            <MonthFilter initialMonth={month} initialYear={year} />
+          </div>
+
+          <TransactionFilters
+            initialCategoryId={categoryId}
+            initialSearch={search}
+          />
         </div>
       </div>
 
-      <TransactionFilters
-        initialCategoryId={categoryId}
-        initialSearch={search}
-      />
-
-      <div className="space-y-3">
-        <TransactionSummary />
-      </div>
-
-      <div className="flex">
-        <div>
-          <NewTransactionDialog />
+      <div className="flex-1 pb-24 md:pb-10 pt-3">
+        <div className="max-w-3xl mx-auto w-full space-y-3">
+          <div className="px-3">
+            <TransactionSummary />
+          </div>
+          <div className="px-3">
+            <TransactionList />
+          </div>
         </div>
       </div>
 
-      {/* Conteúdo principal com scroll e largura máxima maior no desktop */}
-      <div className="w-full max-w-5xl mx-auto">
-        <TransactionList />
+      <div className="fixed bottom-6 right-6 z-30">
+        <NewTransactionDialog initialDate={initialDate} />
       </div>
     </section>
   );

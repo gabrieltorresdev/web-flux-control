@@ -36,6 +36,7 @@ import { useIsMobile } from "@/src/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -55,28 +56,191 @@ interface TransactionFormProps {
 
 const categoryService = new CategoryService();
 
+interface CategorySelectorProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  onCategorySelect: (categoryId: string, categoryName: string) => void;
+  onCreateCategory: () => void;
+  getValues: UseFormGetValues<CreateTransactionInput>;
+  setValue: UseFormSetValue<CreateTransactionInput>;
+  errors: FieldErrors<CreateTransactionInput>;
+}
+
+const CategorySelector = memo(
+  ({
+    open,
+    onOpenChange,
+    searchTerm,
+    onSearchChange,
+    onCategorySelect,
+    onCreateCategory,
+    getValues,
+    errors,
+  }: CategorySelectorProps) => {
+    const isMobile = useIsMobile();
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+    const { data: categoriesResponse, isLoading } = useQuery({
+      queryKey: ["categories", debouncedSearchTerm],
+      queryFn: async () => {
+        return await categoryService.findAllPaginated(debouncedSearchTerm);
+      },
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    });
+
+    const categories = useMemo(
+      () => categoriesResponse?.data ?? [],
+      [categoriesResponse]
+    );
+
+    const content = useMemo(
+      () => (
+        <Command shouldFilter={false} className="w-full">
+          <CommandItem
+            onSelect={onCreateCategory}
+            className="border-b text-blue-500 rounded-none cursor-pointer"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Criar nova categoria
+          </CommandItem>
+          <CommandInput
+            placeholder="Buscar categoria..."
+            value={searchTerm}
+            onValueChange={onSearchChange}
+            className="h-12"
+          />
+          <CommandList className="max-h-[300px]">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : (
+              <>
+                {categories?.length > 0 &&
+                  categories.map((category: Category) => (
+                    <CommandItem
+                      key={category.id}
+                      value={category.id}
+                      onSelect={(value) =>
+                        onCategorySelect(value, category.name)
+                      }
+                      className="py-2"
+                    >
+                      <CategorySelectItem category={category} />
+                      {getValues("categoryId") === category.id && (
+                        <Check className="ml-auto h-4 w-4 opacity-50" />
+                      )}
+                    </CommandItem>
+                  ))}
+                {categories?.length === 0 && (
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma categoria encontrada
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </CommandList>
+        </Command>
+      ),
+      [
+        categories,
+        getValues,
+        isLoading,
+        onCategorySelect,
+        onCreateCategory,
+        searchTerm,
+        onSearchChange,
+      ]
+    );
+
+    const trigger = useMemo(
+      () => (
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            "w-full justify-between h-12 text-base",
+            errors.categoryId && "border-red-500"
+          )}
+        >
+          {getValues("categoryId") && categories ? (
+            categories.find((cat) => cat.id === getValues("categoryId")) ? (
+              <CategorySelectItem
+                category={
+                  categories.find(
+                    (cat) => cat.id === getValues("categoryId")
+                  ) as Category
+                }
+                showType={false}
+              />
+            ) : (
+              "Selecione uma categoria"
+            )
+          ) : (
+            "Selecione uma categoria"
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      ),
+      [categories, errors.categoryId, getValues, open]
+    );
+
+    if (isMobile) {
+      return (
+        <Sheet open={open} onOpenChange={onOpenChange}>
+          <SheetTrigger asChild>{trigger}</SheetTrigger>
+          <SheetContent side="bottom" className="h-[400px] p-3">
+            <SheetHeader>
+              <SheetTitle className="text-base">
+                Selecione uma categoria
+              </SheetTitle>
+              <SheetDescription></SheetDescription>
+            </SheetHeader>
+            {content}
+          </SheetContent>
+        </Sheet>
+      );
+    }
+
+    return (
+      <Popover open={open} onOpenChange={onOpenChange}>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+          {content}
+        </PopoverContent>
+      </Popover>
+    );
+  }
+);
+
+CategorySelector.displayName = "CategorySelector";
+
 export const TransactionForm = memo(
   ({
     onSubmit,
     register,
     errors,
     getValues,
+    setValue,
     suggestedCategory,
     onCreateCategory,
-    setValue,
     isSubmitting = false,
   }: TransactionFormProps) => {
     const [formState, setFormState] = useState({
       open: false,
       searchTerm: "",
       selectedCategory: "",
-      isSearching: false,
       showCreateDialog: false,
       isVisible: false,
       submitSuccess: false,
     });
 
-    const isMobile = useIsMobile();
     const formRef = useRef<HTMLFormElement>(null);
     const queryClient = useQueryClient();
     const debouncedSearchTerm = useDebounce(formState.searchTerm, 500);
@@ -104,12 +268,7 @@ export const TransactionForm = memo(
       }
     }, [handleVisibilityChange]);
 
-    const {
-      data: categoriesResponse,
-      isLoading,
-      isError,
-      refetch,
-    } = useQuery({
+    const { data: categoriesResponse } = useQuery({
       queryKey: ["categories", debouncedSearchTerm],
       queryFn: async () => {
         setFormState((prev) => ({ ...prev, isSearching: true }));
@@ -129,8 +288,6 @@ export const TransactionForm = memo(
       () => categoriesResponse?.data ?? [],
       [categoriesResponse]
     );
-
-    const showLoading = isLoading || formState.isSearching;
 
     useEffect(() => {
       const categoryId = getValues("categoryId");
@@ -205,127 +362,16 @@ export const TransactionForm = memo(
       [setValue]
     );
 
-    const CategorySelector = () => {
-      const content = (
-        <Command shouldFilter={false} className="w-full">
-          <CommandItem
-            onSelect={() =>
-              setFormState((prev) => ({
-                ...prev,
-                showCreateDialog: true,
-              }))
-            }
-            className="border-b text-blue-500 rounded-none cursor-pointer"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Criar nova categoria
-          </CommandItem>
-          <CommandInput
-            placeholder="Buscar categoria..."
-            value={formState.searchTerm}
-            onValueChange={handleSearchChange}
-            className="h-12"
-          />
-          <CommandList className="max-h-[300px]">
-            {showLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin" />
-              </div>
-            ) : isError ? (
-              <div className="flex flex-col items-center gap-2 py-4">
-                <p className="text-sm text-muted-foreground">
-                  Erro ao carregar categorias
-                </p>
-                <Button variant="outline" size="sm" onClick={() => refetch()}>
-                  Tentar novamente
-                </Button>
-              </div>
-            ) : (
-              <>
-                {categories?.length > 0 &&
-                  categories.map((category: Category) => (
-                    <CommandItem
-                      key={category.id}
-                      value={category.id}
-                      onSelect={(value) =>
-                        handleCategorySelect(value, category.name)
-                      }
-                      className="py-2"
-                    >
-                      <CategorySelectItem category={category} />
-                      {getValues("categoryId") === category.id && (
-                        <Check className="ml-auto h-4 w-4 opacity-50" />
-                      )}
-                    </CommandItem>
-                  ))}
-                {categories?.length === 0 && (
-                  <div className="flex flex-col items-center gap-2 py-4">
-                    <p className="text-sm text-muted-foreground">
-                      Nenhuma categoria encontrada
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </CommandList>
-        </Command>
-      );
+    const handleOpenChange = useCallback((open: boolean) => {
+      setFormState((prev) => ({ ...prev, open }));
+    }, []);
 
-      const trigger = (
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={formState.open}
-          className={cn(
-            "w-full justify-between h-12 text-base",
-            errors.categoryId && "border-red-500"
-          )}
-        >
-          {getValues("categoryId") && categories ? (
-            categories.find((cat) => cat.id === getValues("categoryId")) ? (
-              <CategorySelectItem
-                category={
-                  categories.find(
-                    (cat) => cat.id === getValues("categoryId")
-                  ) as Category
-                }
-                showType={false}
-              />
-            ) : (
-              "Selecione uma categoria"
-            )
-          ) : (
-            "Selecione uma categoria"
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      );
-
-      return isMobile ? (
-        <Sheet
-          open={formState.open}
-          onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
-        >
-          <SheetTrigger asChild>{trigger}</SheetTrigger>
-          <SheetContent side="bottom" className="h-[400px]">
-            <SheetHeader>
-              <SheetTitle>Selecione uma categoria</SheetTitle>
-            </SheetHeader>
-            {content}
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <Popover
-          open={formState.open}
-          onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
-        >
-          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-            {content}
-          </PopoverContent>
-        </Popover>
-      );
-    };
+    const handleCreateCategory = useCallback(() => {
+      setFormState((prev) => ({
+        ...prev,
+        showCreateDialog: true,
+      }));
+    }, []);
 
     return (
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
@@ -367,7 +413,17 @@ export const TransactionForm = memo(
         {/* Category Selection */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Categoria</label>
-          <CategorySelector />
+          <CategorySelector
+            open={formState.open}
+            onOpenChange={handleOpenChange}
+            searchTerm={formState.searchTerm}
+            onSearchChange={handleSearchChange}
+            onCategorySelect={handleCategorySelect}
+            onCreateCategory={handleCreateCategory}
+            getValues={getValues}
+            setValue={setValue}
+            errors={errors}
+          />
           {errors.categoryId && (
             <p className="text-sm text-red-500">{errors.categoryId.message}</p>
           )}

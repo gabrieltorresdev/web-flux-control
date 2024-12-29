@@ -2,10 +2,10 @@ export class ApiError extends Error {
   constructor(
     public statusCode: number,
     message: string,
-    public data?: any
+    public data?: Record<string, unknown>
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
@@ -18,5 +18,5 @@ export function handleApiError(error: unknown): never {
     throw new ApiError(500, error.message);
   }
 
-  throw new ApiError(500, 'An unexpected error occurred');
+  throw new ApiError(500, "An unexpected error occurred");
 }

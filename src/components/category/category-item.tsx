@@ -29,6 +29,7 @@ import { useIsMobile } from "@/src/hooks/use-mobile";
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -170,7 +171,11 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
           </DrawerTrigger>
           <DrawerContent>
             <DrawerHeader>
-              <DrawerTitle>Ações da Categoria</DrawerTitle>
+              <DrawerTitle>{category.name}</DrawerTitle>
+              <DrawerDescription>
+                {isIncome ? "Receita" : "Despesa"}
+                {category.is_default && " • Padrão"}
+              </DrawerDescription>
             </DrawerHeader>
             <CategoryActions />
           </DrawerContent>

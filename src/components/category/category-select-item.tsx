@@ -4,11 +4,13 @@ import { CategoryIcon } from "./category-icon";
 interface CategorySelectItemProps {
   category: Category;
   showType?: boolean;
+  compact?: boolean;
 }
 
 export function CategorySelectItem({
   category,
   showType = true,
+  compact = false,
 }: CategorySelectItemProps) {
   const isIncome = category.type === "income";
 
@@ -17,17 +19,18 @@ export function CategorySelectItem({
       <CategoryIcon
         icon={category.icon}
         isIncome={isIncome}
-        className="w-6 h-6"
-        iconClassName="h-4 w-4"
+        className={compact ? "h-4 w-4" : "h-5 w-5"}
       />
-      <div className="flex flex-col">
-        <span className="text-sm font-medium">{category.name}</span>
-        {showType && (
-          <span className="text-xs text-muted-foreground">
-            {isIncome ? "Receita" : "Despesa"}
-          </span>
-        )}
-      </div>
+      <span className={compact ? "text-xs" : "text-sm"}>{category.name}</span>
+      {showType && (
+        <span
+          className={`text-xs ${
+            isIncome ? "text-emerald-500" : "text-rose-500"
+          }`}
+        >
+          {isIncome ? "Receita" : "Despesa"}
+        </span>
+      )}
     </div>
   );
 }

@@ -79,7 +79,7 @@ export function CategoryIcon({
     >
       {icon ? (
         icon.startsWith("emoji:") ? (
-          <span className={cn("text-lg", iconClassName)}>
+          <span className={cn("text-sm", iconClassName)}>
             {icon.replace("emoji:", "")}
           </span>
         ) : (

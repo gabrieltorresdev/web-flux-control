@@ -1,10 +1,10 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "../ui/responsive-modal";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -93,14 +93,14 @@ export function CreateCategoryDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] w-[95vw] sm:w-full mx-auto">
-        <DialogHeader>
-          <DialogTitle>Nova Categoria</DialogTitle>
-          <DialogDescription>
+    <ResponsiveModal open={open} onOpenChange={onOpenChange}>
+      <ResponsiveModalContent className="sm:max-w-[425px] w-[95vw] sm:w-full mx-auto">
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Nova Categoria</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
             Crie uma nova categoria para organizar suas finanças
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Nome</label>
@@ -157,7 +157,7 @@ export function CreateCategoryDialog({
             Criar Categoria
           </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

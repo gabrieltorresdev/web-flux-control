@@ -2,13 +2,13 @@
 
 import { useState, useCallback, useEffect } from "react";
 import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../../ui/dialog";
+  ResponsiveModal,
+  ResponsiveModalTrigger,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalDescription,
+} from "../../ui/responsive-modal";
 import { Button } from "../../ui/button";
 import { Plus, Mic, Keyboard } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../ui/tabs";
@@ -30,30 +30,41 @@ import { transactionSchema } from "@/src/lib/validations/transaction";
 import { CreateTransactionInput } from "@/src/types/transaction";
 import { useCreateTransaction } from "@/src/hooks/use-transactions";
 import { toast } from "@/src/hooks/use-toast";
-import { Label } from "../../ui/label";
 import { useDraftTransaction } from "@/src/hooks/use-draft-transaction";
 
-export function NewTransactionDialog() {
-  const [currentTab, setCurrentTab] = useState("voice");
+interface NewTransactionDialogProps {
+  initialDate?: Date;
+}
+
+export function NewTransactionDialog({
+  initialDate,
+}: NewTransactionDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [currentTab, setCurrentTab] = useState<"manual" | "voice">("manual");
   const [showAlert, setShowAlert] = useState(false);
-  const [pendingTabChange, setPendingTabChange] = useState<string | null>(null);
+  const [pendingTabChange, setPendingTabChange] = useState<
+    "manual" | "voice" | null
+  >(null);
   const [hasVoiceData, setHasVoiceData] = useState(false);
   const [hasManualData, setHasManualData] = useState(false);
 
+  const createTransaction = useCreateTransaction();
   const {
     register,
     handleSubmit,
-    reset,
+    formState: { errors },
     getValues,
     setValue,
-    formState: { errors },
+    reset,
     watch,
   } = useForm<CreateTransactionInput>({
     resolver: zodResolver(transactionSchema),
+    defaultValues: {
+      dateTime: initialDate ?? new Date(),
+    },
   });
 
-  const createTransaction = useCreateTransaction();
-  const { saveDraft, clearDraft, loadTranscript, loadSuggestedCategory } =
+  const { saveDraft, loadTranscript, loadSuggestedCategory, clearDraft } =
     useDraftTransaction(setValue, reset, getValues);
 
   // Salvar rascunho quando houver mudanças no formulário
@@ -83,6 +94,7 @@ export function NewTransactionDialog() {
       reset();
       setHasVoiceData(false);
       setHasManualData(false);
+      setOpen(false);
       toast({
         title: "Transação criada",
         description: "A transação foi criada com sucesso.",
@@ -97,7 +109,7 @@ export function NewTransactionDialog() {
   });
 
   const handleTabChange = useCallback(
-    (value: string) => {
+    (value: "manual" | "voice") => {
       if (value !== currentTab) {
         const shouldShowAlert =
           (currentTab === "voice" && hasVoiceData && value === "manual") ||
@@ -127,95 +139,90 @@ export function NewTransactionDialog() {
     }
   }, [pendingTabChange]);
 
-  const cancelTabChange = useCallback(() => {
-    setPendingTabChange(null);
-    setShowAlert(false);
-  }, []);
-
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <div className="flex items-center gap-2">
-          <Label className="text-sm">Adicionar Transação</Label>
+    <ResponsiveModal open={open} onOpenChange={setOpen}>
+      <ResponsiveModalTrigger asChild>
+        <Button
+          size="lg"
+          className="rounded-full shadow-lg hover:shadow-xl transition-all duration-200 gap-2"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="font-medium">Nova transação</span>
+        </Button>
+      </ResponsiveModalTrigger>
 
-          <Button
-            size="sm"
-            className="gap-2 h-8 w-8 rounded-full p-0 pointer-events-none"
-            variant="outline"
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
-        </div>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] p-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle>Nova Transação</DialogTitle>
-          <DialogDescription>
-            Escolha como deseja adicionar sua transação
-          </DialogDescription>
-        </DialogHeader>
-        <AlertDialog open={showAlert}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Ao trocar o método de entrada, você perderá os dados já
-                preenchidos no formulário.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={cancelTabChange}>
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={confirmTabChange}>
-                Continuar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Nova transação</ResponsiveModalTitle>
+          <ResponsiveModalDescription></ResponsiveModalDescription>
+        </ResponsiveModalHeader>
 
         <Tabs
           value={currentTab}
-          onValueChange={handleTabChange}
-          className="w-full overflow-hidden p-6 pt-0"
+          onValueChange={(value: string) => {
+            if (value === "manual" || value === "voice") {
+              handleTabChange(value);
+            }
+          }}
+          className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="voice" className="gap-2">
-              <Mic className="h-4 w-4" />
-              Por Voz
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="manual" className="gap-2">
               <Keyboard className="h-4 w-4" />
               Manual
             </TabsTrigger>
+            <TabsTrigger value="voice" className="gap-2">
+              <Mic className="h-4 w-4" />
+              Por voz
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="voice">
-            <VoiceTransactionForm
-              setValue={setValue}
-              onDataChange={setHasVoiceData}
+
+          <TabsContent value="manual" className="mt-0">
+            <ManualTransactionForm
+              onSubmit={onSubmit}
               register={register}
               errors={errors}
               getValues={getValues}
+              setValue={setValue}
+              saveDraft={saveDraft}
+              isSubmitting={createTransaction.isPending}
+              onDataChange={setHasManualData}
+            />
+          </TabsContent>
+
+          <TabsContent value="voice" className="mt-0">
+            <VoiceTransactionForm
               onSubmit={onSubmit}
+              register={register}
+              errors={errors}
+              getValues={getValues}
+              setValue={setValue}
+              onDataChange={setHasVoiceData}
               saveDraft={saveDraft}
               loadTranscript={loadTranscript}
               loadSuggestedCategory={loadSuggestedCategory}
             />
           </TabsContent>
-          <TabsContent value="manual">
-            <ManualTransactionForm
-              setValue={setValue}
-              onDataChange={setHasManualData}
-              register={register}
-              errors={errors}
-              getValues={getValues}
-              onSubmit={onSubmit}
-              isSubmitting={createTransaction.isPending}
-              saveDraft={saveDraft}
-            />
-          </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveModalContent>
+
+      <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações não salvas. Deseja realmente trocar o método
+              de entrada? Suas alterações serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmTabChange}>
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </ResponsiveModal>
   );
 }

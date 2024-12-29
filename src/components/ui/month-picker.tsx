@@ -7,6 +7,7 @@ import {
 } from "@/src/components/ui/popover";
 import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
+import { ScrollArea } from "@/src/components/ui/scroll-area";
 
 type MonthPickerProps = {
   /** The currently selected date */
@@ -32,10 +33,14 @@ const MONTHS = [
   "DEZ",
 ] as const;
 
-const YEARS_TO_SHOW = 7;
+const INITIAL_YEAR = 2000;
 
 const generateYearRange = (currentYear: number): number[] => {
-  return Array.from({ length: YEARS_TO_SHOW + 1 }, (_, i) => currentYear - i);
+  const years: number[] = [];
+  for (let year = currentYear; year >= INITIAL_YEAR; year--) {
+    years.push(year);
+  }
+  return years;
 };
 
 export const MonthPicker = React.memo(function MonthPicker({
@@ -45,6 +50,9 @@ export const MonthPicker = React.memo(function MonthPicker({
 }: MonthPickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedYear, setSelectedYear] = React.useState(value.getFullYear());
+
+  const currentMonth = value.getMonth();
+  const currentYear = value.getFullYear();
 
   // Memoize years array since it only depends on the current year
   const years = React.useMemo(
@@ -65,12 +73,13 @@ export const MonthPicker = React.memo(function MonthPicker({
     [selectedYear, onSelect]
   );
 
-  const handleSelectYear = React.useCallback((year: number) => {
-    setSelectedYear(year);
-  }, []);
-
-  const currentMonth = value.getMonth();
-  const currentYear = value.getFullYear();
+  const handleSelectYear = React.useCallback(
+    (year: number) => {
+      setSelectedYear(year);
+      onSelect({ month: currentMonth, year });
+    },
+    [currentMonth, onSelect]
+  );
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -101,7 +110,8 @@ export const MonthPicker = React.memo(function MonthPicker({
               >
                 {MONTHS.map((month, index) => {
                   const isSelected =
-                    index === currentMonth && selectedYear === currentYear;
+                    index === currentMonth &&
+                    selectedYear === value.getFullYear();
 
                   return (
                     <div
@@ -128,34 +138,34 @@ export const MonthPicker = React.memo(function MonthPicker({
                 })}
               </div>
             </div>
-            <div
-              className="border-l p-2 flex flex-col gap-1"
-              role="listbox"
-              aria-label="Anos"
-            >
-              {years.map((year) => (
-                <div
-                  key={year}
-                  role="option"
-                  aria-selected={selectedYear === year}
-                  onClick={() => handleSelectYear(year)}
-                  className={cn(
-                    "px-3 py-1 rounded-md text-sm",
-                    "cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors",
-                    selectedYear === year &&
-                      "bg-primary text-primary-foreground"
-                  )}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleSelectYear(year);
-                    }
-                  }}
-                >
-                  {year}
+            <div className="border-l" role="listbox" aria-label="Anos">
+              <ScrollArea className="h-[192px] px-1.5 pb-0">
+                <div className="py-2 flex flex-col gap-1">
+                  {years.map((year) => (
+                    <div
+                      key={year}
+                      role="option"
+                      aria-selected={selectedYear === year}
+                      onClick={() => handleSelectYear(year)}
+                      className={cn(
+                        "px-3 py-1 rounded-md text-sm",
+                        "cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors",
+                        selectedYear === year &&
+                          "bg-primary text-primary-foreground"
+                      )}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleSelectYear(year);
+                        }
+                      }}
+                    >
+                      {year}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </ScrollArea>
             </div>
           </div>
         </PopoverContent>

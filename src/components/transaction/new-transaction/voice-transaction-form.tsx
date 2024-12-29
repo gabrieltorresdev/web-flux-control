@@ -209,7 +209,7 @@ export const VoiceTransactionForm = memo(
         >
           <div className="flex flex-col items-center gap-2">
             {listening && <RecordingStatus />}
-            {!listening && !transcript && <RecordingInstruction />}
+            {!listening && <RecordingInstruction />}
             <MicrophoneButton
               listening={listening}
               onClick={listening ? stopListening : startListening}

@@ -1,11 +1,11 @@
 import { CreateTransactionInput, Transaction } from "@/src/types/transaction";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "../ui/responsive-modal";
 import { TransactionForm } from "./new-transaction/transaction-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,14 +66,14 @@ export function EditTransactionDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar Transação</DialogTitle>
-          <DialogDescription>
+    <ResponsiveModal open={open} onOpenChange={onOpenChange}>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Editar Transação</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
             Edite os dados da transação e clique em salvar para atualizar.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
         <TransactionForm
           onSubmit={onSubmit}
           register={register}
@@ -82,7 +82,7 @@ export function EditTransactionDialog({
           setValue={setValue}
           isSubmitting={updateTransaction.isPending}
         />
-      </DialogContent>
-    </Dialog>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

@@ -145,7 +145,7 @@ const CategoryGroup = memo(({ title, categories }: CategoryGroupProps) => {
 });
 
 const EmptyState = memo(() => (
-  <div className="flex flex-col items-center justify-center h-64 space-y-4 animate-in fade-in-50">
+  <div className="flex flex-col items-center justify-center h-48 space-y-4 animate-in fade-in-50">
     <Tag className="h-12 w-12 text-muted-foreground/50" />
     <p className="text-muted-foreground text-center">
       Nenhuma categoria encontrada

@@ -18,6 +18,7 @@ import {
   DrawerTrigger,
 } from "../ui/drawer";
 import { useIsMobile } from "@/src/hooks/use-mobile";
+import { CategoryIcon } from "../category/category-icon";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -58,7 +59,7 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
           <DrawerDescription></DrawerDescription>
         </DrawerHeader>
         <DrawerTrigger asChild>
-          <div className="group transition-all duration-200 active:bg-gray-50 p-3 touch-manipulation">
+          <div className="group transition-all duration-200 active:bg-muted/50 p-3 touch-manipulation">
             <TransactionContent
               transaction={transaction}
               isMobile={isMobile}
@@ -77,7 +78,7 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
   }
 
   return (
-    <div className="group transition-all duration-200 hover:bg-gray-50 p-3">
+    <div className="group transition-all duration-200 hover:bg-muted/50 p-3">
       <TransactionContent
         transaction={transaction}
         isMobile={isMobile}
@@ -108,52 +109,58 @@ const TransactionContent = memo(
       <div className="flex items-center gap-3">
         <div
           className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+            "w-6 h-6 rounded-full flex items-center justify-center transition-colors shrink-0",
             isIncome ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
           )}
           aria-hidden="true"
         >
-          {isIncome ? (
-            <ArrowUpRight className="h-5 w-5" />
+          {transaction.category ? (
+            <CategoryIcon
+              icon={transaction.category.icon}
+              isIncome={isIncome}
+              className="h-4 w-4"
+            />
+          ) : isIncome ? (
+            <ArrowUpRight className="h-4 w-4" />
           ) : (
-            <ArrowDownRight className="h-5 w-5" />
+            <ArrowDownRight className="h-4 w-4" />
           )}
         </div>
-        <div className="flex-1">
-          <h3 className="font-medium text-gray-900 line-clamp-1 break-all">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-foreground truncate text-sm">
             {transaction.title}
           </h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-muted-foreground">
-              {transaction.category?.name}
-            </span>
-          </div>
+          <span className="text-xs text-muted-foreground truncate">
+            {transaction.category?.name}
+          </span>
         </div>
-        <div className="flex flex-col items-end">
-          <p
-            className={cn(
-              "font-medium text-base tabular-nums transition-colors",
-              isIncome ? "text-green-600" : "text-red-600"
-            )}
-          >
-            {isIncome ? "+" : "-"}
-            {formattedAmount}
-          </p>
-          <time
-            dateTime={new Date(transaction.dateTime).toISOString()}
-            className="text-xs text-muted-foreground"
-          >
-            {formattedTime}
-          </time>
-        </div>
-        {!isMobile && (
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <TransactionActions
-              transaction={transaction}
-              onDelete={handleDelete}
-            />
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col justify-center items-end">
+            <p
+              className={cn(
+                "text-sm font-medium tabular-nums transition-colors whitespace-nowrap",
+                isIncome ? "text-green-600" : "text-red-600"
+              )}
+            >
+              {isIncome ? "+" : "-"}
+              {formattedAmount}
+            </p>
+            <time
+              dateTime={new Date(transaction.dateTime).toISOString()}
+              className="text-xs text-muted-foreground"
+            >
+              {formattedTime}
+            </time>
           </div>
-        )}
+          {!isMobile && (
+            <div>
+              <TransactionActions
+                transaction={transaction}
+                onDelete={handleDelete}
+              />
+            </div>
+          )}
+        </div>
       </div>
     );
   }
