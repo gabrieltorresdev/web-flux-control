@@ -1,40 +1,36 @@
-import * as React from "react";
+"use client";
+
 import { MonthPicker } from "../ui/month-picker";
 
 interface DateFilterProps {
-  /** The currently selected date */
   currentDate: Date;
-  /** Callback fired when a month is selected */
   onSelectMonth: (month: number) => void;
-  /** Callback fired when a year is selected */
   onSelectYear: (year: number) => void;
 }
 
-export const DateFilter = React.memo(function DateFilter({
+export function DateFilter({
   currentDate,
   onSelectMonth,
   onSelectYear,
 }: DateFilterProps) {
-  const handleSelect = React.useCallback(
-    ({ month, year }: { month: number; year: number }) => {
-      // Only update if values actually changed to prevent unnecessary rerenders
-      if (year !== currentDate.getFullYear()) {
-        onSelectYear(year);
-      }
-      if (month !== currentDate.getMonth()) {
-        onSelectMonth(month);
-      }
-    },
-    [currentDate, onSelectMonth, onSelectYear]
-  );
+  function handleSelect({ month, year }: { month: number; year: number }) {
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    if (year !== currentYear) {
+      onSelectYear(year);
+    }
+    if (month !== currentMonth) {
+      onSelectMonth(month);
+    }
+  }
 
   return (
     <MonthPicker
       className="w-full"
       value={currentDate}
       onSelect={handleSelect}
+      aria-label="Select month and year"
     />
   );
-});
-
-DateFilter.displayName = "DateFilter";
+}

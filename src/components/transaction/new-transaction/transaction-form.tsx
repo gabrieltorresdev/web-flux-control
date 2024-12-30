@@ -1,15 +1,16 @@
 "use client";
 
-import { useDebounce } from "@/src/hooks/lib/use-debounce";
-import { CategoryService } from "@/src/services/category-service";
-import { Category } from "@/src/types/category";
-import { CreateTransactionInput } from "@/src/types/transaction";
+import { useDebounce } from "@/hooks/lib/use-debounce";
+import { CategoryService } from "@/services/category-service";
+import { Category } from "@/types/category";
+import { CreateTransactionInput } from "@/types/transaction";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FieldErrors,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetError,
   UseFormSetValue,
 } from "react-hook-form";
 import { Input } from "../../ui/input";
@@ -21,7 +22,7 @@ import {
   Loader2,
   Plus,
 } from "lucide-react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Button } from "../../ui/button";
 import {
@@ -32,7 +33,7 @@ import {
 } from "../../ui/command";
 import { CreateCategoryDialog } from "../../category/create-category-dialog";
 import { DateTimePicker } from "../../ui/date-time-picker";
-import { useIsMobile } from "@/src/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
@@ -42,6 +43,7 @@ import {
   SheetTrigger,
 } from "../../ui/sheet";
 import { CategorySelectItem } from "../../category/category-select-item";
+import { ValidationError } from "@/lib/api/error-handler";
 
 interface TransactionFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -49,6 +51,7 @@ interface TransactionFormProps {
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
   setValue: UseFormSetValue<CreateTransactionInput>;
+  setError: UseFormSetError<CreateTransactionInput>;
   suggestedCategory?: string;
   onCreateCategory?: (name: string) => void;
   isSubmitting?: boolean;
@@ -228,6 +231,7 @@ export const TransactionForm = memo(
     errors,
     getValues,
     setValue,
+    setError,
     suggestedCategory,
     onCreateCategory,
     isSubmitting = false,
@@ -339,11 +343,19 @@ export const TransactionForm = memo(
           } else {
             setFormState((prev) => ({ ...prev, isSubmitting: false }));
           }
-        } catch {
+        } catch (error) {
           setFormState((prev) => ({ ...prev, isSubmitting: false }));
+          if (error instanceof ValidationError) {
+            Object.entries(error.errors).forEach(([field, messages]) => {
+              setError(field as keyof CreateTransactionInput, {
+                type: "manual",
+                message: messages[0],
+              });
+            });
+          }
         }
       },
-      [onSubmit, errors]
+      [onSubmit, errors, setError]
     );
 
     const handleSearchChange = useCallback((value: string) => {

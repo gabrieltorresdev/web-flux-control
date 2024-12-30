@@ -1,6 +1,6 @@
 "use client";
 
-import { Category } from "@/src/types/category";
+import { Category } from "@/types/category";
 import { memo, useState } from "react";
 import { Button } from "../ui/button";
 import { MoreVertical, Pencil, Trash } from "lucide-react";
@@ -20,12 +20,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { EditCategoryDialog } from "@/src/components/category/edit-category-dialog";
-import { useDeleteCategory } from "@/src/hooks/use-categories";
-import { useToast } from "@/src/hooks/use-toast";
+import { EditCategoryDialog } from "@/components/category/edit-category-dialog";
+import { useDeleteCategory } from "@/hooks/use-categories";
+import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/src/lib/utils";
-import { useIsMobile } from "@/src/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
   DrawerContent,

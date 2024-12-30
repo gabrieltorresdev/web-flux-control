@@ -1,8 +1,12 @@
-import { CategoryService } from "@/src/services/category-service";
+import { CategoryService } from "@/services/category-service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Category, CreateCategoryInput } from "../types/category";
 import { queryKeys } from "../lib/get-query-client";
 import { ApiResponse } from "../types/api";
+import {
+  handleValidationError,
+  ValidationError,
+} from "@/lib/api/error-handler";
 
 export function useCategories(searchTerm?: string) {
   return useQuery({
@@ -16,9 +20,21 @@ export function useCategories(searchTerm?: string) {
 export function useCreateCategory() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (data: CreateCategoryInput) =>
-      new CategoryService().create(data),
+  return useMutation<
+    ApiResponse<Category>,
+    ValidationError | Error,
+    CreateCategoryInput
+  >({
+    mutationFn: async (data: CreateCategoryInput) => {
+      try {
+        return await new CategoryService().create(data);
+      } catch (error) {
+        throw handleValidationError(error);
+      }
+    },
+    retry: (_, error) => {
+      return !(error instanceof ValidationError);
+    },
     onSuccess: (newCategory: ApiResponse<Category>) => {
       // Update categories list cache
       queryClient.setQueryData<ApiResponse<Category[]>>(
@@ -69,8 +85,17 @@ export function useFindCategoryByName(name: string) {
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (id: string) => new CategoryService().delete(id),
+  return useMutation<void, ValidationError | Error, string>({
+    mutationFn: async (id: string) => {
+      try {
+        await new CategoryService().delete(id);
+      } catch (error) {
+        throw handleValidationError(error);
+      }
+    },
+    retry: (_, error) => {
+      return !(error instanceof ValidationError);
+    },
     onSuccess: (_, deletedId) => {
       // Update categories list cache
       queryClient.setQueryData<ApiResponse<Category[]>>(
@@ -96,8 +121,17 @@ export function useDeleteCategory() {
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (data: Category) => new CategoryService().update(data),
+  return useMutation<ApiResponse<Category>, ValidationError | Error, Category>({
+    mutationFn: async (data: Category) => {
+      try {
+        return await new CategoryService().update(data);
+      } catch (error) {
+        throw handleValidationError(error);
+      }
+    },
+    retry: (_, error) => {
+      return !(error instanceof ValidationError);
+    },
     onSuccess: (updatedCategory: ApiResponse<Category>) => {
       // Update categories list cache
       queryClient.setQueryData<ApiResponse<Category[]>>(

@@ -1,12 +1,12 @@
-import { Button, buttonVariants } from "@/src/components/ui/button";
-import type { CalendarProps } from "@/src/components/ui/calendar";
-import { Input } from "@/src/components/ui/input";
+import { Button, buttonVariants } from "@/components/ui/button";
+import type { CalendarProps } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/src/components/ui/popover";
-import { cn } from "@/src/lib/utils";
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { add, format } from "date-fns";
 import { type Locale, ptBR } from "date-fns/locale";
 import {
@@ -24,7 +24,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/src/components/ui/select";
+} from "@/components/ui/select";
 import { DayPicker } from "react-day-picker";
 
 // ---------- utils start ----------

@@ -1,12 +1,12 @@
-import { CategoryList } from "@/src/components/category/category-list";
-import { NewCategoryButton } from "@/src/components/category/new-category-button";
+import { CategoryList } from "@/components/category/category-list";
+import { NewCategoryButton } from "@/components/category/new-category-button";
 import {
   prefetchCategories,
   getDehydratedState,
-} from "@/src/lib/ssr/prefetch-query";
+} from "@/lib/ssr/prefetch-query";
 import { HydrationBoundary } from "@tanstack/react-query";
 import { Suspense } from "react";
-import { LoadingSpinner } from "@/src/components/ui/loading-spinner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default async function CategoriesPage() {
   const queryClient = await prefetchCategories();

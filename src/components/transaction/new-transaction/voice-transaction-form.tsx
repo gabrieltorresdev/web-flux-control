@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, memo, useState } from "react";
-import { useVoiceRecognition } from "@/src/hooks/lib/use-voice-recognition";
+import { useVoiceRecognition } from "@/hooks/lib/use-voice-recognition";
 import { Button } from "../../ui/button";
 import { Textarea } from "../../ui/textarea";
 import {
@@ -15,11 +15,11 @@ import {
   Check,
   AlertTriangle,
 } from "lucide-react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
-import { CreateTransactionInput } from "@/src/types/transaction";
-import { AiTransactionService } from "@/src/services/ai/ai-transaction-service";
-import { CategoryService } from "@/src/services/category-service";
+import { CreateTransactionInput } from "@/types/transaction";
+import { AiTransactionService } from "@/services/ai/ai-transaction-service";
+import { CategoryService } from "@/services/category-service";
 import { TransactionForm } from "./transaction-form";
 import {
   FieldErrors,
@@ -27,9 +27,9 @@ import {
   UseFormRegister,
   UseFormSetValue,
 } from "react-hook-form";
-import { CreateCategoryDialog } from "@/src/components/category/create-category-dialog";
-import { GoogleGenerativeAiService } from "@/src/services/ai/providers/google-generative-ai-service";
-import { useDebounce } from "@/src/hooks/lib/use-debounce";
+import { CreateCategoryDialog } from "@/components/category/create-category-dialog";
+import { GoogleGenerativeAiService } from "@/services/ai/providers/google-generative-ai-service";
+import { useDebounce } from "@/hooks/lib/use-debounce";
 
 interface VoiceTransactionFormProps {
   onDataChange: (hasData: boolean) => void;

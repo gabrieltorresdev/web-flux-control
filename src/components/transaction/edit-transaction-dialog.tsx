@@ -1,4 +1,4 @@
-import { CreateTransactionInput, Transaction } from "@/src/types/transaction";
+import { CreateTransactionInput, Transaction } from "@/types/transaction";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -9,15 +9,23 @@ import {
 import { TransactionForm } from "./new-transaction/transaction-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { transactionSchema } from "@/src/lib/validations/transaction";
-import { useUpdateTransaction } from "@/src/hooks/use-transactions";
-import { useToast } from "@/src/hooks/use-toast";
+import { transactionSchema } from "@/lib/validations/transaction";
+import { useUpdateTransaction } from "@/hooks/use-transactions";
+import { useToast } from "@/hooks/use-toast";
+import { ValidationError } from "@/lib/api/error-handler";
 
 interface EditTransactionDialogProps {
   transaction: Transaction;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+type EditTransactionFormData = {
+  title: string;
+  amount: number;
+  dateTime: Date;
+  categoryId: string;
+};
 
 export function EditTransactionDialog({
   transaction,
@@ -33,6 +41,7 @@ export function EditTransactionDialog({
     formState: { errors },
     getValues,
     setValue,
+    setError,
   } = useForm<CreateTransactionInput>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -43,22 +52,24 @@ export function EditTransactionDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async (data: EditTransactionFormData) => {
     try {
       await updateTransaction.mutateAsync({
         id: transaction.id,
         ...data,
-        dateTime: data.dateTime,
-        categoryId: data.categoryId!,
       });
       onOpenChange(false);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          setError(field as keyof EditTransactionFormData, {
+            message: messages[0],
+          });
+        });
+        return;
+      }
       toast({
-        title: "Transação atualizada",
-        description: "A transação foi atualizada com sucesso.",
-      });
-    } catch {
-      toast({
-        title: "Erro ao atualizar",
+        title: "Erro ao atualizar transação",
         description: "Ocorreu um erro ao atualizar a transação.",
         variant: "destructive",
       });
@@ -80,6 +91,7 @@ export function EditTransactionDialog({
           errors={errors}
           getValues={getValues}
           setValue={setValue}
+          setError={setError}
           isSubmitting={updateTransaction.isPending}
         />
       </ResponsiveModalContent>

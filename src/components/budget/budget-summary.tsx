@@ -1,19 +1,14 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
-import { BudgetService } from "@/src/services/budget-service";
-import { BudgetSummary as IBudgetSummary } from "@/src/types/budget";
-import { formatCurrency } from "@/src/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BudgetService } from "@/services/budget-service";
+import { BudgetSummary as IBudgetSummary } from "@/types/budget";
+import { formatCurrency } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { Progress } from "@/src/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 
 export function BudgetSummary() {

@@ -30,7 +30,7 @@ export class HttpClient {
         throw new ApiError(
           response.status,
           errorData.message || `HTTP error! status: ${response.status}`,
-          errorData
+          errorData.errors
         );
       }
 

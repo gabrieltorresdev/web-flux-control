@@ -14,13 +14,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { useToast } from "@/src/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { Category, CreateCategoryInput } from "@/src/types/category";
-import { useUpdateCategory } from "@/src/hooks/use-categories";
+import { Category, CreateCategoryInput } from "@/types/category";
+import { useUpdateCategory } from "@/hooks/use-categories";
+import { cn } from "@/lib/utils";
 import { IconPicker } from "./icon-picker";
+import { ValidationError } from "@/lib/api/error-handler";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const updateCategorySchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  type: z.enum(["income", "expense"]),
+  icon: z.string().optional(),
+});
 
 interface EditCategoryDialogProps {
   category: Category;
@@ -41,8 +51,10 @@ export function EditCategoryDialog({
     handleSubmit,
     setValue,
     watch,
+    setError,
     formState: { errors },
   } = useForm<CreateCategoryInput>({
+    resolver: zodResolver(updateCategorySchema),
     defaultValues: {
       name: category.name,
       type: category.type,
@@ -55,41 +67,36 @@ export function EditCategoryDialog({
   const updateCategory = useUpdateCategory();
 
   const onSubmit = handleSubmit(async (data) => {
-    if (!data.name.trim()) {
-      toast({
-        title: "Nome obrigatório",
-        description: "Digite um nome para a categoria",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    updateCategory.mutate(
-      {
+    try {
+      await updateCategory.mutateAsync({
         id: category.id,
         name: data.name.trim(),
         type: data.type,
         is_default: category.is_default,
         icon: data.icon,
-      },
-      {
-        onSuccess: () => {
-          onOpenChange(false);
-          queryClient.invalidateQueries({ queryKey: ["categories"] });
-          toast({
-            title: "Categoria atualizada",
-            description: "Categoria atualizada com sucesso",
+      });
+      onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast({
+        title: "Categoria atualizada",
+        description: "Categoria atualizada com sucesso",
+      });
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          setError(field as keyof CreateCategoryInput, {
+            type: "manual",
+            message: messages[0],
           });
-        },
-        onError: () => {
-          toast({
-            title: "Erro ao atualizar categoria",
-            description: "Ocorreu um erro ao atualizar a categoria",
-            variant: "destructive",
-          });
-        },
+        });
+      } else {
+        toast({
+          title: "Erro ao atualizar categoria",
+          description: "Ocorreu um erro ao atualizar a categoria",
+          variant: "destructive",
+        });
       }
-    );
+    }
   });
 
   return (
@@ -101,13 +108,18 @@ export function EditCategoryDialog({
             Edite os dados da categoria e clique em salvar para atualizar
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Nome</label>
             <Input
               {...register("name")}
               placeholder="Ex: Alimentação"
-              className={errors.name && "border-red-500"}
+              className={cn(
+                "h-12 text-base px-4",
+                errors.name && "border-red-500"
+              )}
+              autoComplete="off"
+              autoCapitalize="words"
             />
             {errors.name && (
               <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -118,36 +130,42 @@ export function EditCategoryDialog({
             <Select
               defaultValue={category.type}
               onValueChange={(value) =>
-                register("type").onChange({
-                  target: { value, name: "type" },
-                })
+                setValue("type", value as "income" | "expense")
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-12 text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="expense">Despesa</SelectItem>
-                <SelectItem value="income">Receita</SelectItem>
+                <SelectItem value="expense" className="py-3 text-base">
+                  Despesa
+                </SelectItem>
+                <SelectItem value="income" className="py-3 text-base">
+                  Receita
+                </SelectItem>
               </SelectContent>
             </Select>
+            {errors.type && (
+              <p className="text-sm text-red-500">{errors.type.message}</p>
+            )}
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Ícone</label>
+            <label className="text-sm font-medium">Ícone (opcional)</label>
             <IconPicker
               value={selectedIcon}
-              onChange={(value) => setValue("icon", value)}
+              onChange={(icon) => setValue("icon", icon)}
             />
           </div>
           <Button
             type="submit"
-            className="w-full"
+            className="w-full h-12 text-base"
             disabled={updateCategory.isPending}
           >
             {updateCategory.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
-            Salvar Alterações
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              "Salvar Alterações"
+            )}
           </Button>
         </form>
       </ResponsiveModalContent>

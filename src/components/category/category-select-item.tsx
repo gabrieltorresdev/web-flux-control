@@ -1,4 +1,4 @@
-import { Category } from "@/src/types/category";
+import { Category } from "@/types/category";
 import { CategoryIcon } from "./category-icon";
 
 interface CategorySelectItemProps {

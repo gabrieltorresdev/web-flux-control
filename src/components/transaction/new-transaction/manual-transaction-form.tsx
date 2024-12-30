@@ -2,14 +2,14 @@
 
 import { useEffect, memo } from "react";
 import { TransactionForm } from "./transaction-form";
-import { CreateTransactionInput } from "@/src/types/transaction";
+import { CreateTransactionInput } from "@/types/transaction";
 import {
   FieldErrors,
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
 } from "react-hook-form";
-import { useDebounce } from "@/src/hooks/lib/use-debounce";
+import { useDebounce } from "@/hooks/lib/use-debounce";
 
 interface ManualTransactionFormProps {
   onDataChange: (hasData: boolean) => void;

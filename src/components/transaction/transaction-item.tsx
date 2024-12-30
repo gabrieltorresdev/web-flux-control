@@ -1,14 +1,14 @@
 "use client";
 
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 import { memo, useCallback, useMemo } from "react";
-import { Transaction } from "@/src/types/transaction";
+import { Transaction } from "@/types/transaction";
 import { format } from "date-fns";
-import { formatNumberToBRL } from "@/src/lib/utils";
+import { formatNumberToBRL } from "@/lib/utils";
 import { TransactionActions } from "./transaction-actions";
-import { useDeleteTransaction } from "@/src/hooks/use-transactions";
-import { useToast } from "@/src/hooks/use-toast";
+import { useDeleteTransaction } from "@/hooks/use-transactions";
+import { useToast } from "@/hooks/use-toast";
 import {
   Drawer,
   DrawerContent,
@@ -17,7 +17,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
-import { useIsMobile } from "@/src/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CategoryIcon } from "../category/category-icon";
 
 interface TransactionItemProps {

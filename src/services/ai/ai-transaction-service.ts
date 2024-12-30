@@ -1,4 +1,4 @@
-import { AiTransactionInput } from "@/src/types/transaction";
+import { AiTransactionInput } from "@/types/transaction";
 import { IGenerativeAiService } from "./providers/generative-ai-service";
 
 export class AiTransactionService {

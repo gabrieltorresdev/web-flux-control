@@ -5,8 +5,8 @@ import {
   ApiBudgetSummaryResponse,
   Budget,
   CreateBudgetInput,
-} from "@/src/types/budget";
-import { Transaction } from "@/src/types/transaction";
+} from "@/types/budget";
+import { Transaction } from "@/types/transaction";
 
 // Mock data
 const mockBudgets: Budget[] = [

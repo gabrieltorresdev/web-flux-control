@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, ReactNode } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ResponsiveModal,
   ResponsiveModalTrigger,
@@ -24,24 +26,28 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "../../ui/alert-dialog";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { transactionSchema } from "@/src/lib/validations/transaction";
-import { CreateTransactionInput } from "@/src/types/transaction";
-import { useCreateTransaction } from "@/src/hooks/use-transactions";
-import { toast } from "@/src/hooks/use-toast";
-import { useDraftTransaction } from "@/src/hooks/use-draft-transaction";
+import { useToast } from "@/hooks/use-toast";
+import { useCreateTransaction } from "@/hooks/use-transactions";
+import { ValidationError } from "@/lib/api/error-handler";
+import { transactionSchema } from "@/lib/validations/transaction";
+import { CreateTransactionInput } from "@/types/transaction";
+import { useDraftTransaction } from "@/hooks/use-draft-transaction";
 
 interface NewTransactionDialogProps {
   initialDate?: Date;
+  onClose: () => void;
+  open: boolean;
   children?: ReactNode;
 }
 
+type NewTransactionFormData = CreateTransactionInput;
+
 export function NewTransactionDialog({
   initialDate,
+  onClose,
+  open,
   children,
 }: NewTransactionDialogProps) {
-  const [open, setOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState<"manual" | "voice">("manual");
   const [showAlert, setShowAlert] = useState(false);
   const [pendingTabChange, setPendingTabChange] = useState<
@@ -51,18 +57,24 @@ export function NewTransactionDialog({
   const [hasManualData, setHasManualData] = useState(false);
 
   const createTransaction = useCreateTransaction();
+  const { toast } = useToast();
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    getValues,
+    setError,
     setValue,
+    getValues,
     reset,
     watch,
-  } = useForm<CreateTransactionInput>({
+    formState: { errors },
+  } = useForm<NewTransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
+      title: "",
+      amount: 0,
       dateTime: initialDate ?? new Date(),
+      categoryId: "",
     },
   });
 
@@ -71,6 +83,7 @@ export function NewTransactionDialog({
 
   // Salvar rascunho quando houver mudanças no formulário
   useEffect(() => {
+    let unsubscribe: () => void;
     const subscription = watch(() => {
       if (hasManualData || hasVoiceData) {
         // Preservar o transcript ao salvar o rascunho
@@ -79,7 +92,14 @@ export function NewTransactionDialog({
         saveDraft(currentTranscript, currentSuggestedCategory);
       }
     });
-    return () => subscription.unsubscribe();
+    if (typeof subscription === "function") {
+      unsubscribe = subscription;
+    }
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [
     watch,
     saveDraft,
@@ -89,21 +109,32 @@ export function NewTransactionDialog({
     loadSuggestedCategory,
   ]);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async (data: NewTransactionFormData) => {
     try {
       await createTransaction.mutateAsync(data);
       clearDraft();
       reset();
       setHasVoiceData(false);
       setHasManualData(false);
-      setOpen(false);
+      onClose();
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        const validationError = error as ValidationError;
+        if (validationError.errors) {
+          Object.entries(validationError.errors).forEach(
+            ([field, messages]) => {
+              if (Array.isArray(messages) && messages.length > 0) {
+                setError(field as keyof NewTransactionFormData, {
+                  message: messages[0],
+                });
+              }
+            }
+          );
+          return;
+        }
+      }
       toast({
-        title: "Transação criada",
-        description: "A transação foi criada com sucesso.",
-      });
-    } catch {
-      toast({
-        title: "Erro ao criar a transação",
+        title: "Erro ao criar transação",
         description: "Ocorreu um erro ao criar a transação.",
         variant: "destructive",
       });
@@ -111,17 +142,19 @@ export function NewTransactionDialog({
   });
 
   const handleTabChange = useCallback(
-    (value: "manual" | "voice") => {
-      if (value !== currentTab) {
-        const shouldShowAlert =
-          (currentTab === "voice" && hasVoiceData && value === "manual") ||
-          (currentTab === "manual" && hasManualData && value === "voice");
+    (value: string) => {
+      if (value === "manual" || value === "voice") {
+        if (value !== currentTab) {
+          const shouldShowAlert =
+            (currentTab === "voice" && hasVoiceData && value === "manual") ||
+            (currentTab === "manual" && hasManualData && value === "voice");
 
-        if (shouldShowAlert) {
-          setShowAlert(true);
-          setPendingTabChange(value);
-        } else {
-          setCurrentTab(value);
+          if (shouldShowAlert) {
+            setShowAlert(true);
+            setPendingTabChange(value as "manual" | "voice");
+          } else {
+            setCurrentTab(value as "manual" | "voice");
+          }
         }
       }
     },
@@ -142,46 +175,37 @@ export function NewTransactionDialog({
   }, [pendingTabChange]);
 
   return (
-    <ResponsiveModal open={open} onOpenChange={setOpen}>
+    <ResponsiveModal open={open} onOpenChange={onClose}>
       <ResponsiveModalTrigger asChild>
-        {children || (
-          <Button
-            size="lg"
-            className="rounded-full shadow-lg hover:shadow-xl transition-all duration-200 gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span className="font-medium">Nova transação</span>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon">
+            <Plus className="h-4 w-4" />
           </Button>
-        )}
+          {children}
+        </div>
       </ResponsiveModalTrigger>
 
       <ResponsiveModalContent>
         <ResponsiveModalHeader>
-          <ResponsiveModalTitle>Nova transação</ResponsiveModalTitle>
-          <ResponsiveModalDescription></ResponsiveModalDescription>
+          <ResponsiveModalTitle>Nova Transação</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            Adicione uma nova transação manualmente ou por voz.
+          </ResponsiveModalDescription>
         </ResponsiveModalHeader>
 
-        <Tabs
-          value={currentTab}
-          onValueChange={(value: string) => {
-            if (value === "manual" || value === "voice") {
-              handleTabChange(value);
-            }
-          }}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="manual" className="gap-2">
-              <Keyboard className="h-4 w-4" />
+        <Tabs value={currentTab} onValueChange={handleTabChange}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manual">
+              <Keyboard className="mr-2 h-4 w-4" />
               Manual
             </TabsTrigger>
-            <TabsTrigger value="voice" className="gap-2">
-              <Mic className="h-4 w-4" />
-              Por voz
+            <TabsTrigger value="voice">
+              <Mic className="mr-2 h-4 w-4" />
+              Voz
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="manual" className="mt-0">
+          <TabsContent value="manual">
             <ManualTransactionForm
               onSubmit={onSubmit}
               register={register}
@@ -194,7 +218,7 @@ export function NewTransactionDialog({
             />
           </TabsContent>
 
-          <TabsContent value="voice" className="mt-0">
+          <TabsContent value="voice">
             <VoiceTransactionForm
               onSubmit={onSubmit}
               register={register}
@@ -215,14 +239,13 @@ export function NewTransactionDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você tem alterações não salvas. Deseja realmente trocar o método
-              de entrada? Suas alterações serão perdidas.
+              Você tem alterações não salvas. Deseja descartá-las?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmTabChange}>
-              Continuar
+              Descartar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

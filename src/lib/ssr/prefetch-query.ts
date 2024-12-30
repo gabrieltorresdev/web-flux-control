@@ -1,7 +1,7 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { getQueryClient } from "../get-query-client";
-import { CategoryService } from "@/src/services/category-service";
-import { TransactionService } from "@/src/services/transaction-service";
+import { CategoryService } from "@/services/category-service";
+import { TransactionService } from "@/services/transaction-service";
 import { queryKeys } from "../get-query-client";
 import { startOfMonth, endOfMonth } from "date-fns";
 

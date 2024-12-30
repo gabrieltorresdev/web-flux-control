@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import { useCallback, useRef, useState } from "react";
 import { DateFilter } from "./date-filter";
-import { useQueryParams } from "@/src/hooks/use-search-params";
-import type { TransactionFilters as TransactionFiltersType } from "@/src/types/filters";
+import { useQueryParams } from "@/hooks/use-search-params";
+import type { TransactionFilters as TransactionFiltersType } from "@/types/filters";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -18,71 +18,67 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
   const { getParams } = useQueryParams<TransactionFiltersType>();
   const now = new Date();
 
-  // Inicializa com os valores da URL ou data atual
-  const [currentDate, setCurrentDate] = React.useState(() => {
-    // Converte o mês de 1-12 para 0-11 para o Date
+  // Use o hook useRef para manter uma referência estável da data atual
+  const currentDateRef = useRef(new Date());
+
+  // Use o hook useState com uma função de inicialização
+  const [currentDate, setCurrentDate] = useState(() => {
     const month = initialMonth ? parseInt(initialMonth) - 1 : now.getMonth();
     const year = initialYear ? parseInt(initialYear) : now.getFullYear();
 
-    const date = new Date();
-    date.setMonth(month);
-    date.setFullYear(year);
-    return date;
+    currentDateRef.current.setMonth(month);
+    currentDateRef.current.setFullYear(year);
+    return currentDateRef.current;
   });
 
-  const updateURL = React.useCallback(
+  const updateURL = useCallback(
     (date: Date) => {
-      const currentParams = new URLSearchParams();
-      const params = getParams();
+      const searchParams = new URLSearchParams(getParams());
 
-      // Preserve existing params
-      Object.entries(params).forEach(([key, value]) => {
-        if (key !== "month" && key !== "year" && value) {
-          currentParams.set(key, value);
-        }
-      });
+      searchParams.set("month", (date.getMonth() + 1).toString());
+      searchParams.set("year", date.getFullYear().toString());
 
-      // Add new date params
-      currentParams.set("month", (date.getMonth() + 1).toString());
-      currentParams.set("year", date.getFullYear().toString());
-
-      router.push(`?${currentParams.toString()}`);
+      router.replace(`?${searchParams.toString()}`, { scroll: false });
     },
     [getParams, router]
   );
 
-  const handlePreviousMonth = React.useCallback(() => {
+  const handleDateChange = useCallback(
+    (newDate: Date) => {
+      setCurrentDate(newDate);
+      updateURL(newDate);
+    },
+    [updateURL]
+  );
+
+  const handlePreviousMonth = useCallback(() => {
     const newDate = new Date(currentDate);
     newDate.setMonth(currentDate.getMonth() - 1);
-    setCurrentDate(newDate);
-    updateURL(newDate);
-  }, [currentDate, updateURL]);
+    handleDateChange(newDate);
+  }, [currentDate, handleDateChange]);
 
-  const handleNextMonth = React.useCallback(() => {
+  const handleNextMonth = useCallback(() => {
     const newDate = new Date(currentDate);
     newDate.setMonth(currentDate.getMonth() + 1);
-    setCurrentDate(newDate);
-    updateURL(newDate);
-  }, [currentDate, updateURL]);
+    handleDateChange(newDate);
+  }, [currentDate, handleDateChange]);
 
-  const handleSelectMonth = React.useCallback(
+  const handleSelectMonth = useCallback(
     (month: number) => {
       const newDate = new Date(currentDate);
       newDate.setMonth(month);
-      setCurrentDate(newDate);
-      updateURL(newDate);
+      handleDateChange(newDate);
     },
-    [currentDate, updateURL]
+    [currentDate, handleDateChange]
   );
 
-  const handleSelectYear = React.useCallback(
+  const handleSelectYear = useCallback(
     (year: number) => {
       const newDate = new Date(currentDate);
       newDate.setFullYear(year);
-      setCurrentDate(newDate);
-      updateURL(newDate);
+      handleDateChange(newDate);
     },
-    [currentDate, updateURL]
+    [currentDate, handleDateChange]
   );
 
   return (

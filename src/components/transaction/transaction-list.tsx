@@ -3,17 +3,17 @@
 import { CircleDollarSign, Loader2 } from "lucide-react";
 import { Card } from "../ui/card";
 import { TransactionItem } from "./transaction-item";
-import { cn, formatNumberToBRL } from "@/src/lib/utils";
-import { Transaction } from "@/src/types/transaction";
+import { cn, formatNumberToBRL } from "@/lib/utils";
+import { Transaction } from "@/types/transaction";
 import {
   formatDateHeader,
   groupTransactionsByDate,
-} from "@/src/lib/utils/transactions";
-import { useTransactions } from "@/src/hooks/use-transactions";
+} from "@/lib/utils/transactions";
+import { useTransactions } from "@/hooks/use-transactions";
 import { Skeleton } from "../ui/skeleton";
 import { useInView } from "react-intersection-observer";
 import { ErrorState } from "../ui/error-state";
-import { memo, useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -27,11 +27,8 @@ interface TransactionGroupProps {
 }
 
 const ITEMS_PER_PAGE = 10;
-const MIN_ITEM_COUNT = 1;
-const MAX_ITEM_COUNT = 1;
-const HEIGHT_THRESHOLD = 800;
 
-const EmptyState = memo(function EmptyState() {
+function EmptyState() {
   return (
     <div
       className="flex flex-col items-center justify-center h-48 space-y-4 animate-in fade-in-50"
@@ -46,20 +43,12 @@ const EmptyState = memo(function EmptyState() {
       </p>
     </div>
   );
-});
+}
 
-const LoadingState = memo(function LoadingState() {
-  const [itemCount, setItemCount] = useState(MIN_ITEM_COUNT);
-
-  useEffect(() => {
-    setItemCount(
-      window.innerHeight > HEIGHT_THRESHOLD ? MAX_ITEM_COUNT : MIN_ITEM_COUNT
-    );
-  }, []);
-
+function LoadingState() {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: itemCount }).map((_, index) => (
+    <div className="space-y-3 max-h-screen">
+      {Array.from({ length: 2 }).map((_, index) => (
         <section key={index} className="space-y-3">
           <Accordion type="single" collapsible defaultValue="transactions">
             <AccordionItem
@@ -103,23 +92,12 @@ const LoadingState = memo(function LoadingState() {
       ))}
     </div>
   );
-});
+}
 
-const TransactionGroup = memo(function TransactionGroup({
-  date,
-  transactions,
-}: TransactionGroupProps) {
-  const total = useMemo(
-    () =>
-      transactions.reduce((acc, t) => {
-        if (t.category.type === "income") {
-          return acc + t.amount;
-        }
-
-        return acc - t.amount;
-      }, 0),
-    [transactions]
-  );
+function TransactionGroup({ date, transactions }: TransactionGroupProps) {
+  const total = transactions.reduce((acc, t) => {
+    return t.category.type === "income" ? acc + t.amount : acc - t.amount;
+  }, 0);
 
   return (
     <Accordion type="single" collapsible defaultValue="transactions">
@@ -149,7 +127,7 @@ const TransactionGroup = memo(function TransactionGroup({
             >
               {total > 0
                 ? `+${formatNumberToBRL(total)}`
-                : `${formatNumberToBRL(total)}`}
+                : formatNumberToBRL(total)}
             </p>
           </div>
         </AccordionTrigger>
@@ -163,9 +141,9 @@ const TransactionGroup = memo(function TransactionGroup({
       </AccordionItem>
     </Accordion>
   );
-});
+}
 
-export const TransactionList = memo(function TransactionList() {
+export function TransactionList() {
   const { ref: loadMoreRef, inView } = useInView();
 
   const {
@@ -180,16 +158,13 @@ export const TransactionList = memo(function TransactionList() {
   } = useTransactions({ page: 1, perPage: ITEMS_PER_PAGE });
 
   useEffect(() => {
-    const shouldFetchMore = inView && hasNextPage && !isFetchingNextPage;
-    if (shouldFetchMore) {
+    if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const groupedTransactions = useMemo(() => {
-    const transactions = data?.transactions?.data ?? [];
-    return groupTransactionsByDate(transactions);
-  }, [data]);
+  const transactions = data?.transactions?.data ?? [];
+  const groupedTransactions = groupTransactionsByDate(transactions);
 
   if (isError) {
     return (
@@ -232,9 +207,4 @@ export const TransactionList = memo(function TransactionList() {
       )}
     </div>
   );
-});
-
-EmptyState.displayName = "EmptyState";
-LoadingState.displayName = "LoadingState";
-TransactionGroup.displayName = "TransactionGroup";
-TransactionList.displayName = "TransactionList";
+}

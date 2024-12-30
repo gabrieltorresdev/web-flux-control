@@ -1,11 +1,11 @@
 "use client";
 
-import { Badge } from "@/src/components/ui/badge";
-import { Button } from "@/src/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CategorySelectItem } from "../../category/category-select-item";
 import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { CategoryService } from "@/src/services/category-service";
+import { CategoryService } from "@/services/category-service";
 
 interface CategoryBadgeProps {
   categoryId: string;

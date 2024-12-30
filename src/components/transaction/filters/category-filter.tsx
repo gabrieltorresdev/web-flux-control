@@ -6,32 +6,32 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/src/components/ui/command";
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/src/components/ui/popover";
-import { Label } from "@/src/components/ui/label";
-import { Button } from "@/src/components/ui/button";
+} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
-import { cn } from "@/src/lib/utils";
-import { useQueryParams } from "@/src/hooks/use-search-params";
-import { TransactionFilters } from "@/src/types/filters";
-import { useIsMobile } from "@/src/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { useQueryParams } from "@/hooks/use-search-params";
+import { TransactionFilters } from "@/types/filters";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/src/components/ui/sheet";
+} from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
-import { CategoryService } from "@/src/services/category-service";
+import { CategoryService } from "@/services/category-service";
 import { CategorySelectItem } from "../../category/category-select-item";
-import { Category } from "@/src/types/category";
-import { useDebounce } from "@/src/hooks/lib/use-debounce";
-import { Badge } from "@/src/components/ui/badge";
+import { Category } from "@/types/category";
+import { useDebounce } from "@/hooks/lib/use-debounce";
+import { Badge } from "@/components/ui/badge";
 
 interface CategoryFilterProps {
   initialCategoryId?: string;

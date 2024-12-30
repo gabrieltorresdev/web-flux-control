@@ -1,4 +1,4 @@
-import { Transaction } from "@/src/types/transaction";
+import { Transaction } from "@/types/transaction";
 import { format, isToday, isYesterday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

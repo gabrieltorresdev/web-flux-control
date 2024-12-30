@@ -1,11 +1,11 @@
-import { HttpClient } from "@/src/lib/api/http-client";
-import { getBackendApiUrl } from "@/src/lib/config";
+import { HttpClient } from "@/lib/api/http-client";
+import { getBackendApiUrl } from "@/lib/config";
 import {
   ApiTransactionPaginatedList,
   ApiTransactionSummaryResponse,
   CreateTransactionInput,
   PaginationParams,
-} from "@/src/types/transaction";
+} from "@/types/transaction";
 
 export class TransactionService {
   private httpClient: HttpClient;

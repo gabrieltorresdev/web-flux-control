@@ -1,7 +1,7 @@
-import { HttpClient } from "@/src/lib/api/http-client";
-import { getBackendApiUrl } from "@/src/lib/config";
-import { ApiPaginatedResponse, ApiResponse } from "@/src/types/service";
-import { Category, CreateCategoryInput } from "@/src/types/category";
+import { HttpClient } from "@/lib/api/http-client";
+import { getBackendApiUrl } from "@/lib/config";
+import { ApiPaginatedResponse, ApiResponse } from "@/types/service";
+import { Category, CreateCategoryInput } from "@/types/category";
 
 export class CategoryService {
   private httpClient: HttpClient;

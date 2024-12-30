@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Budget } from "@/src/types/budget";
-import { BudgetService } from "@/src/services/budget-service";
-import { formatCurrency } from "@/src/lib/utils";
-import { Progress } from "@/src/components/ui/progress";
+import { Budget } from "@/types/budget";
+import { BudgetService } from "@/services/budget-service";
+import { formatCurrency } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Button } from "@/src/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -15,11 +15,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/src/components/ui/sheet";
-import { Transaction } from "@/src/types/transaction";
-import { cn } from "@/src/lib/utils";
+} from "@/components/ui/sheet";
+import { Transaction } from "@/types/transaction";
+import { cn } from "@/lib/utils";
 import { Eye } from "lucide-react";
-import { Card, CardContent } from "@/src/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 type BudgetStatus = {
   status: "normal" | "warning" | "danger";

@@ -5,11 +5,11 @@ import { type DialogProps } from "@radix-ui/react-dialog";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
-} from "@/src/components/ui/responsive-modal";
+} from "@/components/ui/responsive-modal";
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,

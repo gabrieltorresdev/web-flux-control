@@ -1,8 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { AppHeader } from "@/src/components/layout/app-header";
+import { AppHeader } from "@/components/layout/app-header";
 import { Providers } from "./providers";
-import { Toaster } from "@/src/components/ui/toaster";
+import { Toaster } from "@/components/ui/toaster";
 import { Suspense, memo } from "react";
 
 export const metadata: Metadata = {

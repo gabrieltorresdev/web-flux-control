@@ -14,17 +14,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { toast } from "@/src/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { CreateCategoryInput } from "@/src/types/category";
-import { useCreateCategory } from "@/src/hooks/use-categories";
-import { cn } from "@/src/lib/utils";
+import { CreateCategoryInput } from "@/types/category";
+import { useCreateCategory } from "@/hooks/use-categories";
+import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { IconPicker } from "./icon-picker";
+import { ValidationError } from "@/lib/api/error-handler";
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -50,6 +51,7 @@ export function CreateCategoryDialog({
     handleSubmit,
     setValue,
     watch,
+    setError,
     formState: { errors },
     reset,
   } = useForm<CreateCategoryInput>({
@@ -83,12 +85,21 @@ export function CreateCategoryDialog({
       onSuccess(response.data.id, data.name);
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-    } catch {
-      toast({
-        title: "Erro ao criar categoria",
-        description: "Ocorreu um erro ao criar a categoria.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          setError(field as keyof CreateCategoryInput, {
+            type: "manual",
+            message: messages[0],
+          });
+        });
+      } else {
+        toast({
+          title: "Erro ao criar categoria",
+          description: "Ocorreu um erro ao criar a categoria.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
@@ -138,12 +149,15 @@ export function CreateCategoryDialog({
                 </SelectItem>
               </SelectContent>
             </Select>
+            {errors.type && (
+              <p className="text-sm text-red-500">{errors.type.message}</p>
+            )}
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Ícone</label>
+            <label className="text-sm font-medium">Ícone (opcional)</label>
             <IconPicker
               value={selectedIcon}
-              onChange={(value) => setValue("icon", value)}
+              onChange={(icon) => setValue("icon", icon)}
             />
           </div>
           <Button
@@ -152,9 +166,10 @@ export function CreateCategoryDialog({
             disabled={createCategory.isPending}
           >
             {createCategory.isPending ? (
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            ) : null}
-            Criar Categoria
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              "Criar Categoria"
+            )}
           </Button>
         </form>
       </ResponsiveModalContent>

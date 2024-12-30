@@ -4,10 +4,10 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/src/components/ui/popover";
-import { Button } from "@/src/components/ui/button";
-import { cn } from "@/src/lib/utils";
-import { ScrollArea } from "@/src/components/ui/scroll-area";
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type MonthPickerProps = {
   /** The currently selected date */

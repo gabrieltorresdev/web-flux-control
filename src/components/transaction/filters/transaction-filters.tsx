@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { CategoryFilter } from "./category-filter";
-import { Input } from "@/src/components/ui/input";
-import { useQueryParams } from "@/src/hooks/use-search-params";
-import type { TransactionFilters as TransactionFiltersType } from "@/src/types/filters";
-import { useDebounce } from "@/src/hooks/use-debounce";
+import { Input } from "@/components/ui/input";
+import { useQueryParams } from "@/hooks/use-search-params";
+import type { TransactionFilters as TransactionFiltersType } from "@/types/filters";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Card } from "../../ui/card";
 import { Label } from "../../ui/label";

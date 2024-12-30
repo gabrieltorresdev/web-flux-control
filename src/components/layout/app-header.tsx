@@ -3,7 +3,7 @@
 import { NavigationMenu, NavigationMenuList } from "../ui/navigation-menu";
 import { LayoutDashboard, Tags, PiggyBank } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
 const menuItems = [

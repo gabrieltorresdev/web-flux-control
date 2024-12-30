@@ -1,7 +1,7 @@
 "use client";
 
-import { useCategories } from "@/src/hooks/use-categories";
-import { Category } from "@/src/types/category";
+import { useCategories } from "@/hooks/use-categories";
+import { Category } from "@/types/category";
 import { memo } from "react";
 import { Card } from "../ui/card";
 import { CategoryItem } from "./category-item";
@@ -13,7 +13,7 @@ import {
 } from "../ui/collapsible";
 import { Button } from "../ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 import { ErrorState } from "../ui/error-state";
 
 interface CategoryGroupProps {

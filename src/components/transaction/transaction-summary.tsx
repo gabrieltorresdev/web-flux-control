@@ -2,12 +2,12 @@
 
 import { memo } from "react";
 import { Card } from "../ui/card";
-import { formatNumberToBRL } from "@/src/lib/utils";
+import { formatNumberToBRL } from "@/lib/utils";
 import { ArrowDownRight, ArrowUpRight, Coins } from "lucide-react";
-import { useTransactions } from "@/src/hooks/use-transactions";
+import { useTransactions } from "@/hooks/use-transactions";
 import { Skeleton } from "../ui/skeleton";
 import { ErrorState } from "../ui/error-state";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/lib/utils";
 
 type SummaryCardProps = {
   title: string;

@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/src/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -11,19 +11,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/src/components/ui/form";
-import { Input } from "@/src/components/ui/input";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/src/components/ui/select";
-import { Checkbox } from "@/src/components/ui/checkbox";
-import { BudgetService } from "@/src/services/budget-service";
-import { CreateBudgetInput } from "@/src/types/budget";
-import { useToast } from "@/src/hooks/use-toast";
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BudgetService } from "@/services/budget-service";
+import { CreateBudgetInput } from "@/types/budget";
+import { useToast } from "@/hooks/use-toast";
 import { ControllerRenderProps } from "react-hook-form";
 
 const formSchema = z.object({

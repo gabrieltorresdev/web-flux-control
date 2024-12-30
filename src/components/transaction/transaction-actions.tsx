@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
-import { Transaction } from "@/src/types/transaction";
+import { Transaction } from "@/types/transaction";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,7 @@ import {
 } from "../ui/alert-dialog";
 import { useState } from "react";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
-import { useIsMobile } from "@/src/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TransactionActionsProps {
   transaction: Transaction;
