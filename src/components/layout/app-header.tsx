@@ -1,15 +1,16 @@
 "use client";
 
 import { NavigationMenu, NavigationMenuList } from "../ui/navigation-menu";
-import { LayoutDashboard, Tags, PiggyBank } from "lucide-react";
+import { LayoutDashboard, Tags, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { Button } from "../ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: PiggyBank, label: "Orçamentos", href: "/budget" },
-  { icon: Tags, label: "Categorias", href: "/categories" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: PiggyBank, label: "Orçamentos", href: "/dashboard/budget" },
+  { icon: Tags, label: "Categorias", href: "/dashboard/categories" },
 ];
 
 export function AppHeader() {
@@ -20,6 +21,21 @@ export function AppHeader() {
       <header className="h-10 md:h-12 flex items-center w-full">
         <div className="flex-1">
           <h1 className="text-base md:text-xl font-semibold">FluxControl</h1>
+        </div>
+        <div>
+          <Link href="/dashboard/settings">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "rounded-full",
+                pathname.startsWith("/dashboard/settings") && "bg-gray-100"
+              )}
+            >
+              <Settings className="h-[1.2rem] w-[1.2rem]" />
+              <span className="sr-only">Configurações</span>
+            </Button>
+          </Link>
         </div>
       </header>
       <div>

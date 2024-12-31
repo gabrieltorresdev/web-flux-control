@@ -1,6 +1,5 @@
 import { TransactionList } from "@/components/transaction/transaction-list";
 import { TransactionSummary } from "@/components/transaction/transaction-summary";
-import { NewTransactionButton } from "@/components/transaction/new-transaction/new-transaction-button";
 import { TransactionFilters } from "@/components/transaction/filters/transaction-filters";
 import {
   prefetchTransactions,
@@ -9,7 +8,7 @@ import {
 import { HydrationBoundary } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { MonthFilter } from "../components/transaction/month-filter";
+import { MonthFilter } from "../../components/transaction/month-filter";
 import { TransactionFilters as TransactionFiltersType } from "@/types/filters";
 interface HomePageProps {
   searchParams: Promise<Partial<TransactionFiltersType>>;
@@ -42,7 +41,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
       <div className="flex flex-col gap-3">
-        <NewTransactionButton />
         <HydrationBoundary state={getDehydratedState(queryClient)}>
           <Suspense fallback={<LoadingSpinner />}>
             <TransactionSummary />

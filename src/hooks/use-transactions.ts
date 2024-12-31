@@ -85,14 +85,6 @@ const useTransactionQueries = (
   search: string | null,
   initialPagination?: PaginationParams
 ) => {
-  console.log("useTransactionQueries called with:", {
-    startDate,
-    endDate,
-    categoryId,
-    search,
-    initialPagination,
-  });
-
   const queryClient = getQueryClient();
 
   const queryKey = queryKeys.transactions.list({
@@ -101,8 +93,6 @@ const useTransactionQueries = (
     categoryId,
     search,
   });
-
-  console.log("Query key generated:", queryKey);
 
   const summaryQueryKey = queryKeys.transactions.summary({
     month: startDate.getMonth() + 1,
@@ -116,7 +106,6 @@ const useTransactionQueries = (
   const summaryQuery = useQuery({
     queryKey: summaryQueryKey,
     queryFn: async () => {
-      console.log("summaryQuery queryFn called");
       try {
         const result = await transactionService.getSummary(
           startDate,
@@ -124,7 +113,6 @@ const useTransactionQueries = (
           categoryId,
           search || undefined
         );
-        console.log("summaryQuery result:", result);
         return result;
       } catch (error) {
         console.error("summaryQuery error:", error);
@@ -139,17 +127,12 @@ const useTransactionQueries = (
   const transactionsQuery = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam = 1 }) => {
-      console.log(
-        "transactionsQuery queryFn called with pageParam:",
-        pageParam
-      );
       try {
         const pagination = {
           page: pageParam,
           perPage: initialPagination?.perPage || DEFAULT_PAGE_SIZE,
         };
 
-        console.log("Fetching transactions with pagination:", pagination);
         const transactions = await transactionService.findAllPaginated(
           startDate,
           endDate,
@@ -157,7 +140,6 @@ const useTransactionQueries = (
           search || undefined,
           pagination
         );
-        console.log("Transactions fetched:", transactions);
 
         if (transactions.meta.current_page < transactions.meta.last_page) {
           await prefetchNextPage({
@@ -187,27 +169,12 @@ const useTransactionQueries = (
       }
     },
     getNextPageParam: (lastPage) => {
-      console.log("getNextPageParam called with:", lastPage);
       if (!lastPage?.transactions?.meta) return undefined;
       return lastPage.nextPage;
     },
     initialPageParam: 1,
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
-  });
-
-  console.log("Queries state:", {
-    summaryQuery: {
-      isLoading: summaryQuery.isLoading,
-      isError: summaryQuery.isError,
-      error: summaryQuery.error,
-    },
-    transactionsQuery: {
-      isLoading: transactionsQuery.isLoading,
-      isError: transactionsQuery.isError,
-      error: transactionsQuery.error,
-      hasNextPage: transactionsQuery.hasNextPage,
-    },
   });
 
   return { summaryQuery, transactionsQuery };
@@ -483,7 +450,6 @@ export function useDeleteTransaction() {
       }
     },
     onError: (error, variables, context) => {
-      console.log("onError called with context:", context);
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, previousValue]) => {
           queryClient.setQueryData(queryKey, previousValue);
