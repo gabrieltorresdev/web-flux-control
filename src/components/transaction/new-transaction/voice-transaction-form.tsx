@@ -26,6 +26,7 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
+  UseFormSetError,
 } from "react-hook-form";
 import { CreateCategoryDialog } from "@/components/category/create-category-dialog";
 import { GoogleGenerativeAiService } from "@/services/ai/providers/google-generative-ai-service";
@@ -37,6 +38,7 @@ interface VoiceTransactionFormProps {
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
   setValue: UseFormSetValue<CreateTransactionInput>;
+  setError: UseFormSetError<CreateTransactionInput>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   saveDraft: (transcript?: string, suggestedCategory?: string) => void;
   loadTranscript: () => string | undefined;
@@ -50,6 +52,7 @@ export const VoiceTransactionForm = memo(
     errors,
     getValues,
     setValue,
+    setError,
     onSubmit,
     saveDraft,
     loadTranscript,
@@ -266,6 +269,8 @@ export const VoiceTransactionForm = memo(
                 errors={errors}
                 getValues={getValues}
                 setValue={setValue}
+                setError={setError}
+                isSubmitting={convertTranscriptMutation.isPending}
               />
 
               <SuggestedCategoryState />

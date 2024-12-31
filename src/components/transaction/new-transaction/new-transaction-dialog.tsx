@@ -11,8 +11,7 @@ import {
   ResponsiveModalTitle,
   ResponsiveModalDescription,
 } from "../../ui/responsive-modal";
-import { Button } from "../../ui/button";
-import { Plus, Mic, Keyboard } from "lucide-react";
+import { Mic, Keyboard } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../ui/tabs";
 import { VoiceTransactionForm } from "./voice-transaction-form";
 import { ManualTransactionForm } from "./manual-transaction-form";
@@ -176,14 +175,7 @@ export function NewTransactionDialog({
 
   return (
     <ResponsiveModal open={open} onOpenChange={onClose}>
-      <ResponsiveModalTrigger asChild>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon">
-            <Plus className="h-4 w-4" />
-          </Button>
-          {children}
-        </div>
-      </ResponsiveModalTrigger>
+      <ResponsiveModalTrigger asChild>{children}</ResponsiveModalTrigger>
 
       <ResponsiveModalContent>
         <ResponsiveModalHeader>
@@ -212,6 +204,7 @@ export function NewTransactionDialog({
               errors={errors}
               getValues={getValues}
               setValue={setValue}
+              setError={setError}
               saveDraft={saveDraft}
               isSubmitting={createTransaction.isPending}
               onDataChange={setHasManualData}
@@ -225,6 +218,7 @@ export function NewTransactionDialog({
               errors={errors}
               getValues={getValues}
               setValue={setValue}
+              setError={setError}
               onDataChange={setHasVoiceData}
               saveDraft={saveDraft}
               loadTranscript={loadTranscript}

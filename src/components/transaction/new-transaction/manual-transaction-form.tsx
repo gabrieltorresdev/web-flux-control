@@ -8,6 +8,7 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
+  UseFormSetError,
 } from "react-hook-form";
 import { useDebounce } from "@/hooks/lib/use-debounce";
 
@@ -17,6 +18,7 @@ interface ManualTransactionFormProps {
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
   setValue: UseFormSetValue<CreateTransactionInput>;
+  setError: UseFormSetError<CreateTransactionInput>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   isSubmitting?: boolean;
   saveDraft: () => void;
@@ -29,6 +31,7 @@ export const ManualTransactionForm = memo(
     errors,
     getValues,
     setValue,
+    setError,
     onSubmit,
     isSubmitting = false,
     saveDraft,
@@ -55,6 +58,7 @@ export const ManualTransactionForm = memo(
           errors={errors}
           getValues={getValues}
           setValue={setValue}
+          setError={setError}
           isSubmitting={isSubmitting}
         />
       </div>
