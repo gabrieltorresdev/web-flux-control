@@ -21,7 +21,6 @@ export class HttpClient {
       const response = await fetch(url, {
         ...options,
         cache: "no-store",
-        credentials: "include",
         headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
       });

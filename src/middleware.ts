@@ -15,7 +15,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Se não estiver autenticado e tentar acessar rotas protegidas, redireciona para o login
-  if (!session && request.nextUrl.pathname.startsWith("/dashboard")) {
+  if (
+    (!session && request.nextUrl.pathname.startsWith("/dashboard")) ||
+    request.nextUrl.pathname.endsWith("/")
+  ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

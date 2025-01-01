@@ -50,7 +50,7 @@ export function LoginForm() {
 
       if (result?.error === "CredentialsSignin") {
         setError(
-          "Email ou senha incorretos. Por favor, verifique suas credenciais e tente novamente."
+          "Email/username ou senha incorretos. Por favor, verifique suas credenciais e tente novamente."
         );
         setIsLoading(false);
         return;
@@ -102,11 +102,11 @@ export function LoginForm() {
               <FormItem>
                 <FormControl>
                   <Input
-                    type="email"
-                    placeholder="Seu email"
+                    type="text"
+                    placeholder="Email ou username"
                     className="w-full h-12 text-base placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20"
                     disabled={isLoading}
-                    autoComplete="email"
+                    autoComplete="username"
                     {...field}
                   />
                 </FormControl>
