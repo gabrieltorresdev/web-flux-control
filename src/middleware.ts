@@ -14,11 +14,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Se não estiver autenticado e tentar acessar rotas protegidas, redireciona para o login
+  // Se não estiver autenticado ou tiver erro de refresh token, redireciona para o login
   if (
-    (!session && request.nextUrl.pathname.startsWith("/dashboard")) ||
-    request.nextUrl.pathname.endsWith("/")
+    (!session || session.error === "RefreshAccessTokenError") &&
+    (request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname.endsWith("/"))
   ) {
+    // Se houver erro de refresh token, limpa a sessão antes de redirecionar
+    if (session?.error === "RefreshAccessTokenError") {
+      await fetch("/api/auth/signout", { method: "POST" });
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

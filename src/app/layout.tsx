@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/toaster";
-import { Suspense } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,42 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className="antialiased">
         <Providers>
-          <Suspense fallback={<LoadingState />}>
-            <main className="min-h-screen w-full">{children}</main>
-            <Toaster />
-          </Suspense>
+          <main className="min-h-screen w-full">{children}</main>
+          <Toaster />
         </Providers>
       </body>
     </html>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="flex items-center justify-center h-screen w-full bg-gray-100/70">
-      <div className="flex flex-col items-center gap-6">
-        <div className="flex items-center justify-center">
-          <div className="relative mr-4">
-            <div className="absolute inset-0 animate-[pulse_2s_ease-in-out_infinite]">
-              <span className="block h-12 w-12 rounded-full bg-primary/20" />
-            </div>
-            <div className="relative animate-bounce">
-              <span className="font-bold text-2xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                FC
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-2 animate-in fade-in-0 duration-700">
-          <p className="text-sm text-muted-foreground animate-pulse">
-            Carregando...
-          </p>
-        </div>
-      </div>
-    </div>
   );
 }

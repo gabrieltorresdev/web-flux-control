@@ -1,7 +1,7 @@
-import NextAuth from "next-auth";
+import NextAuth, { Session, DefaultSession } from "next-auth";
 import { JWT } from "next-auth/jwt";
-import { DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { TokenManager } from "@/lib/auth/token-manager";
 
 // Type extensions and interfaces
 declare module "next-auth" {
@@ -16,17 +16,22 @@ declare module "next-auth" {
       username: string;
     } & DefaultSession["user"];
     accessToken?: string;
+    refreshToken?: string;
     error?: string;
   }
 }
 
-interface ExtendedToken extends JWT {
-  accessToken?: string;
-  error?: string;
-  givenName?: string;
-  familyName?: string;
-  emailVerified?: boolean;
-  username?: string;
+declare module "next-auth/jwt" {
+  interface JWT {
+    accessToken?: string;
+    refreshToken?: string;
+    error?: string;
+    givenName?: string;
+    familyName?: string;
+    emailVerified?: boolean;
+    username?: string;
+    accessTokenExpires?: number;
+  }
 }
 
 interface KeycloakToken {
@@ -65,6 +70,7 @@ interface User {
   emailVerified: boolean;
   username: string;
   accessToken: string;
+  refreshToken: string;
 }
 
 interface Credentials {
@@ -197,6 +203,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             emailVerified: result.userInfo.email_verified,
             username: result.userInfo.preferred_username,
             accessToken: result.data.access_token,
+            refreshToken: result.data.refresh_token,
           };
         } catch (error) {
           console.error("Authorization error:", error);
@@ -210,28 +217,116 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: "/login",
   },
   callbacks: {
-    async jwt({ token, user }): Promise<ExtendedToken> {
+    async jwt({ token, user }): Promise<JWT> {
+      // Initial sign in
       if (user) {
-        token.accessToken = (user as User).accessToken;
-        token.givenName = (user as User).givenName;
-        token.familyName = (user as User).familyName;
-        token.emailVerified = (user as User).emailVerified;
-        token.username = (user as User).username;
+        console.log("Initial token setup");
+        return {
+          ...token,
+          accessToken: (user as User).accessToken,
+          refreshToken: (user as User).refreshToken,
+          givenName: (user as User).givenName,
+          familyName: (user as User).familyName,
+          emailVerified: (user as User).emailVerified,
+          username: (user as User).username,
+          accessTokenExpires: Math.floor(Date.now() / 1000 + 15), // 15 segundos de expiração para teste
+        };
       }
-      return token;
+
+      console.log("Checking token expiration:", {
+        hasAccessToken: !!token.accessToken,
+        hasExpiry: !!token.accessTokenExpires,
+        currentTime: Math.floor(Date.now() / 1000),
+        expiryTime: token.accessTokenExpires,
+      });
+
+      // Return previous token if the access token has not expired yet
+      if (
+        token.accessToken &&
+        token.accessTokenExpires &&
+        !TokenManager.isTokenExpired(
+          token.accessToken,
+          token.accessTokenExpires
+        )
+      ) {
+        console.log("Token still valid, returning existing token");
+        return token;
+      }
+
+      console.log("Token expired, attempting refresh");
+
+      // Access token has expired, try to refresh it
+      if (token.refreshToken) {
+        try {
+          const response = await TokenManager.refreshToken(token.refreshToken);
+
+          if (response) {
+            console.log("Token refresh successful");
+            return {
+              ...token,
+              accessToken: response.access_token,
+              refreshToken: response.refresh_token,
+              accessTokenExpires: Math.floor(
+                Date.now() / 1000 + response.expires_in
+              ),
+              error: undefined,
+            };
+          }
+        } catch (error) {
+          console.error("Error refreshing token:", error);
+          return {
+            ...token,
+            error: "RefreshAccessTokenError",
+          };
+        }
+      }
+
+      console.log("No refresh token available or refresh failed");
+      return {
+        ...token,
+        error: "RefreshAccessTokenError",
+      };
     },
-    async session({ session, token }) {
+    async session({ session, token }): Promise<Session> {
       return {
         ...session,
         accessToken: token.accessToken,
+        refreshToken: token.refreshToken,
+        error: token.error,
         user: {
           ...session.user,
-          givenName: token.givenName,
-          familyName: token.familyName,
-          emailVerified: token.emailVerified,
-          username: token.username,
+          id: token.sub || "",
+          givenName: token.givenName || "",
+          familyName: token.familyName || "",
+          emailVerified: token.emailVerified || false,
+          username: token.username || "",
         },
       };
+    },
+  },
+  events: {
+    async signOut(message) {
+      const token = "token" in message ? message.token : null;
+      if (token?.accessToken && token?.refreshToken) {
+        try {
+          await fetch(
+            `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                client_id: process.env.KEYCLOAK_CLIENT_ID!,
+                client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+                refresh_token: token.refreshToken,
+              }),
+            }
+          );
+        } catch (error) {
+          console.error("Error during Keycloak logout:", error);
+        }
+      }
     },
   },
   debug: process.env.NODE_ENV === "development",
