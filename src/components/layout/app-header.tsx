@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: PiggyBank, label: "Orçamentos", href: "/dashboard/budget" },
+  // { icon: PiggyBank, label: "Orçamentos", href: "/dashboard/budget" },
   { icon: Tags, label: "Categorias", href: "/dashboard/categories" },
 ];
 

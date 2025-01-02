@@ -10,15 +10,15 @@ export function NewTransactionButton() {
 
   return (
     <div className="fixed bottom-6 right-6 z-30">
-      <NewTransactionDialog open={isOpen} onClose={() => setIsOpen(false)}>
-        <Button
-          size="icon"
-          className="rounded-full h-14 w-14 shadow-lg"
-          onClick={() => setIsOpen(true)}
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      </NewTransactionDialog>
+      <Button
+        size="icon"
+        className="rounded-full h-14 w-14 shadow-lg"
+        onClick={() => setIsOpen(true)}
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
+
+      <NewTransactionDialog open={isOpen} onClose={() => setIsOpen(false)} />
     </div>
   );
 }

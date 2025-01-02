@@ -144,20 +144,38 @@ export function NewTransactionDialog({
     (value: string) => {
       if (value === "manual" || value === "voice") {
         if (value !== currentTab) {
+          // Verifica se há dados reais no formulário
+          const formValues = getValues();
+          const hasFormData =
+            formValues.title.trim() !== "" ||
+            formValues.amount !== 0 ||
+            formValues.categoryId !== "";
+
           const shouldShowAlert =
-            (currentTab === "voice" && hasVoiceData && value === "manual") ||
-            (currentTab === "manual" && hasManualData && value === "voice");
+            ((currentTab === "voice" && hasVoiceData && value === "manual") ||
+              (currentTab === "manual" &&
+                hasManualData &&
+                value === "voice")) &&
+            hasFormData;
 
           if (shouldShowAlert) {
             setShowAlert(true);
             setPendingTabChange(value as "manual" | "voice");
           } else {
+            // Se não tiver dados, limpa e muda direto
+            if (value === "voice") {
+              setHasManualData(false);
+            } else {
+              setHasVoiceData(false);
+            }
+            clearDraft();
+            reset();
             setCurrentTab(value as "manual" | "voice");
           }
         }
       }
     },
-    [currentTab, hasVoiceData, hasManualData]
+    [currentTab, hasVoiceData, hasManualData, getValues, clearDraft, reset]
   );
 
   const confirmTabChange = useCallback(() => {
@@ -165,13 +183,15 @@ export function NewTransactionDialog({
       setCurrentTab(pendingTabChange);
       setPendingTabChange(null);
       setShowAlert(false);
+      clearDraft();
+      reset();
       if (pendingTabChange === "voice") {
         setHasManualData(false);
       } else {
         setHasVoiceData(false);
       }
     }
-  }, [pendingTabChange]);
+  }, [pendingTabChange, clearDraft, reset]);
 
   return (
     <ResponsiveModal open={open} onOpenChange={onClose}>
