@@ -17,15 +17,14 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { CreateCategoryInput } from "@/types/category";
-import { useCreateCategory } from "@/hooks/use-categories";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { IconPicker } from "./icon-picker";
 import { ValidationError } from "@/lib/api/error-handler";
+import { createCategory } from "@/app/actions/categories";
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -63,9 +62,7 @@ export function CreateCategoryDialog({
     },
   });
 
-  const queryClient = useQueryClient();
-  const createCategory = useCreateCategory();
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedIcon = watch("icon");
 
   // Resetar o formulário quando o diálogo for aberto
@@ -81,10 +78,10 @@ export function CreateCategoryDialog({
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const response = await createCategory.mutateAsync(data);
+      setIsSubmitting(true);
+      const response = await createCategory(data);
       onSuccess(response.data.id, data.name);
       onOpenChange(false);
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
     } catch (error) {
       if (error instanceof ValidationError) {
         Object.entries(error.errors).forEach(([field, messages]) => {
@@ -100,6 +97,8 @@ export function CreateCategoryDialog({
           variant: "destructive",
         });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   });
 
@@ -163,9 +162,9 @@ export function CreateCategoryDialog({
           <Button
             type="submit"
             className="w-full h-12 text-base"
-            disabled={createCategory.isPending}
+            disabled={isSubmitting}
           >
-            {createCategory.isPending ? (
+            {isSubmitting ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               "Criar Categoria"

@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
   ) {
     // Se houver erro de refresh token, limpa a sessão antes de redirecionar
     if (session?.error === "RefreshAccessTokenError") {
-      await fetch("/api/auth/signout", { method: "POST" });
+      await signOut({ redirect: false });
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }

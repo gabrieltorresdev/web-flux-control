@@ -17,14 +17,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { Category, CreateCategoryInput } from "@/types/category";
-import { useUpdateCategory } from "@/hooks/use-categories";
 import { cn } from "@/lib/utils";
 import { IconPicker } from "./icon-picker";
 import { ValidationError } from "@/lib/api/error-handler";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { updateCategory } from "@/app/actions/categories";
+import { useState } from "react";
 
 const updateCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -44,7 +44,7 @@ export function EditCategoryDialog({
   onOpenChange,
 }: EditCategoryDialogProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -64,11 +64,10 @@ export function EditCategoryDialog({
 
   const selectedIcon = watch("icon");
 
-  const updateCategory = useUpdateCategory();
-
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await updateCategory.mutateAsync({
+      setIsSubmitting(true);
+      await updateCategory({
         id: category.id,
         name: data.name.trim(),
         type: data.type,
@@ -76,7 +75,6 @@ export function EditCategoryDialog({
         icon: data.icon,
       });
       onOpenChange(false);
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast({
         title: "Categoria atualizada",
         description: "Categoria atualizada com sucesso",
@@ -96,6 +94,8 @@ export function EditCategoryDialog({
           variant: "destructive",
         });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   });
 
@@ -159,9 +159,9 @@ export function EditCategoryDialog({
           <Button
             type="submit"
             className="w-full h-12 text-base"
-            disabled={updateCategory.isPending}
+            disabled={isSubmitting}
           >
-            {updateCategory.isPending ? (
+            {isSubmitting ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               "Salvar Alterações"

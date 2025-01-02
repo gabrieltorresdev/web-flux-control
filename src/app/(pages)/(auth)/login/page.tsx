@@ -1,13 +1,7 @@
 import Image from "next/image";
 import { LoginForm } from "@/components/auth/login-form";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
-  const session = await auth();
-  if (session) {
-    return redirect("/");
-  }
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row">
       <div className="relative h-36 lg:h-auto lg:w-1/2 bg-white overflow-hidden lg:bg-gradient-to-br lg:from-primary/90 lg:to-primary/40">
@@ -46,7 +40,7 @@ export default async function LoginPage() {
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <h3 className="text-white text-3xl font-bold">99%</h3>
-                <p className="text-white/70 text-sm">Satisfação</p>
+                <p className="text-white/70 text-sm">Satisfação xD</p>
               </div>
             </div>
           </div>

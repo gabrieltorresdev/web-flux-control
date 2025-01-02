@@ -4,31 +4,76 @@ import { CircleDollarSign, Loader2 } from "lucide-react";
 import { Card } from "../ui/card";
 import { TransactionItem } from "./transaction-item";
 import { cn, formatNumberToBRL } from "@/lib/utils";
-import { Transaction } from "@/types/transaction";
 import {
   formatDateHeader,
   groupTransactionsByDate,
 } from "@/lib/utils/transactions";
-import { useTransactions } from "@/hooks/use-transactions";
-import { Skeleton } from "../ui/skeleton";
 import { useInView } from "react-intersection-observer";
-import { ErrorState } from "../ui/error-state";
-import { useEffect } from "react";
+import {
+  useCallback,
+  useTransition,
+  cache,
+  useState,
+  useEffect,
+  memo,
+  useMemo,
+} from "react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "../ui/accordion";
+import { getTransactionsList } from "@/app/actions/transactions";
+import { Transaction } from "@/types/transaction";
 
 interface TransactionGroupProps {
   date: Date;
   transactions: Transaction[];
+  total: number;
+}
+
+interface SearchParams {
+  month: string | null;
+  year: string | null;
+  categoryId: string | null;
+  search: string | null;
+}
+
+interface TransactionListProps {
+  initialData: Awaited<ReturnType<typeof getTransactionsList>>;
+  searchParams: SearchParams;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-function EmptyState() {
+// Calculate total for a group of transactions
+const calculateGroupTotal = (transactions: Transaction[]) => {
+  return transactions.reduce((acc, t) => {
+    return t.category.type === "income" ? acc + t.amount : acc - t.amount;
+  }, 0);
+};
+
+// Cache the fetch function to avoid unnecessary refetches
+const fetchTransactionsPage = cache(
+  async (params: SearchParams, page: number) => {
+    try {
+      return await getTransactionsList({
+        month: params.month ? parseInt(params.month) : undefined,
+        year: params.year ? parseInt(params.year) : undefined,
+        categoryId: params.categoryId || undefined,
+        search: params.search || undefined,
+        page,
+        perPage: ITEMS_PER_PAGE,
+      });
+    } catch (error) {
+      console.error("Error fetching next page:", error);
+      throw error;
+    }
+  }
+);
+
+const EmptyState = memo(function EmptyState() {
   return (
     <div
       className="flex flex-col items-center justify-center h-48 space-y-4 animate-in fade-in-50"
@@ -43,62 +88,13 @@ function EmptyState() {
       </p>
     </div>
   );
-}
+});
 
-function LoadingState() {
-  return (
-    <div className="space-y-3 max-h-screen">
-      {Array.from({ length: 2 }).map((_, index) => (
-        <section key={index} className="space-y-3">
-          <Accordion type="single" collapsible defaultValue="transactions">
-            <AccordionItem
-              value="transactions"
-              className="border-none rounded-lg overflow-hidden"
-            >
-              <AccordionTrigger
-                className={cn(
-                  "py-3 px-3 text-sm transition-colors",
-                  "hover:no-underline hover:bg-muted/50 data-[state=open]:!bg-muted border",
-                  "flex items-center gap-2 justify-between !bg-card rounded-lg data-[state=open]:rounded-b-none"
-                )}
-              >
-                <div className="flex items-center justify-between flex-1 gap-1.5">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-0 rounded-b-lg">
-                <Card className="divide-y divide-border/50 shadow-none border-none overflow-hidden rounded-none">
-                  {Array.from({ length: 3 }).map((_, idx) => (
-                    <div key={idx} className="p-3">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="w-6 h-6 rounded-full" />
-                        <div className="flex-1 min-w-0">
-                          <Skeleton className="h-4 w-32 mb-1" />
-                          <div className="space-y-1">
-                            <Skeleton className="h-3 w-24" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                        </div>
-                        <Skeleton className="h-4 w-20" />
-                      </div>
-                    </div>
-                  ))}
-                </Card>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function TransactionGroup({ date, transactions }: TransactionGroupProps) {
-  const total = transactions.reduce((acc, t) => {
-    return t.category.type === "income" ? acc + t.amount : acc - t.amount;
-  }, 0);
-
+const TransactionGroup = memo(function TransactionGroup({
+  date,
+  transactions,
+  total,
+}: TransactionGroupProps) {
   return (
     <Accordion type="single" collapsible defaultValue="transactions">
       <AccordionItem
@@ -141,70 +137,110 @@ function TransactionGroup({ date, transactions }: TransactionGroupProps) {
       </AccordionItem>
     </Accordion>
   );
-}
+});
 
-export function TransactionList() {
+const TransactionListContent = memo(function TransactionListContent({
+  initialData,
+  searchParams,
+}: TransactionListProps) {
   const { ref: loadMoreRef, inView } = useInView();
+  const [isPending, startTransition] = useTransition();
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-    isError,
-    refetch,
-  } = useTransactions({ page: 1, perPage: ITEMS_PER_PAGE });
+  // State for pagination
+  const [pages, setPages] = useState<Transaction[][]>([
+    initialData.transactions.data,
+  ]);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // Memoized fetch function for next pages
+  const fetchNextPage = useCallback(async () => {
+    if (!initialData.nextPage) return;
+
+    startTransition(async () => {
+      try {
+        const nextPageData = await fetchTransactionsPage(
+          searchParams,
+          currentPage + 1
+        );
+        setPages((prev) => [...prev, nextPageData.transactions.data]);
+        setCurrentPage((prev) => prev + 1);
+      } catch (error) {
+        console.error("Error fetching next page:", error);
+      }
+    });
+  }, [searchParams, currentPage, initialData.nextPage]);
+
+  // Handle infinite scroll
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+    if (inView && initialData.nextPage && !isPending) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [inView, initialData.nextPage, isPending, fetchNextPage]);
 
-  const transactions = data?.transactions?.data ?? [];
-  const groupedTransactions = groupTransactionsByDate(transactions);
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPages([initialData.transactions.data]);
+    setCurrentPage(1);
+  }, [
+    searchParams.month,
+    searchParams.year,
+    searchParams.categoryId,
+    searchParams.search,
+    initialData.transactions.data,
+  ]);
 
-  if (isError) {
-    return (
-      <ErrorState
-        title="Erro ao carregar transações"
-        description="Não foi possível carregar a lista de transações. Por favor, tente novamente."
-        onRetry={() => refetch()}
-      />
-    );
+  // Memoize expensive calculations
+  const { transactions, groupedTransactionsWithTotals } = useMemo(() => {
+    const allTransactions = pages.flat();
+    const grouped = groupTransactionsByDate(allTransactions);
+    const withTotals = grouped.map((group) => ({
+      ...group,
+      total: calculateGroupTotal(group.transactions),
+    }));
+    return {
+      transactions: allTransactions,
+      groupedTransactionsWithTotals: withTotals,
+    };
+  }, [pages]);
+
+  if (transactions.length === 0) {
+    return <EmptyState />;
   }
-
-  if (isLoading || (isFetching && !isFetchingNextPage)) {
-    return <LoadingState />;
-  }
-
-  const hasTransactions = groupedTransactions.length > 0;
 
   return (
     <div className="animate-in fade-in-50 duration-500 space-y-3">
-      {hasTransactions ? (
-        <>
-          {groupedTransactions.map((group) => (
-            <TransactionGroup key={group.date.toISOString()} {...group} />
-          ))}
-          {hasNextPage && (
-            <div
-              ref={loadMoreRef}
-              className="flex justify-center py-3"
-              role="status"
-              aria-label="Carregando mais transações"
-            >
-              {isFetchingNextPage && (
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              )}
-            </div>
+      {groupedTransactionsWithTotals.map((group) => (
+        <TransactionGroup
+          key={group.date.toISOString()}
+          date={group.date}
+          transactions={group.transactions}
+          total={group.total}
+        />
+      ))}
+      {initialData.nextPage && (
+        <div
+          ref={loadMoreRef}
+          className="flex justify-center py-3"
+          role="status"
+          aria-label="Carregando mais transações"
+        >
+          {isPending && (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           )}
-        </>
-      ) : (
-        <EmptyState />
+        </div>
       )}
     </div>
+  );
+});
+
+export function TransactionList({
+  initialData,
+  searchParams,
+}: TransactionListProps) {
+  return (
+    <TransactionListContent
+      initialData={initialData}
+      searchParams={searchParams}
+    />
   );
 }

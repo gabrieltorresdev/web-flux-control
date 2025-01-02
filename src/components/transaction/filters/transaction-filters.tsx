@@ -1,27 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { CategoryFilter } from "./category-filter";
-import { Input } from "@/components/ui/input";
-import { useQueryParams } from "@/hooks/use-search-params";
-import type { TransactionFilters as TransactionFiltersType } from "@/types/filters";
-import { useDebounce } from "@/hooks/use-debounce";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { Card } from "../../ui/card";
-import { Label } from "../../ui/label";
-import { Button } from "../../ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CategoryFilter } from "./category-filter";
+import { useQueryParams } from "@/hooks/use-search-params";
+import { TransactionFilters as TransactionFiltersType } from "@/types/filters";
+import { CategoryBadge } from "./category-badge";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "../../ui/sheet";
-import { Badge } from "../../ui/badge";
-import { ScrollArea, ScrollBar } from "../../ui/scroll-area";
-import { useEffect, useState } from "react";
-import { Skeleton } from "../../ui/skeleton";
-import { CategoryBadge } from "./category-badge";
+} from "@/components/ui/sheet";
+import { useCategoriesData } from "@/hooks/use-categories";
 
 interface TransactionFiltersProps {
   initialCategoryId?: string;
@@ -36,14 +34,15 @@ export function TransactionFilters({
 }: TransactionFiltersProps) {
   const { setParam } = useQueryParams<TransactionFiltersType>();
   const [search, setSearch] = React.useState(initialSearch ?? "");
-  const [isOpen, setIsOpen] = React.useState(false);
   const [selectedCategoryId, setSelectedCategoryId] =
     React.useState(initialCategoryId);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const { data: categories, isLoading } = useCategoriesData();
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  const selectedCategory = React.useMemo(
+    () => categories.find((cat) => cat.id === selectedCategoryId),
+    [categories, selectedCategoryId]
+  );
 
   const updateSearch = React.useCallback(
     (value: string) => {
@@ -56,34 +55,40 @@ export function TransactionFilters({
     [setParam]
   );
 
-  // Atualiza o estado quando initialCategoryId muda
-  React.useEffect(() => {
-    setSelectedCategoryId(initialCategoryId);
-  }, [initialCategoryId]);
-
-  // Debounce search to avoid too many requests
-  useDebounce(updateSearch, 500, [search]);
-
-  const hasActiveFilters = search || selectedCategoryId;
+  const handleCategoryChange = React.useCallback(
+    (categoryId: string | undefined) => {
+      setSelectedCategoryId(categoryId);
+      setParam("categoryId", categoryId ?? null);
+    },
+    [setParam]
+  );
 
   const handleClearSearch = React.useCallback(() => {
     setSearch("");
     setParam("search", null);
   }, [setParam]);
 
-  const handleCategoryChange = React.useCallback(
-    (categoryId: string | undefined) => {
-      setSelectedCategoryId(categoryId);
-    },
-    []
-  );
+  React.useEffect(() => {
+    setSelectedCategoryId(initialCategoryId);
+  }, [initialCategoryId]);
 
-  if (!isHydrated) {
+  // Update search params when search changes
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [search, updateSearch]);
+
+  const hasActiveFilters = search || selectedCategoryId;
+
+  if (isLoading) {
     return (
       <Card className={className}>
         <div className="flex items-center gap-3 p-3">
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-8 w-8 shrink-0" />
+          <div className="h-6 w-32 bg-muted rounded animate-pulse" />
+          <div className="h-8 w-8 bg-muted rounded shrink-0 animate-pulse" />
         </div>
       </Card>
     );
@@ -112,9 +117,9 @@ export function TransactionFilters({
                 </Button>
               </Badge>
             )}
-            {selectedCategoryId && (
+            {selectedCategory && (
               <CategoryBadge
-                categoryId={selectedCategoryId}
+                category={selectedCategory}
                 onRemove={() => handleCategoryChange(undefined)}
               />
             )}

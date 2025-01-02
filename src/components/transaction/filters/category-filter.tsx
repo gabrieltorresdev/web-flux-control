@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import {
   Command,
   CommandInput,
@@ -12,26 +13,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useQueryParams } from "@/hooks/use-search-params";
-import { TransactionFilters } from "@/types/filters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useQuery } from "@tanstack/react-query";
-import { CategoryService } from "@/services/category-service";
 import { CategorySelectItem } from "../../category/category-select-item";
-import { Category } from "@/types/category";
 import { useDebounce } from "@/hooks/lib/use-debounce";
-import { Badge } from "@/components/ui/badge";
+import { useCategoriesData } from "@/hooks/use-categories";
 
 interface CategoryFilterProps {
   initialCategoryId?: string;
@@ -39,14 +34,11 @@ interface CategoryFilterProps {
   onCategoryChange?: (categoryId: string | undefined) => void;
 }
 
-const categoryService = new CategoryService();
-
 export const CategoryFilter = React.memo(function CategoryFilter({
   initialCategoryId,
   showAsBadge = false,
   onCategoryChange,
 }: CategoryFilterProps) {
-  const { setParam } = useQueryParams<TransactionFilters>();
   const [formState, setFormState] = React.useState({
     open: false,
     searchTerm: "",
@@ -62,23 +54,11 @@ export const CategoryFilter = React.memo(function CategoryFilter({
 
   const isMobile = useIsMobile();
   const debouncedSearchTerm = useDebounce(formState.searchTerm, 500);
+  const { data: categories, isLoading } =
+    useCategoriesData(debouncedSearchTerm);
 
-  const { data: categoriesResponse, isLoading } = useQuery({
-    queryKey: ["categories", debouncedSearchTerm],
-    queryFn: async () => {
-      return await categoryService.findAllPaginated(debouncedSearchTerm);
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
-
-  const categories = React.useMemo(
-    () => categoriesResponse?.data ?? [],
-    [categoriesResponse]
-  );
-
-  const selectedCategoryData = React.useMemo(
-    () => categories.find((category) => category.id === formState.selectedId),
+  const selectedCategory = React.useMemo(
+    () => categories.find((cat) => cat.id === formState.selectedId),
     [categories, formState.selectedId]
   );
 
@@ -94,158 +74,127 @@ export const CategoryFilter = React.memo(function CategoryFilter({
         open: false,
         searchTerm: "",
       }));
-      setParam("categoryId", categoryId);
       onCategoryChange?.(categoryId ?? undefined);
     },
-    [setParam, onCategoryChange]
+    [onCategoryChange]
   );
 
   const handleOpenChange = React.useCallback((open: boolean) => {
     setFormState((prev) => ({ ...prev, open }));
   }, []);
 
-  const content = React.useMemo(
-    () => (
-      <Command className="w-full">
-        <CommandInput
-          placeholder="Buscar categoria..."
-          value={formState.searchTerm}
-          onValueChange={handleSearchChange}
-          className="h-12 text-base"
-        />
-        <CommandList className="max-h-[300px]">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin" />
-            </div>
-          ) : (
-            <>
-              <CommandItem
-                value="all"
-                onSelect={() => handleSelectCategory(null)}
-                className="py-3 text-base"
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    !formState.selectedId ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                Todas as categorias
-              </CommandItem>
-              {categories?.length > 0 &&
-                categories.map((category: Category) => (
-                  <CommandItem
-                    key={category.id}
-                    value={category.name}
-                    onSelect={() => handleSelectCategory(category.id)}
-                    className="py-2"
-                  >
-                    <div className="flex items-center w-full">
-                      <CategorySelectItem category={category} />
-                      {formState.selectedId === category.id && (
-                        <Check className="ml-auto h-4 w-4 opacity-50" />
-                      )}
-                    </div>
-                  </CommandItem>
-                ))}
-              {categories?.length === 0 && (
-                <div className="flex flex-col items-center gap-2 py-4">
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma categoria encontrada
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </CommandList>
-      </Command>
-    ),
-    [
-      categories,
-      formState.searchTerm,
-      formState.selectedId,
-      handleSearchChange,
-      handleSelectCategory,
-      isLoading,
-    ]
-  );
-
-  const trigger = React.useMemo(
-    () => (
-      <Button
-        variant="outline"
-        role="combobox"
-        aria-expanded={formState.open}
-        className={cn("w-full justify-between", isMobile && "h-12 text-base")}
+  const content = (
+    <Command shouldFilter={false} className="w-full">
+      <CommandItem
+        onSelect={() =>
+          setFormState((prev) => ({ ...prev, showCreateDialog: true }))
+        }
+        className="border-b text-blue-500 rounded-none cursor-pointer"
       >
-        {selectedCategoryData ? (
-          <CategorySelectItem
-            category={selectedCategoryData}
-            showType={false}
-          />
+        <Plus className="mr-2 h-4 w-4" />
+        Criar nova categoria
+      </CommandItem>
+      <CommandInput
+        placeholder="Buscar categoria..."
+        value={formState.searchTerm}
+        onValueChange={handleSearchChange}
+        className="h-12"
+      />
+      <CommandList className="max-h-[300px]">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
         ) : (
-          "Todas as categorias"
+          <>
+            <CommandItem
+              value="all"
+              onSelect={() => handleSelectCategory(null)}
+              className="py-3 text-base"
+            >
+              <Check
+                className={cn(
+                  "mr-2 h-4 w-4",
+                  !formState.selectedId ? "opacity-100" : "opacity-0"
+                )}
+              />
+              Todas as categorias
+            </CommandItem>
+            {categories?.length > 0 &&
+              categories.map((category) => (
+                <CommandItem
+                  key={category.id}
+                  value={category.id}
+                  onSelect={(value) => handleSelectCategory(value)}
+                  className="py-2"
+                >
+                  <div className="flex items-center w-full">
+                    <CategorySelectItem category={category} />
+                    {formState.selectedId === category.id && (
+                      <Check className="ml-auto h-4 w-4 opacity-50" />
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            {categories?.length === 0 && (
+              <div className="flex flex-col items-center gap-2 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma categoria encontrada
+                </p>
+              </div>
+            )}
+          </>
         )}
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-      </Button>
-    ),
-    [formState.open, isMobile, selectedCategoryData]
+      </CommandList>
+    </Command>
   );
 
-  if (showAsBadge && selectedCategoryData) {
+  const trigger = (
+    <Button
+      variant="outline"
+      role="combobox"
+      aria-expanded={formState.open}
+      className={cn(
+        "w-full justify-between h-12 text-base",
+        showAsBadge && "w-40"
+      )}
+    >
+      {selectedCategory ? (
+        <CategorySelectItem category={selectedCategory} showType={false} />
+      ) : (
+        "Selecione uma categoria"
+      )}
+      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+    </Button>
+  );
+
+  if (isMobile) {
     return (
-      <Badge variant="secondary" className="gap-1 whitespace-nowrap">
-        <CategorySelectItem
-          category={selectedCategoryData}
-          showType={false}
-          compact
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-4 w-4 p-0 hover:bg-transparent"
-          onClick={() => handleSelectCategory(null)}
-        >
-          <X className="h-3 w-3" />
-        </Button>
-      </Badge>
+      <Sheet open={formState.open} onOpenChange={handleOpenChange}>
+        <SheetTrigger asChild>{trigger}</SheetTrigger>
+        <SheetContent side="bottom" className="h-[400px] p-3">
+          <SheetHeader>
+            <SheetTitle className="text-base">
+              Selecione uma categoria
+            </SheetTitle>
+            <SheetDescription></SheetDescription>
+          </SheetHeader>
+          {content}
+        </SheetContent>
+      </Sheet>
     );
   }
 
   return (
-    <div className="space-y-1.5 flex flex-col justify-between">
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Categoria</Label>
-        {formState.selectedId && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-auto p-0 text-muted-foreground"
-            onClick={() => handleSelectCategory(null)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
-      {isMobile ? (
-        <Sheet open={formState.open} onOpenChange={handleOpenChange}>
-          <SheetTrigger asChild>{trigger}</SheetTrigger>
-          <SheetContent side="bottom" className="h-[85vh]">
-            <SheetHeader>
-              <SheetTitle>Filtrar por Categoria</SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">{content}</div>
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <Popover open={formState.open} onOpenChange={handleOpenChange}>
-          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-          <PopoverContent className="w-full p-0">{content}</PopoverContent>
-        </Popover>
-      )}
-    </div>
+    <Popover open={formState.open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        align="start"
+      >
+        {content}
+      </PopoverContent>
+    </Popover>
   );
 });
 

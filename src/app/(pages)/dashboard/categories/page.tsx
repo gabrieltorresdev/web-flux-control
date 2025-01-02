@@ -1,15 +1,12 @@
 import { CategoryList } from "@/components/category/category-list";
 import { NewCategoryButton } from "@/components/category/new-category-button";
-import {
-  prefetchCategories,
-  getDehydratedState,
-} from "@/lib/ssr/prefetch-query";
-import { HydrationBoundary } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { getCategories } from "@/app/actions/categories";
 
 export default async function CategoriesPage() {
-  const queryClient = await prefetchCategories();
+  // Fetch initial data on the server
+  const initialCategories = await getCategories();
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col gap-3 px-3">
@@ -18,11 +15,9 @@ export default async function CategoriesPage() {
       </div>
       <div className="flex flex-col gap-3">
         <NewCategoryButton />
-        <HydrationBoundary state={getDehydratedState(queryClient)}>
-          <Suspense fallback={<LoadingSpinner />}>
-            <CategoryList />
-          </Suspense>
-        </HydrationBoundary>
+        <Suspense fallback={<LoadingSpinner />}>
+          <CategoryList initialData={initialCategories} />
+        </Suspense>
       </div>
     </div>
   );

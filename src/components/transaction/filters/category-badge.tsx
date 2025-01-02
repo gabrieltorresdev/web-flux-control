@@ -4,31 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CategorySelectItem } from "../../category/category-select-item";
 import { X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { CategoryService } from "@/services/category-service";
+import { Category } from "@/types/category";
 
 interface CategoryBadgeProps {
-  categoryId: string;
+  category: Category;
   onRemove: () => void;
 }
 
-const categoryService = new CategoryService();
-
-export function CategoryBadge({ categoryId, onRemove }: CategoryBadgeProps) {
-  const { data: categoriesResponse } = useQuery({
-    queryKey: ["categories", ""],
-    queryFn: async () => {
-      return await categoryService.findAllPaginated("");
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
-
-  const categories = categoriesResponse?.data ?? [];
-  const category = categories.find((cat) => cat.id === categoryId);
-
-  if (!category) return null;
-
+export function CategoryBadge({ category, onRemove }: CategoryBadgeProps) {
   return (
     <Badge variant="secondary" className="gap-1 whitespace-nowrap">
       <CategorySelectItem category={category} showType={false} compact />

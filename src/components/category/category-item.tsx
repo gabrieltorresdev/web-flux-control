@@ -21,9 +21,7 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { EditCategoryDialog } from "@/components/category/edit-category-dialog";
-import { useDeleteCategory } from "@/hooks/use-categories";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -35,6 +33,7 @@ import {
   DrawerTrigger,
 } from "../ui/drawer";
 import { CategoryIcon } from "./category-icon";
+import { deleteCategory } from "@/app/actions/categories";
 
 interface CategoryItemProps {
   category: Category;
@@ -47,15 +46,12 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const deleteCategory = useDeleteCategory();
   const isMobile = useIsMobile();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await deleteCategory.mutateAsync(category.id);
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await deleteCategory(category.id);
       toast({
         title: "Categoria excluída",
         description: "A categoria foi excluída com sucesso.",

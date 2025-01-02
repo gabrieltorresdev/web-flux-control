@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { CreateTransactionInput } from "@/types/transaction";
 import { AiTransactionService } from "@/services/ai/ai-transaction-service";
-import { CategoryService } from "@/services/category-service";
 import { TransactionForm } from "./transaction-form";
 import {
   FieldErrors,
@@ -31,6 +30,7 @@ import {
 import { CreateCategoryDialog } from "@/components/category/create-category-dialog";
 import { GoogleGenerativeAiService } from "@/services/ai/providers/google-generative-ai-service";
 import { useDebounce } from "@/hooks/lib/use-debounce";
+import { getCategoryByName } from "@/app/actions/categories";
 
 interface VoiceTransactionFormProps {
   onDataChange: (hasData: boolean) => void;
@@ -359,7 +359,6 @@ const useTranscriptConversion = (
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
 
   const aiService = new AiTransactionService(new GoogleGenerativeAiService());
-  const categoryService = new CategoryService();
 
   const convertTranscriptMutation = useMutation({
     mutationFn: async (): Promise<CreateTransactionInput> => {
@@ -395,7 +394,7 @@ const useTranscriptConversion = (
 
       let categoryId = "";
       try {
-        const categoryResponse = await categoryService.findByName(
+        const categoryResponse = await getCategoryByName(
           aiTransaction.category
         );
         categoryId = categoryResponse?.data?.id;
