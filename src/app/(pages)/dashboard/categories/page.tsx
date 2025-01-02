@@ -4,6 +4,9 @@ import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { getCategories } from "@/app/actions/categories";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function CategoriesPage() {
   // Fetch initial data on the server
   const initialCategories = await getCategories();
