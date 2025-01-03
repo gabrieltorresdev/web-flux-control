@@ -40,9 +40,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   ]);
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col gap-3 px-3">
+    <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 px-3">
       <div>
-        <div className="flex flex-col gap-2 max-w-3xl mx-auto w-full">
+        <div className="flex flex-col gap-3 w-full">
           <div className="flex items-center justify-between">
             <h1 className="text-muted-foreground text-sm font-medium">
               Minhas <strong className="text-primary">transações</strong>

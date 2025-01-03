@@ -220,7 +220,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }): Promise<JWT> {
       // Initial sign in
       if (user) {
-        console.log("Initial token setup");
+        if (process.env.NODE_ENV === "development") {
+          console.log("Initial token setup");
+        }
         return {
           ...token,
           accessToken: (user as User).accessToken,
@@ -229,16 +231,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           familyName: (user as User).familyName,
           emailVerified: (user as User).emailVerified,
           username: (user as User).username,
-          accessTokenExpires: Math.floor(Date.now() / 1000 + 15), // 15 segundos de expiração para teste
+          accessTokenExpires: Math.floor(Date.now() / 1000 + 300), // 5 minutos de expiração
         };
       }
 
-      console.log("Checking token expiration:", {
-        hasAccessToken: !!token.accessToken,
-        hasExpiry: !!token.accessTokenExpires,
-        currentTime: Math.floor(Date.now() / 1000),
-        expiryTime: token.accessTokenExpires,
-      });
+      if (process.env.NODE_ENV === "development") {
+        console.log("Checking token expiration:", {
+          hasAccessToken: !!token.accessToken,
+          hasExpiry: !!token.accessTokenExpires,
+          currentTime: Math.floor(Date.now() / 1000),
+          expiryTime: token.accessTokenExpires,
+        });
+      }
 
       // Return previous token if the access token has not expired yet
       if (
@@ -249,11 +253,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.accessTokenExpires
         )
       ) {
-        console.log("Token still valid, returning existing token");
+        if (process.env.NODE_ENV === "development") {
+          console.log("Token still valid, returning existing token");
+        }
         return token;
       }
 
-      console.log("Token expired, attempting refresh");
+      if (process.env.NODE_ENV === "development") {
+        console.log("Token expired, attempting refresh");
+      }
 
       // Access token has expired, try to refresh it
       if (token.refreshToken) {
@@ -261,7 +269,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const response = await TokenManager.refreshToken(token.refreshToken);
 
           if (response) {
-            console.log("Token refresh successful");
+            if (process.env.NODE_ENV === "development") {
+              console.log("Token refresh successful");
+            }
             return {
               ...token,
               accessToken: response.access_token,
@@ -281,7 +291,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      console.log("No refresh token available or refresh failed");
+      if (process.env.NODE_ENV === "development") {
+        console.log("No refresh token available or refresh failed");
+      }
       return {
         ...token,
         error: "RefreshAccessTokenError",

@@ -3,6 +3,9 @@
 import { useState, useCallback, useEffect, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CreateTransactionInput } from "@/types/transaction";
+import { transactionSchema } from "@/lib/validations/transaction";
+import { useToast } from "@/hooks/use-toast";
 import {
   ResponsiveModal,
   ResponsiveModalTrigger,
@@ -25,12 +28,10 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "../../ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { useCreateTransaction } from "@/hooks/use-transactions";
-import { ValidationError } from "@/lib/api/error-handler";
-import { transactionSchema } from "@/lib/validations/transaction";
-import { CreateTransactionInput } from "@/types/transaction";
 import { useDraftTransaction } from "@/hooks/use-draft-transaction";
+import { createTransaction } from "@/app/actions/transactions";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/get-query-client";
 
 interface NewTransactionDialogProps {
   initialDate?: Date;
@@ -40,6 +41,12 @@ interface NewTransactionDialogProps {
 }
 
 type NewTransactionFormData = CreateTransactionInput;
+
+interface ApiError {
+  status: number;
+  message: string;
+  errors?: Record<string, string[]>;
+}
 
 export function NewTransactionDialog({
   initialDate,
@@ -55,8 +62,8 @@ export function NewTransactionDialog({
   const [hasVoiceData, setHasVoiceData] = useState(false);
   const [hasManualData, setHasManualData] = useState(false);
 
-  const createTransaction = useCreateTransaction();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -110,28 +117,39 @@ export function NewTransactionDialog({
 
   const onSubmit = handleSubmit(async (data: NewTransactionFormData) => {
     try {
-      await createTransaction.mutateAsync(data);
+      await createTransaction(data);
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.transactions.all,
+      });
       clearDraft();
       reset();
       setHasVoiceData(false);
       setHasManualData(false);
       onClose();
+      toast({
+        title: "Transação criada",
+        description: "A transação foi criada com sucesso.",
+      });
     } catch (error) {
-      if (error instanceof ValidationError) {
-        const validationError = error as ValidationError;
-        if (validationError.errors) {
-          Object.entries(validationError.errors).forEach(
-            ([field, messages]) => {
-              if (Array.isArray(messages) && messages.length > 0) {
-                setError(field as keyof NewTransactionFormData, {
-                  message: messages[0],
-                });
-              }
-            }
-          );
+      if (typeof error === "object" && error !== null && "status" in error) {
+        const apiError = error as ApiError;
+        if (apiError.status === 422 && apiError.errors) {
+          Object.entries(apiError.errors).forEach(([field, messages]) => {
+            setError(field as keyof NewTransactionFormData, {
+              message: messages[0],
+            });
+          });
           return;
         }
       }
+
+      if (error instanceof Error) {
+        setError("dateTime", {
+          message: error.message,
+        });
+        return;
+      }
+
       toast({
         title: "Erro ao criar transação",
         description: "Ocorreu um erro ao criar a transação.",
@@ -226,7 +244,6 @@ export function NewTransactionDialog({
               setValue={setValue}
               setError={setError}
               saveDraft={saveDraft}
-              isSubmitting={createTransaction.isPending}
               onDataChange={setHasManualData}
             />
           </TabsContent>

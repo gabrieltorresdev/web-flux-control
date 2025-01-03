@@ -31,6 +31,7 @@ import { CreateCategoryDialog } from "@/components/category/create-category-dial
 import { GoogleGenerativeAiService } from "@/services/ai/providers/google-generative-ai-service";
 import { useDebounce } from "@/hooks/lib/use-debounce";
 import { getCategoryByName } from "@/app/actions/categories";
+import { MockGoogleGenerativeAiService } from "@/services/ai/providers/mocks/mock-google-generative-ai-service";
 
 interface VoiceTransactionFormProps {
   onDataChange: (hasData: boolean) => void;
@@ -358,7 +359,11 @@ const useTranscriptConversion = (
 ) => {
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
 
-  const aiService = new AiTransactionService(new GoogleGenerativeAiService());
+  const aiService = new AiTransactionService(
+    process.env.NODE_ENV === "development"
+      ? new MockGoogleGenerativeAiService()
+      : new GoogleGenerativeAiService()
+  );
 
   const convertTranscriptMutation = useMutation({
     mutationFn: async (): Promise<CreateTransactionInput> => {

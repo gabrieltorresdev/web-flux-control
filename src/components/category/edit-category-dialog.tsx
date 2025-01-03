@@ -24,7 +24,7 @@ import { ValidationError } from "@/lib/api/error-handler";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateCategory } from "@/app/actions/categories";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 
 const updateCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -38,75 +38,34 @@ interface EditCategoryDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditCategoryDialog({
+export const EditCategoryDialog = memo(function EditCategoryDialog({
   category,
   open,
   onOpenChange,
 }: EditCategoryDialogProps) {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    form,
+    selectedIcon,
+    isSubmitting,
+    handleTypeChange,
+    handleIconChange,
+    onSubmit,
+  } = useEditCategory({
+    category,
+    onOpenChange,
+  });
 
   const {
     register,
-    handleSubmit,
-    setValue,
-    watch,
-    setError,
     formState: { errors },
-  } = useForm<CreateCategoryInput>({
-    resolver: zodResolver(updateCategorySchema),
-    defaultValues: {
-      name: category.name,
-      type: category.type,
-      icon: category.icon,
-    },
-  });
-
-  const selectedIcon = watch("icon");
-
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      setIsSubmitting(true);
-      await updateCategory({
-        id: category.id,
-        name: data.name.trim(),
-        type: data.type,
-        is_default: category.is_default,
-        icon: data.icon,
-      });
-      onOpenChange(false);
-      toast({
-        title: "Categoria atualizada",
-        description: "Categoria atualizada com sucesso",
-      });
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        Object.entries(error.errors).forEach(([field, messages]) => {
-          setError(field as keyof CreateCategoryInput, {
-            type: "manual",
-            message: messages[0],
-          });
-        });
-      } else {
-        toast({
-          title: "Erro ao atualizar categoria",
-          description: "Ocorreu um erro ao atualizar a categoria",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  });
+  } = form;
 
   return (
     <ResponsiveModal open={open} onOpenChange={onOpenChange}>
-      <ResponsiveModalContent className="sm:max-w-[425px] w-[95vw] sm:w-full mx-auto">
+      <ResponsiveModalContent>
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>Editar Categoria</ResponsiveModalTitle>
-          <ResponsiveModalDescription>
-            Edite os dados da categoria e clique em salvar para atualizar
-          </ResponsiveModalDescription>
+          <ResponsiveModalDescription />
         </ResponsiveModalHeader>
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="space-y-2">
@@ -129,9 +88,7 @@ export function EditCategoryDialog({
             <label className="text-sm font-medium">Tipo</label>
             <Select
               defaultValue={category.type}
-              onValueChange={(value) =>
-                setValue("type", value as "income" | "expense")
-              }
+              onValueChange={handleTypeChange}
             >
               <SelectTrigger className="h-12 text-base">
                 <SelectValue />
@@ -151,10 +108,7 @@ export function EditCategoryDialog({
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Ícone (opcional)</label>
-            <IconPicker
-              value={selectedIcon}
-              onChange={(icon) => setValue("icon", icon)}
-            />
+            <IconPicker value={selectedIcon} onChange={handleIconChange} />
           </div>
           <Button
             type="submit"
@@ -171,4 +125,90 @@ export function EditCategoryDialog({
       </ResponsiveModalContent>
     </ResponsiveModal>
   );
+});
+
+interface UseEditCategoryProps {
+  category: Category;
+  onOpenChange: (open: boolean) => void;
+}
+
+function useEditCategory({ category, onOpenChange }: UseEditCategoryProps) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<CreateCategoryInput>({
+    resolver: zodResolver(updateCategorySchema),
+    defaultValues: {
+      name: category.name,
+      type: category.type,
+      icon: category.icon,
+    },
+  });
+
+  const { setValue, watch, setError, handleSubmit } = form;
+
+  const selectedIcon = watch("icon");
+
+  const handleUpdateCategory = useCallback(
+    async (data: CreateCategoryInput) => {
+      try {
+        setIsSubmitting(true);
+        await updateCategory({
+          id: category.id,
+          name: data.name.trim(),
+          type: data.type,
+          is_default: category.is_default,
+          icon: data.icon,
+        });
+        onOpenChange(false);
+        toast({
+          title: "Categoria atualizada",
+          description: "Categoria atualizada com sucesso",
+        });
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          Object.entries(error.errors).forEach(([field, messages]) => {
+            setError(field as keyof CreateCategoryInput, {
+              type: "manual",
+              message: messages[0],
+            });
+          });
+        } else {
+          toast({
+            title: "Erro ao atualizar categoria",
+            description: "Ocorreu um erro ao atualizar a categoria",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [category.id, category.is_default, onOpenChange, setError, toast]
+  );
+
+  const onSubmit = handleSubmit(handleUpdateCategory);
+
+  const handleTypeChange = useCallback(
+    (value: string) => {
+      setValue("type", value as "income" | "expense");
+    },
+    [setValue]
+  );
+
+  const handleIconChange = useCallback(
+    (icon: string) => {
+      setValue("icon", icon);
+    },
+    [setValue]
+  );
+
+  return {
+    form,
+    selectedIcon,
+    isSubmitting,
+    handleTypeChange,
+    handleIconChange,
+    onSubmit,
+  };
 }

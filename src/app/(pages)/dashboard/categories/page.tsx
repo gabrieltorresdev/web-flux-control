@@ -10,9 +10,10 @@ export const revalidate = 0;
 export default async function CategoriesPage() {
   // Fetch initial data on the server
   const initialCategories = await getCategories();
+  console.log("initialCategories", initialCategories);
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col gap-3 px-3">
+    <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 px-3">
       <div className="text-muted-foreground text-sm md:text-base text-center">
         Gerencie suas <strong>categorias</strong> de transações
       </div>

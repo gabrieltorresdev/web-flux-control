@@ -1,24 +1,30 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { Transaction } from "@/types/transaction";
 import { format } from "date-fns";
 import { formatNumberToBRL } from "@/lib/utils";
 import { TransactionActions } from "./transaction-actions";
-import { useDeleteTransaction } from "@/hooks/use-transactions";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "../ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CategoryIcon } from "../category/category-icon";
+import { deleteTransaction } from "@/app/actions/transactions";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/get-query-client";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { EditTransactionDialog } from "./edit-transaction-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -31,17 +37,31 @@ interface TransactionContentProps {
 }
 
 export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
-  const deleteTransaction = useDeleteTransaction();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const [isPressed, setIsPressed] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const x = useMotionValue(0);
+
+  // Transform x motion into opacity and scale for the action buttons
+  const actionButtonsOpacity = useTransform(x, [-100, -20], [1, 0]);
+  const scale = useTransform(x, [-100, -20], [1, 0.8]);
 
   const handleDelete = useCallback(async () => {
     try {
-      await deleteTransaction.mutateAsync(transaction.id);
+      await deleteTransaction(transaction.id);
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.transactions.all,
+      });
       toast({
         title: "Transação excluída",
         description: "A transação foi excluída com sucesso.",
       });
+      // Reset swipe position after successful delete
+      x.set(0);
+      setIsDeleteDialogOpen(false);
     } catch {
       toast({
         title: "Erro ao excluir",
@@ -49,31 +69,102 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
         variant: "destructive",
       });
     }
-  }, [deleteTransaction, toast, transaction.id]);
+  }, [toast, transaction.id, queryClient, x]);
 
   if (isMobile) {
     return (
-      <Drawer>
-        <DrawerHeader className="hidden">
-          <DrawerTitle></DrawerTitle>
-          <DrawerDescription></DrawerDescription>
-        </DrawerHeader>
-        <DrawerTrigger asChild>
-          <div className="group transition-all duration-200 active:bg-muted/50 p-3 touch-manipulation">
-            <TransactionContent
-              transaction={transaction}
-              isMobile={isMobile}
-              handleDelete={handleDelete}
-            />
-          </div>
-        </DrawerTrigger>
-        <DrawerContent>
-          <TransactionActions
-            transaction={transaction}
-            onDelete={handleDelete}
-          />
-        </DrawerContent>
-      </Drawer>
+      <>
+        <motion.div className="relative overflow-hidden">
+          {/* Action buttons container */}
+          <motion.div
+            className="absolute right-0 h-full flex items-center gap-2 px-3 bg-background"
+            style={{ opacity: actionButtonsOpacity }}
+          >
+            <motion.button
+              className="p-2 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground"
+              style={{ scale }}
+              onClick={() => setIsEditOpen(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </motion.button>
+            <motion.button
+              className="p-2 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              style={{ scale }}
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </motion.button>
+          </motion.div>
+
+          {/* Main content with drag */}
+          <motion.div
+            drag="x"
+            dragDirectionLock
+            dragConstraints={{ left: -100, right: 0 }}
+            dragElastic={0.1}
+            dragMomentum={false}
+            style={{ x }}
+            className={cn(
+              "group touch-manipulation bg-background",
+              "active:bg-muted/50 transition-colors"
+            )}
+            onDragEnd={(
+              _: MouseEvent | TouchEvent | PointerEvent,
+              info: PanInfo
+            ) => {
+              // If dragged more than halfway, keep it open
+              if (info.offset.x < -50) {
+                x.set(-100);
+              } else {
+                x.set(0);
+              }
+            }}
+          >
+            <div
+              className={cn(
+                "p-3 touch-manipulation relative",
+                isPressed && "bg-muted/30"
+              )}
+              onTouchStart={() => setIsPressed(true)}
+              onTouchEnd={() => setIsPressed(false)}
+              onTouchCancel={() => setIsPressed(false)}
+            >
+              <TransactionContent
+                transaction={transaction}
+                isMobile={isMobile}
+                handleDelete={handleDelete}
+              />
+            </div>
+          </motion.div>
+        </motion.div>
+
+        <EditTransactionDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          transaction={transaction}
+        />
+
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir transação</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta transação? Esta ação não
+                pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 
@@ -109,8 +200,10 @@ const TransactionContent = memo(
       <div className="flex items-center gap-3">
         <div
           className={cn(
-            "w-6 h-6 rounded-full flex items-center justify-center transition-colors shrink-0",
-            isIncome ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+            "w-7 h-7 rounded-full flex items-center justify-center transition-colors shrink-0 border overflow-hidden",
+            isIncome
+              ? "bg-green-500/10 text-green-500 dark:bg-green-500/20 dark:text-green-400 border-green-500 dark:border-green-400"
+              : "bg-red-500/10 text-red-500 dark:bg-red-500/20 dark:text-red-400 border-red-500 dark:border-red-400"
           )}
           aria-hidden="true"
         >
@@ -118,12 +211,11 @@ const TransactionContent = memo(
             <CategoryIcon
               icon={transaction.category.icon}
               isIncome={isIncome}
-              className="h-4 w-4"
             />
           ) : isIncome ? (
-            <ArrowUpRight className="h-4 w-4" />
+            <ArrowUpRight />
           ) : (
-            <ArrowDownRight className="h-4 w-4" />
+            <ArrowDownRight />
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -139,7 +231,9 @@ const TransactionContent = memo(
             <p
               className={cn(
                 "text-sm font-medium tabular-nums transition-colors whitespace-nowrap",
-                isIncome ? "text-green-600" : "text-red-600"
+                isIncome
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
               )}
             >
               {isIncome ? "+" : "-"}

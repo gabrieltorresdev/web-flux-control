@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { memo, useState, useEffect, useMemo, useCallback } from "react";
 import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import {
   Command,
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { CategorySelectItem } from "../../category/category-select-item";
 import { useDebounce } from "@/hooks/lib/use-debounce";
-import { useCategoriesData } from "@/hooks/use-categories";
+import { useCategories } from "@/hooks/use-categories";
 
 interface CategoryFilterProps {
   initialCategoryId?: string;
@@ -34,18 +34,18 @@ interface CategoryFilterProps {
   onCategoryChange?: (categoryId: string | undefined) => void;
 }
 
-export const CategoryFilter = React.memo(function CategoryFilter({
+export const CategoryFilter = memo(function CategoryFilter({
   initialCategoryId,
   showAsBadge = false,
   onCategoryChange,
 }: CategoryFilterProps) {
-  const [formState, setFormState] = React.useState({
+  const [formState, setFormState] = useState({
     open: false,
     searchTerm: "",
     selectedId: initialCategoryId,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     setFormState((prev) => ({
       ...prev,
       selectedId: initialCategoryId,
@@ -54,19 +54,26 @@ export const CategoryFilter = React.memo(function CategoryFilter({
 
   const isMobile = useIsMobile();
   const debouncedSearchTerm = useDebounce(formState.searchTerm, 500);
-  const { data: categories, isLoading } =
-    useCategoriesData(debouncedSearchTerm);
+  const { data, isLoading } = useCategories(debouncedSearchTerm);
+  const categories = data?.data ?? [];
 
-  const selectedCategory = React.useMemo(
+  const filteredCategories = useMemo(() => {
+    if (!formState.searchTerm) return categories;
+    return categories.filter((cat) =>
+      cat.name.toLowerCase().includes(formState.searchTerm.toLowerCase())
+    );
+  }, [categories, formState.searchTerm]);
+
+  const selectedCategory = useMemo(
     () => categories.find((cat) => cat.id === formState.selectedId),
     [categories, formState.selectedId]
   );
 
-  const handleSearchChange = React.useCallback((value: string) => {
+  const handleSearchChange = useCallback((value: string) => {
     setFormState((prev) => ({ ...prev, searchTerm: value }));
   }, []);
 
-  const handleSelectCategory = React.useCallback(
+  const handleSelectCategory = useCallback(
     (categoryId: string | null) => {
       setFormState((prev) => ({
         ...prev,
@@ -79,7 +86,7 @@ export const CategoryFilter = React.memo(function CategoryFilter({
     [onCategoryChange]
   );
 
-  const handleOpenChange = React.useCallback((open: boolean) => {
+  const handleOpenChange = useCallback((open: boolean) => {
     setFormState((prev) => ({ ...prev, open }));
   }, []);
 
@@ -120,8 +127,8 @@ export const CategoryFilter = React.memo(function CategoryFilter({
               />
               Todas as categorias
             </CommandItem>
-            {categories?.length > 0 &&
-              categories.map((category) => (
+            {filteredCategories?.length > 0 &&
+              filteredCategories.map((category) => (
                 <CommandItem
                   key={category.id}
                   value={category.id}
@@ -136,7 +143,7 @@ export const CategoryFilter = React.memo(function CategoryFilter({
                   </div>
                 </CommandItem>
               ))}
-            {categories?.length === 0 && (
+            {filteredCategories?.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-4">
                 <p className="text-sm text-muted-foreground">
                   Nenhuma categoria encontrada

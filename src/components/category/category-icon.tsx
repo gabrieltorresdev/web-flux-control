@@ -72,7 +72,6 @@ export function CategoryIcon({
     <div
       className={cn(
         "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-        isIncome ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600",
         className
       )}
       aria-hidden="true"

@@ -31,8 +31,11 @@ export class MockGoogleGenerativeAiService implements IGenerativeAiService {
 
   private getRandomDateTime(): Date {
     const now = new Date();
-    const randomDays = Math.floor(Math.random() * 30);
-    return new Date(now.setDate(now.getDate() - randomDays));
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const randomDay = Math.floor(Math.random() * daysInMonth) + 1;
+    return new Date(currentYear, currentMonth, randomDay);
   }
 
   public async generateContent() {

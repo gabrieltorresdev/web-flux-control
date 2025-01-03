@@ -1,29 +1,32 @@
-import { useSessionManager } from "@/hooks/use-session-manager";
-import { Loader2 } from "lucide-react";
-import { usePathname } from "next/navigation";
+"use client";
+
+import { verifySession } from "@/app/actions/auth";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 interface SessionProviderProps {
   children: React.ReactNode;
 }
 
-const PUBLIC_ROUTES = ["/login", "/register"];
-
 export function SessionProvider({ children }: SessionProviderProps) {
-  const { isLoading } = useSessionManager();
-  const pathname = usePathname();
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const router = useRouter();
 
-  // Mostra loading state apenas em rotas protegidas
-  if (isLoading && !isPublicRoute) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background/50 backdrop-blur-sm">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Verificando sessão...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const { isAuthenticated, error } = await verifySession();
+
+      if (!isAuthenticated || error === "RefreshAccessTokenError") {
+        router.push("/login");
+        toast({
+          title: "Sua sessão expirou. Por favor, faça login novamente.",
+          variant: "destructive",
+        });
+      }
+    }, 60000); // Check session every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [router]);
 
   return <>{children}</>;
 }

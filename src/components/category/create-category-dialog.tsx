@@ -104,12 +104,10 @@ export function CreateCategoryDialog({
 
   return (
     <ResponsiveModal open={open} onOpenChange={onOpenChange}>
-      <ResponsiveModalContent className="sm:max-w-[425px] w-[95vw] sm:w-full mx-auto">
+      <ResponsiveModalContent>
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>Nova Categoria</ResponsiveModalTitle>
-          <ResponsiveModalDescription>
-            Crie uma nova categoria para organizar suas finanças
-          </ResponsiveModalDescription>
+          <ResponsiveModalDescription />
         </ResponsiveModalHeader>
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="space-y-2">

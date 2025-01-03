@@ -20,20 +20,23 @@ interface TransactionSummaryProps {
 const SUMMARY_STYLES = {
   income: {
     icon: ArrowUpRight,
-    color: "text-green-500",
-    bgColor: "bg-green-50",
+    color: "text-green-600 dark:text-green-400",
+    bgColor: "bg-green-50 dark:bg-green-500/20",
     title: "Entradas",
   },
   expense: {
     icon: ArrowDownRight,
-    color: "text-red-500",
-    bgColor: "bg-red-50",
+    color: "text-red-600 dark:text-red-400",
+    bgColor: "bg-red-50 dark:bg-red-500/20",
     title: "Saídas",
   },
   total: {
     icon: Coins,
-    color: (value: number) => (value >= 0 ? "text-green-500" : "text-red-500"),
-    bgColor: "bg-primary/10",
+    color: (value: number) =>
+      value >= 0
+        ? "text-green-600 dark:text-green-400"
+        : "text-red-600 dark:text-red-400",
+    bgColor: "bg-primary/10 dark:bg-primary/20",
     title: "Total",
   },
 } as const;
@@ -54,11 +57,11 @@ const SummaryCard = memo(function SummaryCard({
     <div className="flex flex-col items-center gap-2">
       <div
         className={cn(
-          "w-6 h-6 rounded-lg flex items-center justify-center",
+          "w-7 h-7 rounded-full flex items-center justify-center",
           bgColor
         )}
       >
-        <Icon className={cn("h-4 w-4", textColor)} />
+        <Icon className={textColor} />
       </div>
       <div className="text-center">
         <span className="text-xs text-muted-foreground block">{title}</span>
@@ -81,7 +84,7 @@ const SummaryContent = memo(function SummaryContent({
         {(["income", "expense", "total"] as const).map((type) => (
           <Card
             key={type}
-            className="p-3 bg-gradient-to-br from-background to-muted/20"
+            className="p-3 bg-gradient-to-br from-background to-muted/20 dark:from-background/50 dark:to-muted/30"
           >
             <SummaryCard
               title={SUMMARY_STYLES[type].title}

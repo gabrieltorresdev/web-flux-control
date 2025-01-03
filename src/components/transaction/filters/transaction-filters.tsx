@@ -15,11 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useCategoriesData } from "@/hooks/use-categories";
+import { useCategories } from "@/hooks/use-categories";
 
 interface TransactionFiltersProps {
   initialCategoryId?: string;
@@ -37,7 +38,8 @@ export function TransactionFilters({
   const [selectedCategoryId, setSelectedCategoryId] =
     React.useState(initialCategoryId);
   const [isOpen, setIsOpen] = React.useState(false);
-  const { data: categories, isLoading } = useCategoriesData();
+  const { data, isLoading } = useCategories();
+  const categories = data?.data ?? [];
 
   const selectedCategory = React.useMemo(
     () => categories.find((cat) => cat.id === selectedCategoryId),
@@ -141,6 +143,7 @@ export function TransactionFilters({
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Filtros avançados</SheetTitle>
+              <SheetDescription />
             </SheetHeader>
             <div className="space-y-6 pt-8">
               <div className="space-y-1.5">

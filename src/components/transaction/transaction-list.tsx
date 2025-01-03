@@ -17,6 +17,7 @@ import {
   useEffect,
   memo,
   useMemo,
+  useRef,
 } from "react";
 import {
   Accordion,
@@ -26,6 +27,7 @@ import {
 } from "../ui/accordion";
 import { getTransactionsList } from "@/app/actions/transactions";
 import { Transaction } from "@/types/transaction";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TransactionGroupProps {
   date: Date;
@@ -56,7 +58,7 @@ const calculateGroupTotal = (transactions: Transaction[]) => {
 
 // Cache the fetch function to avoid unnecessary refetches
 const fetchTransactionsPage = cache(
-  async (params: SearchParams, page: number) => {
+  async (params: SearchParams, page: number, perPage: number) => {
     try {
       return await getTransactionsList({
         month: params.month ? parseInt(params.month) : undefined,
@@ -64,7 +66,7 @@ const fetchTransactionsPage = cache(
         categoryId: params.categoryId || undefined,
         search: params.search || undefined,
         page,
-        perPage: ITEMS_PER_PAGE,
+        perPage,
       });
     } catch (error) {
       console.error("Error fetching next page:", error);
@@ -95,6 +97,8 @@ const TransactionGroup = memo(function TransactionGroup({
   transactions,
   total,
 }: TransactionGroupProps) {
+  const isMobile = useIsMobile();
+
   return (
     <Accordion type="single" collapsible defaultValue="transactions">
       <AccordionItem
@@ -104,21 +108,28 @@ const TransactionGroup = memo(function TransactionGroup({
         <AccordionTrigger
           className={cn(
             "py-3 px-3 text-sm transition-colors",
-            "hover:no-underline hover:bg-muted/50  data-[state=open]:!bg-muted border",
-            "flex items-center gap-2 justify-between !bg-card rounded-lg data-[state=open]:rounded-b-none"
+            "hover:no-underline hover:bg-muted/50 data-[state=open]:!bg-muted border",
+            "flex items-center gap-2 justify-between !bg-card rounded-lg data-[state=open]:rounded-b-none",
+            isMobile && "sticky top-0 z-10 backdrop-blur-lg bg-opacity-90"
           )}
         >
           <div className="flex items-center justify-between flex-1 gap-1.5">
             <time
               dateTime={date.toISOString()}
-              className="text-xs font-medium text-muted-foreground"
+              className={cn(
+                "text-xs font-medium text-muted-foreground",
+                isMobile && "text-sm"
+              )}
             >
               {formatDateHeader(date)}
             </time>
             <p
               className={cn(
-                "text-xs font-medium text-muted-foreground",
-                total > 0 ? "text-green-600" : "text-red-600"
+                "text-xs font-medium",
+                total > 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400",
+                isMobile && "text-sm font-semibold"
               )}
             >
               {total > 0
@@ -128,7 +139,12 @@ const TransactionGroup = memo(function TransactionGroup({
           </div>
         </AccordionTrigger>
         <AccordionContent className="pb-0 rounded-b-lg">
-          <Card className="divide-y divide-border/50 shadow-none border-none overflow-hidden rounded-none">
+          <Card
+            className={cn(
+              "divide-y divide-border/50 shadow-none border-none overflow-hidden rounded-none",
+              isMobile && "bg-transparent"
+            )}
+          >
             {transactions.map((transaction) => (
               <TransactionItem key={transaction.id} transaction={transaction} />
             ))}
@@ -143,50 +159,78 @@ const TransactionListContent = memo(function TransactionListContent({
   initialData,
   searchParams,
 }: TransactionListProps) {
-  const { ref: loadMoreRef, inView } = useInView();
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0.1,
+    rootMargin: "150px", // Increased for better mobile experience
+  });
   const [isPending, startTransition] = useTransition();
+  const isLoadingRef = useRef(false);
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // State for pagination
+  // State for pagination with optimized page size for mobile
+  const pageSize = isMobile ? 5 : ITEMS_PER_PAGE;
   const [pages, setPages] = useState<Transaction[][]>([
     initialData.transactions.data,
   ]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(initialData.nextPage);
 
   // Memoized fetch function for next pages
   const fetchNextPage = useCallback(async () => {
-    if (!initialData.nextPage) return;
+    if (!hasNextPage || isLoadingRef.current) return;
 
+    isLoadingRef.current = true;
     startTransition(async () => {
       try {
         const nextPageData = await fetchTransactionsPage(
           searchParams,
-          currentPage + 1
+          currentPage + 1,
+          pageSize
         );
         setPages((prev) => [...prev, nextPageData.transactions.data]);
         setCurrentPage((prev) => prev + 1);
+        setHasNextPage(nextPageData.nextPage);
       } catch (error) {
         console.error("Error fetching next page:", error);
+      } finally {
+        isLoadingRef.current = false;
       }
     });
-  }, [searchParams, currentPage, initialData.nextPage]);
+  }, [searchParams, currentPage, hasNextPage, pageSize]);
 
-  // Handle infinite scroll
+  // Handle infinite scroll with debounce for mobile
   useEffect(() => {
-    if (inView && initialData.nextPage && !isPending) {
-      fetchNextPage();
+    let timeoutId: NodeJS.Timeout;
+    if (inView && hasNextPage && !isPending) {
+      timeoutId = setTimeout(
+        () => {
+          fetchNextPage();
+        },
+        isMobile ? 150 : 0
+      ); // Small delay on mobile for smoother scrolling
     }
-  }, [inView, initialData.nextPage, isPending, fetchNextPage]);
+    return () => clearTimeout(timeoutId);
+  }, [inView, hasNextPage, isPending, fetchNextPage, isMobile]);
 
   // Reset pagination when filters change
   useEffect(() => {
     setPages([initialData.transactions.data]);
     setCurrentPage(1);
+    setHasNextPage(initialData.nextPage);
+    isLoadingRef.current = false;
+
+    // Scroll to top when filters change
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, [
     searchParams.month,
     searchParams.year,
     searchParams.categoryId,
     searchParams.search,
     initialData.transactions.data,
+    initialData.nextPage,
   ]);
 
   // Memoize expensive calculations
@@ -208,7 +252,13 @@ const TransactionListContent = memo(function TransactionListContent({
   }
 
   return (
-    <div className="animate-in fade-in-50 duration-500 space-y-3">
+    <div
+      ref={containerRef}
+      className={cn(
+        "animate-in fade-in-50 duration-500 space-y-3",
+        isMobile && "pb-safe-area-bottom"
+      )}
+    >
       {groupedTransactionsWithTotals.map((group) => (
         <TransactionGroup
           key={group.date.toISOString()}
@@ -217,7 +267,7 @@ const TransactionListContent = memo(function TransactionListContent({
           total={group.total}
         />
       ))}
-      {initialData.nextPage && (
+      {hasNextPage && (
         <div
           ref={loadMoreRef}
           className="flex justify-center py-3"

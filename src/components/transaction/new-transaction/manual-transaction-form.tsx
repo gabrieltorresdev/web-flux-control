@@ -31,7 +31,6 @@ export const ManualTransactionForm = memo(
     errors,
     getValues,
     setValue,
-    setError,
     onSubmit,
     isSubmitting = false,
     saveDraft,
@@ -58,7 +57,6 @@ export const ManualTransactionForm = memo(
           errors={errors}
           getValues={getValues}
           setValue={setValue}
-          setError={setError}
           isSubmitting={isSubmitting}
         />
       </div>

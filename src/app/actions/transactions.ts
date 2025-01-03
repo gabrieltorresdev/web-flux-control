@@ -1,7 +1,11 @@
 "use server";
 
 import { TransactionService } from "@/services/transaction-service";
+import { CreateTransactionInput } from "@/types/transaction";
 import { startOfMonth, endOfMonth } from "date-fns";
+import { revalidatePath } from "next/cache";
+
+const transactionService = new TransactionService();
 
 export type TransactionListParams = {
   month?: number;
@@ -27,7 +31,6 @@ export async function getTransactionsList({
   const startDate = startOfMonth(date);
   const endDate = endOfMonth(date);
 
-  const transactionService = new TransactionService();
   const transactions = await transactionService.findAllPaginated(
     startDate,
     endDate,
@@ -58,6 +61,40 @@ export async function getTransactionsSummary({
   const startDate = startOfMonth(date);
   const endDate = endOfMonth(date);
 
-  const transactionService = new TransactionService();
   return transactionService.getSummary(startDate, endDate, categoryId, search);
+}
+
+export async function createTransaction(input: CreateTransactionInput) {
+  try {
+    const response = await transactionService.create(input);
+    revalidatePath("/transactions");
+    return response;
+  } catch (error) {
+    console.error("Error creating transaction:", error);
+    throw error;
+  }
+}
+
+export async function updateTransaction(
+  id: string,
+  input: CreateTransactionInput
+) {
+  try {
+    const response = await transactionService.update(id, input);
+    revalidatePath("/transactions");
+    return response;
+  } catch (error) {
+    console.error("Error updating transaction:", error);
+    throw error;
+  }
+}
+
+export async function deleteTransaction(id: string) {
+  try {
+    await transactionService.delete(id);
+    revalidatePath("/transactions");
+  } catch (error) {
+    console.error("Error deleting transaction:", error);
+    throw error;
+  }
 }
