@@ -53,7 +53,6 @@ export const VoiceTransactionForm = memo(
     errors,
     getValues,
     setValue,
-    setError,
     onSubmit,
     saveDraft,
     loadTranscript,
@@ -107,7 +106,7 @@ export const VoiceTransactionForm = memo(
           : currentTranscript;
         setTranscript(newTranscript);
       }
-    }, [currentTranscript, listening]);
+    }, [currentTranscript, listening, transcript]);
 
     useEffect(() => {
       onDataChange(transcript.trim().length > 0);
@@ -270,7 +269,6 @@ export const VoiceTransactionForm = memo(
                 errors={errors}
                 getValues={getValues}
                 setValue={setValue}
-                setError={setError}
                 isSubmitting={convertTranscriptMutation.isPending}
               />
 

@@ -45,62 +45,13 @@ export function CreateCategoryDialog({
   onSuccess,
   defaultCategoryName,
 }: CreateCategoryDialogProps) {
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    setError,
-    formState: { errors },
-    reset,
-  } = useForm<CreateCategoryInput>({
-    resolver: zodResolver(createCategorySchema),
-    defaultValues: {
-      type: "expense",
-      name: "",
-      icon: undefined,
-    },
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const selectedIcon = watch("icon");
-
-  // Resetar o formulário quando o diálogo for aberto
-  useEffect(() => {
-    if (open) {
-      reset({
-        type: "expense",
-        name: defaultCategoryName || "",
-        icon: undefined,
-      });
-    }
-  }, [open, defaultCategoryName, reset]);
-
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      setIsSubmitting(true);
-      const response = await createCategory(data);
-      onSuccess(response.data.id, data.name);
-      onOpenChange(false);
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        Object.entries(error.errors).forEach(([field, messages]) => {
-          setError(field as keyof CreateCategoryInput, {
-            type: "manual",
-            message: messages[0],
-          });
-        });
-      } else {
-        toast({
-          title: "Erro ao criar categoria",
-          description: "Ocorreu um erro ao criar a categoria.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  });
+  const { form, isSubmitting, selectedIcon, handleCreateCategory } =
+    useCreateCategory({
+      open,
+      onOpenChange,
+      onSuccess,
+      defaultCategoryName,
+    });
 
   return (
     <ResponsiveModal open={open} onOpenChange={onOpenChange}>
@@ -109,21 +60,23 @@ export function CreateCategoryDialog({
           <ResponsiveModalTitle>Nova Categoria</ResponsiveModalTitle>
           <ResponsiveModalDescription />
         </ResponsiveModalHeader>
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={handleCreateCategory} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Nome</label>
             <Input
-              {...register("name")}
+              {...form.register("name")}
               placeholder="Ex: Alimentação"
               className={cn(
                 "h-12 text-base px-4",
-                errors.name && "border-red-500"
+                form.formState.errors.name && "border-red-500"
               )}
               autoComplete="off"
               autoCapitalize="words"
             />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name.message}</p>
+            {form.formState.errors.name && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.name.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -131,7 +84,7 @@ export function CreateCategoryDialog({
             <Select
               defaultValue="expense"
               onValueChange={(value) =>
-                setValue("type", value as "income" | "expense")
+                form.setValue("type", value as "income" | "expense")
               }
             >
               <SelectTrigger className="h-12 text-base">
@@ -146,15 +99,17 @@ export function CreateCategoryDialog({
                 </SelectItem>
               </SelectContent>
             </Select>
-            {errors.type && (
-              <p className="text-sm text-red-500">{errors.type.message}</p>
+            {form.formState.errors.type && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.type.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Ícone (opcional)</label>
             <IconPicker
               value={selectedIcon}
-              onChange={(icon) => setValue("icon", icon)}
+              onChange={(icon) => form.setValue("icon", icon)}
             />
           </div>
           <Button
@@ -172,4 +127,66 @@ export function CreateCategoryDialog({
       </ResponsiveModalContent>
     </ResponsiveModal>
   );
+}
+
+function useCreateCategory({
+  open,
+  onOpenChange,
+  onSuccess,
+  defaultCategoryName,
+}: CreateCategoryDialogProps) {
+  const form = useForm<CreateCategoryInput>({
+    resolver: zodResolver(createCategorySchema),
+    defaultValues: {
+      type: "expense",
+      name: "",
+      icon: undefined,
+    },
+  });
+
+  const selectedIcon = form.watch("icon");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        type: "expense",
+        name: defaultCategoryName || "",
+        icon: undefined,
+      });
+    }
+  }, [open, defaultCategoryName, form, form.reset]);
+
+  const handleCreateCategory = form.handleSubmit(async (data) => {
+    try {
+      setIsSubmitting(true);
+      const response = await createCategory(data);
+      onSuccess(response.data.id, data.name);
+      onOpenChange(false);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          form.setError(field as keyof CreateCategoryInput, {
+            type: "manual",
+            message: messages[0],
+          });
+        });
+      } else {
+        toast({
+          title: "Erro ao criar categoria",
+          description: "Ocorreu um erro ao criar a categoria.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  });
+
+  return {
+    form,
+    isSubmitting,
+    selectedIcon,
+    handleCreateCategory,
+  };
 }

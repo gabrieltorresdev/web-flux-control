@@ -12,10 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { queryKeys, getQueryClient } from "../lib/get-query-client";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { QueryClient } from "@tanstack/react-query";
-import {
-  handleValidationError,
-  ValidationError,
-} from "@/lib/api/error-handler";
+import { ValidationError } from "@/lib/api/error-handler";
 
 const TRANSACTIONS_QUERY_KEY = queryKeys.transactions.all;
 const STALE_TIME = 30 * 1000;
@@ -248,7 +245,7 @@ export function useCreateTransaction() {
         const result = await new TransactionService().create(data);
         return result as Transaction;
       } catch (error) {
-        throw handleValidationError(error);
+        throw handleMutationError(error);
       }
     },
     retry: (_, error) => {
@@ -338,7 +335,7 @@ export function useUpdateTransaction() {
         const result = await new TransactionService().update(id, data);
         return result as Transaction;
       } catch (error) {
-        throw handleValidationError(error);
+        throw handleMutationError(error);
       }
     },
     retry: (_, error) => {
