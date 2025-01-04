@@ -42,12 +42,6 @@ interface NewTransactionDialogProps {
 
 type NewTransactionFormData = CreateTransactionInput;
 
-interface ApiError {
-  status: number;
-  message: string;
-  errors?: Record<string, string[]>;
-}
-
 export function NewTransactionDialog({
   initialDate,
   onClose,
@@ -117,7 +111,31 @@ export function NewTransactionDialog({
 
   const onSubmit = handleSubmit(async (data: NewTransactionFormData) => {
     try {
-      await createTransaction(data);
+      const result = await createTransaction(data);
+
+      if (result.error) {
+        if (
+          result.error.code === "VALIDATION_ERROR" &&
+          result.error.validationErrors
+        ) {
+          Object.entries(result.error.validationErrors).forEach(
+            ([field, messages]) => {
+              setError(field as keyof NewTransactionFormData, {
+                message: messages[0],
+              });
+            }
+          );
+          return;
+        }
+
+        toast({
+          title: "Erro ao criar transação",
+          description: result.error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
       await queryClient.invalidateQueries({
         queryKey: queryKeys.transactions.all,
       });
@@ -131,28 +149,10 @@ export function NewTransactionDialog({
         description: "A transação foi criada com sucesso.",
       });
     } catch (error) {
-      if (typeof error === "object" && error !== null && "status" in error) {
-        const apiError = error as ApiError;
-        if (apiError.status === 422 && apiError.errors) {
-          Object.entries(apiError.errors).forEach(([field, messages]) => {
-            setError(field as keyof NewTransactionFormData, {
-              message: messages[0],
-            });
-          });
-          return;
-        }
-      }
-
-      if (error instanceof Error) {
-        setError("dateTime", {
-          message: error.message,
-        });
-        return;
-      }
-
+      console.error("Unexpected error:", error);
       toast({
         title: "Erro ao criar transação",
-        description: "Ocorreu um erro ao criar a transação.",
+        description: "Ocorreu um erro inesperado ao criar a transação.",
         variant: "destructive",
       });
     }

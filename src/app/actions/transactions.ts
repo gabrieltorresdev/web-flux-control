@@ -4,6 +4,10 @@ import { TransactionService } from "@/services/transaction-service";
 import { CreateTransactionInput } from "@/types/transaction";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { revalidatePath } from "next/cache";
+import {
+  handleServerActionError,
+  ServerActionResult,
+} from "@/lib/api/error-handler";
 
 const transactionService = new TransactionService();
 
@@ -64,37 +68,39 @@ export async function getTransactionsSummary({
   return transactionService.getSummary(startDate, endDate, categoryId, search);
 }
 
-export async function createTransaction(input: CreateTransactionInput) {
+export async function createTransaction(
+  input: CreateTransactionInput
+): Promise<ServerActionResult<void>> {
   try {
-    const response = await transactionService.create(input);
+    await transactionService.create(input);
     revalidatePath("/transactions");
-    return response;
+    return { data: undefined };
   } catch (error) {
-    console.error("Error creating transaction:", error);
-    throw error;
+    return handleServerActionError(error);
   }
 }
 
 export async function updateTransaction(
   id: string,
   input: CreateTransactionInput
-) {
+): Promise<ServerActionResult<void>> {
   try {
-    const response = await transactionService.update(id, input);
+    await transactionService.update(id, input);
     revalidatePath("/transactions");
-    return response;
+    return { data: undefined };
   } catch (error) {
-    console.error("Error updating transaction:", error);
-    throw error;
+    return handleServerActionError(error);
   }
 }
 
-export async function deleteTransaction(id: string) {
+export async function deleteTransaction(
+  id: string
+): Promise<ServerActionResult<void>> {
   try {
     await transactionService.delete(id);
     revalidatePath("/transactions");
+    return { data: undefined };
   } catch (error) {
-    console.error("Error deleting transaction:", error);
-    throw error;
+    return handleServerActionError(error);
   }
 }

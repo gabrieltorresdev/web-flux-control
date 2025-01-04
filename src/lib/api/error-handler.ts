@@ -5,6 +5,15 @@ export interface ValidationErrorResponse {
   errors: Record<string, string[]>;
 }
 
+export type ServerActionResult<T> = {
+  data?: T;
+  error?: {
+    message: string;
+    code: string;
+    validationErrors?: Record<string, string[]>;
+  };
+};
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -24,6 +33,48 @@ export class ValidationError extends Error {
     this.errors = response.errors;
     this.name = "ValidationError";
   }
+}
+
+export function handleServerActionError(
+  error: unknown
+): ServerActionResult<never> {
+  console.error("Server Action Error:", error);
+
+  if (error instanceof ValidationError) {
+    return {
+      error: {
+        message: error.message,
+        code: "VALIDATION_ERROR",
+        validationErrors: error.errors,
+      },
+    };
+  }
+
+  if (error instanceof ApiError) {
+    if (error.status === 422) {
+      return {
+        error: {
+          message: error.message,
+          code: "VALIDATION_ERROR",
+          validationErrors: error.errors,
+        },
+      };
+    }
+
+    return {
+      error: {
+        message: "An unexpected error occurred",
+        code: `HTTP_${error.status}`,
+      },
+    };
+  }
+
+  return {
+    error: {
+      message: "An unexpected error occurred",
+      code: "INTERNAL_SERVER_ERROR",
+    },
+  };
 }
 
 export function handleApiError(error: unknown): never {

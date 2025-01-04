@@ -17,12 +17,6 @@ import { updateTransaction } from "@/app/actions/transactions";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/get-query-client";
 
-interface ApiError {
-  status: number;
-  message: string;
-  errors?: Record<string, string[]>;
-}
-
 interface EditTransactionDialogProps {
   transaction: Transaction;
   open: boolean;
@@ -58,7 +52,31 @@ export function EditTransactionDialog({
 
   const onSubmit = handleSubmit(async (data: EditTransactionFormData) => {
     try {
-      await updateTransaction(transaction.id, data);
+      const result = await updateTransaction(transaction.id, data);
+
+      if (result.error) {
+        if (
+          result.error.code === "VALIDATION_ERROR" &&
+          result.error.validationErrors
+        ) {
+          Object.entries(result.error.validationErrors).forEach(
+            ([field, messages]) => {
+              setError(field as keyof EditTransactionFormData, {
+                message: messages[0],
+              });
+            }
+          );
+          return;
+        }
+
+        toast({
+          title: "Erro ao atualizar transação",
+          description: result.error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
       await queryClient.invalidateQueries({
         queryKey: queryKeys.transactions.all,
       });
@@ -68,28 +86,10 @@ export function EditTransactionDialog({
         description: "A transação foi atualizada com sucesso.",
       });
     } catch (error) {
-      if (typeof error === "object" && error !== null && "status" in error) {
-        const apiError = error as ApiError;
-        if (apiError.status === 422 && apiError.errors) {
-          Object.entries(apiError.errors).forEach(([field, messages]) => {
-            setError(field as keyof EditTransactionFormData, {
-              message: messages[0],
-            });
-          });
-          return;
-        }
-      }
-
-      if (error instanceof Error) {
-        setError("dateTime", {
-          message: error.message,
-        });
-        return;
-      }
-
+      console.error("Unexpected error:", error);
       toast({
         title: "Erro ao atualizar transação",
-        description: "Ocorreu um erro ao atualizar a transação.",
+        description: "Ocorreu um erro inesperado ao atualizar a transação.",
         variant: "destructive",
       });
     }
