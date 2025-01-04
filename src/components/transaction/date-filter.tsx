@@ -6,12 +6,14 @@ interface DateFilterProps {
   currentDate: Date;
   onSelectMonth: (month: number) => void;
   onSelectYear: (year: number) => void;
+  disabled?: boolean;
 }
 
 export function DateFilter({
   currentDate,
   onSelectMonth,
   onSelectYear,
+  disabled,
 }: DateFilterProps) {
   function handleSelect({ month, year }: { month: number; year: number }) {
     const currentYear = currentDate.getFullYear();
@@ -31,6 +33,7 @@ export function DateFilter({
       value={currentDate}
       onSelect={handleSelect}
       aria-label="Select month and year"
+      disabled={disabled}
     />
   );
 }

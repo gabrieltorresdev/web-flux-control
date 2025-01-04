@@ -16,6 +16,7 @@ import {
 import { updateTransaction } from "@/app/actions/transactions";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/get-query-client";
+import { useState } from "react";
 
 interface EditTransactionDialogProps {
   transaction: Transaction;
@@ -32,6 +33,7 @@ export function EditTransactionDialog({
 }: EditTransactionDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -51,8 +53,10 @@ export function EditTransactionDialog({
   });
 
   const onSubmit = handleSubmit(async (data: EditTransactionFormData) => {
+    let result;
     try {
-      const result = await updateTransaction(transaction.id, data);
+      setIsSubmitting(true);
+      result = await updateTransaction(transaction.id, data);
 
       if (result.error) {
         if (
@@ -92,6 +96,14 @@ export function EditTransactionDialog({
         description: "Ocorreu um erro inesperado ao atualizar a transação.",
         variant: "destructive",
       });
+    } finally {
+      if (result?.error) {
+        setIsSubmitting(false);
+      } else {
+        setTimeout(() => {
+          setIsSubmitting(false);
+        }, 300);
+      }
     }
   });
 
@@ -109,7 +121,7 @@ export function EditTransactionDialog({
           errors={errors}
           getValues={getValues}
           setValue={setValue}
-          isSubmitting={false}
+          isSubmitting={isSubmitting}
         />
       </ResponsiveModalContent>
     </ResponsiveModal>

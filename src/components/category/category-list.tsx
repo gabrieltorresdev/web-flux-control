@@ -46,13 +46,16 @@ const CategoryGroup = memo(function CategoryGroup({
     <section className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-gray-700">{title}</h2>
+          <h2 className="text-base font-medium text-foreground">{title}</h2>
           <span className="text-sm text-muted-foreground">
             ({categories.length})
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
+          <ChevronRight
+            className="h-4 w-4 text-muted-foreground/50"
+            aria-hidden="true"
+          />
         </div>
       </div>
       <Card className="overflow-hidden">
@@ -98,7 +101,7 @@ export const CategoryList = memo(function CategoryList({
         <Collapsible>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold text-gray-700">
+              <h2 className="text-base font-medium text-foreground">
                 Categorias padrão
               </h2>
               <span className="text-sm text-muted-foreground">
@@ -111,7 +114,7 @@ export const CategoryList = memo(function CategoryList({
             <div className="flex items-center gap-2">
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-0 h-auto">
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground/50" />
                 </Button>
               </CollapsibleTrigger>
             </div>

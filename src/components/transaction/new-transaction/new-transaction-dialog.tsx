@@ -50,6 +50,7 @@ export function NewTransactionDialog({
 }: NewTransactionDialogProps) {
   const [currentTab, setCurrentTab] = useState<"manual" | "voice">("manual");
   const [showAlert, setShowAlert] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingTabChange, setPendingTabChange] = useState<
     "manual" | "voice" | null
   >(null);
@@ -110,8 +111,10 @@ export function NewTransactionDialog({
   ]);
 
   const onSubmit = handleSubmit(async (data: NewTransactionFormData) => {
+    let result;
     try {
-      const result = await createTransaction(data);
+      setIsSubmitting(true);
+      result = await createTransaction(data);
 
       if (result.error) {
         if (
@@ -140,9 +143,6 @@ export function NewTransactionDialog({
         queryKey: queryKeys.transactions.all,
       });
       clearDraft();
-      reset();
-      setHasVoiceData(false);
-      setHasManualData(false);
       onClose();
       toast({
         title: "Transação criada",
@@ -155,6 +155,15 @@ export function NewTransactionDialog({
         description: "Ocorreu um erro inesperado ao criar a transação.",
         variant: "destructive",
       });
+    } finally {
+      if (result?.error) {
+        setIsSubmitting(false);
+      } else {
+        // Aguarda a animação do modal fechar antes de resetar o estado
+        setTimeout(() => {
+          setIsSubmitting(false);
+        }, 300);
+      }
     }
   });
 
@@ -237,14 +246,15 @@ export function NewTransactionDialog({
 
           <TabsContent value="manual">
             <ManualTransactionForm
-              onSubmit={onSubmit}
+              onDataChange={setHasManualData}
               register={register}
               errors={errors}
               getValues={getValues}
               setValue={setValue}
               setError={setError}
+              onSubmit={onSubmit}
+              isSubmitting={isSubmitting}
               saveDraft={saveDraft}
-              onDataChange={setHasManualData}
             />
           </TabsContent>
 

@@ -3,7 +3,7 @@
 import { Category } from "@/types/category";
 import { memo, useState } from "react";
 import { Button } from "../ui/button";
-import { MoreVertical, Pencil, Trash } from "lucide-react";
+import { MoreVertical, Pencil, Trash, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,16 +24,9 @@ import { EditCategoryDialog } from "@/components/category/edit-category-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "../ui/drawer";
 import { CategoryIcon } from "./category-icon";
 import { deleteCategory } from "@/app/actions/categories";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 
 interface CategoryItemProps {
   category: Category;
@@ -43,7 +36,12 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const x = useMotionValue(0);
+
+  // Transform x motion into opacity and scale for the action buttons
+  const actionButtonsOpacity = useTransform(x, [-100, -20], [1, 0]);
+  const scale = useTransform(x, [-100, -20], [1, 0.8]);
 
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -56,6 +54,8 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
         title: "Categoria excluída",
         description: "A categoria foi excluída com sucesso.",
       });
+      // Reset swipe position after successful delete
+      x.set(0);
     } catch {
       toast({
         title: "Erro ao excluir",
@@ -65,50 +65,16 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
     } finally {
       setIsDeleting(false);
       setShowDeleteAlert(false);
-      setIsDrawerOpen(false);
     }
   };
 
   const isIncome = category.type === "income";
 
-  const CategoryActions = () => (
-    <div className="flex items-center justify-center gap-4 py-2">
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={() => {
-          setShowEditDialog(true);
-          setIsDrawerOpen(false);
-        }}
-        className="flex-1 gap-2"
-      >
-        <Pencil className="h-5 w-5" />
-        Editar
-      </Button>
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={() => {
-          setShowDeleteAlert(true);
-          setIsDrawerOpen(false);
-        }}
-        className={cn(
-          "flex-1 gap-2",
-          "text-red-600 hover:text-red-600 hover:border-red-600"
-        )}
-        disabled={category.is_default}
-      >
-        <Trash className="h-5 w-5" />
-        Excluir
-      </Button>
-    </div>
-  );
-
   const Content = () => (
     <div className="flex items-center gap-3">
       <CategoryIcon icon={category.icon} isIncome={isIncome} />
       <div className="flex-1">
-        <h3 className="font-medium text-gray-900 line-clamp-1 break-all">
+        <h3 className="font-medium text-foreground/90 line-clamp-1 break-all">
           {category.name}
         </h3>
         <span className="text-xs text-muted-foreground">
@@ -122,7 +88,7 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 text-muted-foreground/70 hover:text-muted-foreground"
                 aria-label="Abrir menu"
               >
                 <MoreVertical className="h-4 w-4" />
@@ -138,7 +104,7 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => setShowDeleteAlert(true)}
-                className="gap-2 text-red-600"
+                className="gap-2 text-destructive"
                 disabled={category.is_default}
               >
                 <Trash className="h-4 w-4" />
@@ -154,32 +120,70 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
   return (
     <>
       {isMobile ? (
-        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <DrawerTrigger asChild>
+        <motion.div className="relative overflow-hidden">
+          {/* Action buttons container */}
+          <motion.div
+            className="absolute right-0 h-full flex items-center gap-2 px-3 bg-background"
+            style={{ opacity: actionButtonsOpacity }}
+          >
+            <motion.button
+              className="p-2 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground"
+              style={{ scale }}
+              onClick={() => setShowEditDialog(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </motion.button>
+            <motion.button
+              className="p-2 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              style={{ scale }}
+              onClick={() => setShowDeleteAlert(true)}
+              disabled={category.is_default}
+            >
+              <Trash className="h-4 w-4" />
+            </motion.button>
+          </motion.div>
+
+          {/* Main content with drag */}
+          <motion.div
+            drag="x"
+            dragDirectionLock
+            dragConstraints={{ left: -100, right: 0 }}
+            dragElastic={0.1}
+            dragMomentum={false}
+            style={{ x }}
+            className={cn(
+              "group touch-manipulation bg-background",
+              "active:bg-accent/50 transition-colors"
+            )}
+            onDragEnd={(
+              _: MouseEvent | TouchEvent | PointerEvent,
+              info: PanInfo
+            ) => {
+              // If dragged more than halfway, keep it open
+              if (info.offset.x < -50) {
+                x.set(-100);
+              } else {
+                x.set(0);
+              }
+            }}
+          >
             <div
               className={cn(
-                "group transition-all duration-200 active:bg-gray-50 p-3 touch-manipulation",
-                "cursor-pointer"
+                "p-3 touch-manipulation relative",
+                isPressed && "bg-accent/30"
               )}
+              onTouchStart={() => setIsPressed(true)}
+              onTouchEnd={() => setIsPressed(false)}
+              onTouchCancel={() => setIsPressed(false)}
             >
               <Content />
             </div>
-          </DrawerTrigger>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>{category.name}</DrawerTitle>
-              <DrawerDescription>
-                {isIncome ? "Receita" : "Despesa"}
-                {category.is_default && " • Padrão"}
-              </DrawerDescription>
-            </DrawerHeader>
-            <CategoryActions />
-          </DrawerContent>
-        </Drawer>
+          </motion.div>
+        </motion.div>
       ) : (
         <div
           className={cn(
-            "group transition-all duration-200 hover:bg-gray-50 p-3",
+            "group transition-all duration-200 hover:bg-accent/50 p-3",
             "cursor-pointer"
           )}
         >
@@ -210,9 +214,13 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
                 <AlertDialogAction
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-destructive hover:bg-destructive/90"
                 >
-                  Excluir
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Excluir"
+                  )}
                 </AlertDialogAction>
               </>
             )}

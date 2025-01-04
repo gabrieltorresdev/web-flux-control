@@ -248,9 +248,7 @@ const CategorySelector = memo(
           <SheetContent side="bottom" className="h-[400px]">
             <SheetHeader>
               <SheetTitle>Selecionar categoria</SheetTitle>
-              <SheetDescription>
-                Escolha uma categoria para a transação
-              </SheetDescription>
+              <SheetDescription />
             </SheetHeader>
             {content}
           </SheetContent>
@@ -274,166 +272,166 @@ const CategorySelector = memo(
 
 CategorySelector.displayName = "CategorySelector";
 
-export const TransactionForm = memo(
-  ({
-    onSubmit,
-    register,
-    errors,
-    getValues,
-    setValue,
-    suggestedCategory,
-    onCreateCategory,
-    isSubmitting,
-  }: TransactionFormProps) => {
-    const [state, setState] = useState<FormState>({
+export const TransactionForm = memo(function TransactionForm({
+  onSubmit,
+  register,
+  errors,
+  getValues,
+  setValue,
+  suggestedCategory,
+  onCreateCategory,
+  isSubmitting,
+}: TransactionFormProps) {
+  const [state, setState] = useState<FormState>({
+    open: false,
+    searchTerm: "",
+    selectedCategory: "",
+    showCreateDialog: false,
+    isSubmitting: false,
+    submitSuccess: false,
+  });
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setState((prev) => ({ ...prev, open }));
+  }, []);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, searchTerm: value }));
+  }, []);
+
+  const handleCategorySelect = useCallback(
+    (categoryId: string) => {
+      setValue("categoryId", categoryId);
+      setState((prev) => ({ ...prev, open: false }));
+    },
+    [setValue]
+  );
+
+  const handleCreateCategory = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      showCreateDialog: true,
       open: false,
-      searchTerm: "",
-      selectedCategory: "",
-      showCreateDialog: false,
-      isSubmitting: false,
-      submitSuccess: false,
-    });
+    }));
+  }, []);
 
-    const handleOpenChange = useCallback((open: boolean) => {
-      setState((prev) => ({ ...prev, open }));
-    }, []);
+  const handleCreateCategorySuccess = useCallback(
+    (categoryId: string, categoryName: string) => {
+      setValue("categoryId", categoryId);
+      setState((prev) => ({ ...prev, showCreateDialog: false }));
+      onCreateCategory?.(categoryName);
+    },
+    [setValue, onCreateCategory]
+  );
 
-    const handleSearchChange = useCallback((value: string) => {
-      setState((prev) => ({ ...prev, searchTerm: value }));
-    }, []);
-
-    const handleCategorySelect = useCallback(
-      (categoryId: string) => {
-        setValue("categoryId", categoryId);
-        setState((prev) => ({ ...prev, open: false }));
-      },
-      [setValue]
-    );
-
-    const handleCreateCategory = useCallback(() => {
-      setState((prev) => ({
-        ...prev,
-        showCreateDialog: true,
-        open: false,
-      }));
-    }, []);
-
-    const handleCreateCategorySuccess = useCallback(
-      (categoryId: string, categoryName: string) => {
-        setValue("categoryId", categoryId);
-        setState((prev) => ({ ...prev, showCreateDialog: false }));
-        onCreateCategory?.(categoryName);
-      },
-      [setValue, onCreateCategory]
-    );
-
-    return (
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Título"
-              className={cn(
-                "h-12 text-base pl-10",
-                errors.title && "border-destructive text-destructive"
-              )}
-              {...register("title")}
-            />
-            <CircleDollarSign
-              className={cn(
-                "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground",
-                errors.title && "text-destructive"
-              )}
-            />
-          </div>
-          {errors.title && (
-            <p className="text-sm text-destructive">{errors.title.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <div className="relative">
-            <Input
-              type="number"
-              step="0.01"
-              placeholder="Valor"
-              className={cn(
-                "h-12 text-base pl-10",
-                errors.amount && "border-destructive text-destructive"
-              )}
-              {...register("amount", { valueAsNumber: true })}
-            />
-            <ArrowUpDown
-              className={cn(
-                "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground",
-                errors.amount && "text-destructive"
-              )}
-            />
-          </div>
-          {errors.amount && (
-            <p className="text-sm text-destructive">{errors.amount.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <CategorySelector
-            open={state.open}
-            onOpenChange={handleOpenChange}
-            searchTerm={state.searchTerm}
-            onSearchChange={handleSearchChange}
-            onCategorySelect={handleCategorySelect}
-            onCreateCategory={handleCreateCategory}
-            getValues={getValues}
-            setValue={setValue}
-            errors={errors}
-          />
-          {errors.categoryId && (
-            <p className="text-sm text-destructive">
-              {errors.categoryId.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <DateTimePicker
-            value={getValues("dateTime")}
-            onChange={(date) => date && setValue("dateTime", date)}
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <div className="relative">
+          <Input
+            type="text"
+            placeholder="Título"
             className={cn(
-              "h-12",
-              errors.dateTime && "border-destructive text-destructive"
+              "h-12 text-base pl-10",
+              errors.title && "border-destructive text-destructive"
+            )}
+            {...register("title")}
+          />
+          <CircleDollarSign
+            className={cn(
+              "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground",
+              errors.title && "text-destructive"
             )}
           />
-          {errors.dateTime && (
-            <p className="text-sm text-destructive">
-              {errors.dateTime.message}
-            </p>
-          )}
         </div>
+        {errors.title && (
+          <p className="text-sm text-destructive">{errors.title.message}</p>
+        )}
+      </div>
 
-        <Button
-          type="submit"
-          className="w-full h-12 text-base"
-          disabled={isSubmitting}
-        >
+      <div className="space-y-2">
+        <div className="relative">
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="Valor"
+            className={cn(
+              "h-12 text-base pl-10",
+              errors.amount && "border-destructive text-destructive"
+            )}
+            {...register("amount", { valueAsNumber: true })}
+          />
+          <ArrowUpDown
+            className={cn(
+              "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground",
+              errors.amount && "text-destructive"
+            )}
+          />
+        </div>
+        {errors.amount && (
+          <p className="text-sm text-destructive">{errors.amount.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <CategorySelector
+          open={state.open}
+          onOpenChange={handleOpenChange}
+          searchTerm={state.searchTerm}
+          onSearchChange={handleSearchChange}
+          onCategorySelect={handleCategorySelect}
+          onCreateCategory={handleCreateCategory}
+          getValues={getValues}
+          setValue={setValue}
+          errors={errors}
+        />
+        {errors.categoryId && (
+          <p className="text-sm text-destructive">
+            {errors.categoryId.message}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <DateTimePicker
+          value={getValues("dateTime")}
+          onChange={(date) => date && setValue("dateTime", date)}
+          className={cn(
+            "h-12",
+            errors.dateTime && "border-destructive text-destructive"
+          )}
+        />
+        {errors.dateTime && (
+          <p className="text-sm text-destructive">{errors.dateTime.message}</p>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-4 mt-6">
+        <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
           ) : (
-            "Salvar"
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              Salvar
+            </>
           )}
         </Button>
+      </div>
 
-        <CreateCategoryDialog
-          open={state.showCreateDialog}
-          onOpenChange={(open) =>
-            setState((prev) => ({ ...prev, showCreateDialog: open }))
-          }
-          onSuccess={handleCreateCategorySuccess}
-          defaultCategoryName={suggestedCategory}
-        />
-      </form>
-    );
-  }
-);
+      <CreateCategoryDialog
+        open={state.showCreateDialog}
+        onOpenChange={(open) =>
+          setState((prev) => ({ ...prev, showCreateDialog: open }))
+        }
+        onSuccess={handleCreateCategorySuccess}
+        defaultCategoryName={suggestedCategory}
+      />
+    </form>
+  );
+});
 
 TransactionForm.displayName = "TransactionForm";

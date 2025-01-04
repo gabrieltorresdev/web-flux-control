@@ -72,6 +72,9 @@ export function CategoryIcon({
     <div
       className={cn(
         "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+        isIncome
+          ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-400/10 dark:text-emerald-400"
+          : "bg-rose-500/10 text-rose-500 dark:bg-rose-400/10 dark:text-rose-400",
         className
       )}
       aria-hidden="true"
@@ -86,14 +89,16 @@ export function CategoryIcon({
             const IconComponent =
               LUCIDE_ICONS[icon as keyof typeof LUCIDE_ICONS];
             return IconComponent ? (
-              <IconComponent className={cn("h-5 w-5", iconClassName)} />
+              <IconComponent
+                className={cn("h-[18px] w-[18px]", iconClassName)}
+              />
             ) : null;
           })()
         )
       ) : isIncome ? (
-        <ArrowUpRight className={cn("h-5 w-5", iconClassName)} />
+        <ArrowUpRight className={cn("h-[18px] w-[18px]", iconClassName)} />
       ) : (
-        <ArrowDownRight className={cn("h-5 w-5", iconClassName)} />
+        <ArrowDownRight className={cn("h-[18px] w-[18px]", iconClassName)} />
       )}
     </div>
   );

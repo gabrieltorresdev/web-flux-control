@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Pencil, Trash2 } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Pencil,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Transaction } from "@/types/transaction";
@@ -43,6 +49,7 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
   const [isPressed, setIsPressed] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const x = useMotionValue(0);
 
   // Transform x motion into opacity and scale for the action buttons
@@ -51,6 +58,7 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
 
   const handleDelete = useCallback(async () => {
     try {
+      setIsDeleting(true);
       await deleteTransaction(transaction.id);
       await queryClient.invalidateQueries({
         queryKey: queryKeys.transactions.all,
@@ -68,6 +76,8 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
         description: "Ocorreu um erro ao excluir a transação.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   }, [toast, transaction.id, queryClient, x]);
 
@@ -158,8 +168,22 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>
-                Excluir
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                  </>
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

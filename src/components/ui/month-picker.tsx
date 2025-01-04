@@ -16,6 +16,8 @@ type MonthPickerProps = {
   onSelect: (date: { month: number; year: number }) => void;
   /** Additional class names */
   className?: string;
+  /** Whether the picker is disabled */
+  disabled?: boolean;
 };
 
 const MONTHS = [
@@ -47,6 +49,7 @@ export const MonthPicker = React.memo(function MonthPicker({
   value,
   onSelect,
   className,
+  disabled,
 }: MonthPickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedYear, setSelectedYear] = React.useState(value.getFullYear());
@@ -93,6 +96,7 @@ export const MonthPicker = React.memo(function MonthPicker({
               !value && "text-muted-foreground"
             )}
             aria-label="Selecionar mês e ano"
+            disabled={disabled}
           >
             <Calendar className="mr-2 h-4 w-4" aria-hidden="true" />
             <span>
@@ -118,15 +122,17 @@ export const MonthPicker = React.memo(function MonthPicker({
                       key={month}
                       role="option"
                       aria-selected={isSelected}
-                      onClick={() => handleSelectMonth(index)}
+                      onClick={() => !disabled && handleSelectMonth(index)}
                       className={cn(
                         "flex h-9 w-16 items-center justify-center rounded-md text-sm",
                         "cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors",
-                        isSelected && "bg-primary text-primary-foreground"
+                        isSelected && "bg-primary text-primary-foreground",
+                        disabled &&
+                          "opacity-50 cursor-not-allowed hover:bg-transparent"
                       )}
-                      tabIndex={0}
+                      tabIndex={disabled ? -1 : 0}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                        if (!disabled && (e.key === "Enter" || e.key === " ")) {
                           e.preventDefault();
                           handleSelectMonth(index);
                         }
@@ -146,16 +152,18 @@ export const MonthPicker = React.memo(function MonthPicker({
                       key={year}
                       role="option"
                       aria-selected={selectedYear === year}
-                      onClick={() => handleSelectYear(year)}
+                      onClick={() => !disabled && handleSelectYear(year)}
                       className={cn(
                         "px-3 py-1 rounded-md text-sm",
                         "cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors",
                         selectedYear === year &&
-                          "bg-primary text-primary-foreground"
+                          "bg-primary text-primary-foreground",
+                        disabled &&
+                          "opacity-50 cursor-not-allowed hover:bg-transparent"
                       )}
-                      tabIndex={0}
+                      tabIndex={disabled ? -1 : 0}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                        if (!disabled && (e.key === "Enter" || e.key === " ")) {
                           e.preventDefault();
                           handleSelectYear(year);
                         }

@@ -6,11 +6,13 @@ import { ArrowDownRight, ArrowUpRight, Coins } from "lucide-react";
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { ApiTransactionSummaryResponse } from "@/types/transaction";
+import { useTransactions } from "@/hooks/use-transactions";
 
 type SummaryCardProps = {
   title: string;
   value: number;
   type: "income" | "expense" | "total";
+  isLoading?: boolean;
 };
 
 interface TransactionSummaryProps {
@@ -45,6 +47,7 @@ const SummaryCard = memo(function SummaryCard({
   title,
   value,
   type,
+  isLoading,
 }: SummaryCardProps) {
   const Icon = SUMMARY_STYLES[type].icon;
   const textColor =
@@ -61,11 +64,17 @@ const SummaryCard = memo(function SummaryCard({
           bgColor
         )}
       >
-        <Icon className={textColor} />
+        <Icon className={cn(textColor, isLoading && "opacity-50")} />
       </div>
       <div className="text-center">
         <span className="text-xs text-muted-foreground block">{title}</span>
-        <p className={cn("text-xs md:text-sm font-semibold", textColor)}>
+        <p
+          className={cn(
+            "text-xs md:text-sm font-semibold",
+            textColor,
+            isLoading && "opacity-50"
+          )}
+        >
           {formatNumberToBRL(value)}
         </p>
       </div>
@@ -75,8 +84,10 @@ const SummaryCard = memo(function SummaryCard({
 
 const SummaryContent = memo(function SummaryContent({
   summary,
+  isLoading,
 }: {
   summary: ApiTransactionSummaryResponse;
+  isLoading: boolean;
 }) {
   return (
     <div>
@@ -84,12 +95,16 @@ const SummaryContent = memo(function SummaryContent({
         {(["income", "expense", "total"] as const).map((type) => (
           <Card
             key={type}
-            className="p-3 bg-gradient-to-br from-background to-muted/20 dark:from-background/50 dark:to-muted/30"
+            className={cn(
+              "p-3 bg-gradient-to-br from-background to-muted/20 dark:from-background/50 dark:to-muted/30",
+              isLoading && "animate-pulse"
+            )}
           >
             <SummaryCard
               title={SUMMARY_STYLES[type].title}
               value={summary.data[type]}
               type={type}
+              isLoading={isLoading}
             />
           </Card>
         ))}
@@ -101,5 +116,7 @@ const SummaryContent = memo(function SummaryContent({
 export function TransactionSummary({
   initialSummary,
 }: TransactionSummaryProps) {
-  return <SummaryContent summary={initialSummary} />;
+  const { isLoading } = useTransactions();
+
+  return <SummaryContent summary={initialSummary} isLoading={isLoading} />;
 }

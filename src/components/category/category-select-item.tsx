@@ -21,11 +21,19 @@ export function CategorySelectItem({
         isIncome={isIncome}
         className={compact ? "h-4 w-4" : "h-5 w-5"}
       />
-      <span className={compact ? "text-xs" : "text-sm"}>{category.name}</span>
+      <span
+        className={
+          compact ? "text-xs text-foreground/90" : "text-sm text-foreground/90"
+        }
+      >
+        {category.name}
+      </span>
       {showType && (
         <span
           className={`text-xs ${
-            isIncome ? "text-emerald-500" : "text-rose-500"
+            isIncome
+              ? "text-emerald-500 dark:text-emerald-400"
+              : "text-rose-500 dark:text-rose-400"
           }`}
         >
           {isIncome ? "Receita" : "Despesa"}
