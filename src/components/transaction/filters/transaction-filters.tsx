@@ -21,6 +21,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useCategories } from "@/hooks/use-categories";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TransactionFiltersProps {
   initialCategoryId?: string;
@@ -40,6 +41,7 @@ export function TransactionFilters({
   const [isOpen, setIsOpen] = React.useState(false);
   const { data, isLoading } = useCategories();
   const categories = data?.data ?? [];
+  const isMobile = useIsMobile();
 
   const selectedCategory = React.useMemo(
     () => categories.find((cat) => cat.id === selectedCategoryId),
@@ -140,7 +142,10 @@ export function TransactionFilters({
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
           </SheetTrigger>
-          <SheetContent>
+          <SheetContent
+            side={isMobile ? "bottom" : "right"}
+            className={isMobile ? "h-[85vh]" : undefined}
+          >
             <SheetHeader>
               <SheetTitle>Filtros avançados</SheetTitle>
               <SheetDescription />
@@ -159,10 +164,14 @@ export function TransactionFilters({
                   />
                 </div>
               </div>
-              <CategoryFilter
-                initialCategoryId={selectedCategoryId}
-                onCategoryChange={handleCategoryChange}
-              />
+              <div className="space-y-1.5">
+                <Label>Categoria</Label>
+                <CategoryFilter
+                  initialCategoryId={selectedCategoryId}
+                  onCategoryChange={handleCategoryChange}
+                  insideSheet={true}
+                />
+              </div>
             </div>
           </SheetContent>
         </Sheet>

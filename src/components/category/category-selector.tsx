@@ -34,6 +34,7 @@ interface CategorySelectorProps {
   showAsBadge?: boolean;
   className?: string;
   error?: boolean;
+  insideSheet?: boolean;
 }
 
 export const CategorySelector = memo(function CategorySelector({
@@ -43,6 +44,7 @@ export const CategorySelector = memo(function CategorySelector({
   showAsBadge = false,
   className,
   error,
+  insideSheet = false,
 }: CategorySelectorProps) {
   const [state, setState] = useState({
     open: false,
@@ -106,7 +108,9 @@ export const CategorySelector = memo(function CategorySelector({
           className="h-12 border-none focus:ring-0"
         />
       </div>
-      <CommandList className="max-h-[300px]">
+      <CommandList
+        className={cn("max-h-[300px]", insideSheet && "max-h-[50vh]")}
+      >
         {isLoading ? (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -176,7 +180,7 @@ export const CategorySelector = memo(function CategorySelector({
     </Button>
   );
 
-  if (isMobile) {
+  if (isMobile && !insideSheet) {
     return (
       <>
         <Sheet open={state.open} onOpenChange={handleOpenChange}>
