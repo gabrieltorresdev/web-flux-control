@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
-import { InlineAlert } from "@/components/ui/inline-alert";
 import { FcGoogle } from "react-icons/fc";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -74,26 +73,15 @@ export function LoginForm() {
     }
   };
 
-  const handleKeycloakSignIn = () => {
-    signIn("keycloak", {
-      callbackUrl: "/dashboard",
-    });
-  };
-
   return (
-    <div className="w-full max-w-md">
-      <div className="mb-6 lg:mb-8 text-center lg:text-left">
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
-          Bem-vindo de volta
-        </h2>
-        <p className="text-sm lg:text-base text-gray-600 mt-1 lg:mt-2">
-          Entre com suas credenciais para acessar
-        </p>
-      </div>
-
+    <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
-          {error && <InlineAlert message={error} />}
+          {error && (
+            <div className="p-3 bg-destructive/15 text-destructive text-sm rounded-lg">
+              {error}
+            </div>
+          )}
 
           <FormField
             control={form.control}
@@ -101,19 +89,31 @@ export function LoginForm() {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input
-                    type="text"
-                    placeholder="Email ou username"
-                    className="w-full h-12 text-base placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20"
-                    disabled={isLoading}
-                    autoComplete="username"
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Email ou username"
+                      className="pl-8"
+                      disabled={isLoading}
+                      autoComplete="username"
+                      {...field}
+                    />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-5 h-5 absolute left-2 top-2.5 text-muted-foreground"
+                    >
+                      <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.162V6a2 2 0 00-2-2H3z" />
+                      <path d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
+                    </svg>
+                  </div>
                 </FormControl>
-                <FormMessage className="text-sm" />
+                <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="password"
@@ -124,15 +124,27 @@ export function LoginForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Sua senha"
-                      className="w-full h-12 text-base placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20 pr-12"
+                      className="pl-8"
                       disabled={isLoading}
                       autoComplete="current-password"
                       {...field}
                     />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-5 h-5 absolute left-2 top-2.5 text-muted-foreground"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground transition-colors"
                       aria-label={
                         showPassword ? "Ocultar senha" : "Mostrar senha"
                       }
@@ -145,70 +157,77 @@ export function LoginForm() {
                     </button>
                   </div>
                 </FormControl>
-                <FormMessage className="text-sm" />
+                <FormMessage />
               </FormItem>
             )}
           />
-          <div className="flex justify-end">
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="remember"
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label
+                htmlFor="remember"
+                className="text-sm text-muted-foreground cursor-pointer select-none"
+              >
+                Lembrar-me
+              </label>
+            </div>
             <Link
               href="/forgot-password"
-              className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
               Esqueceu sua senha?
             </Link>
           </div>
 
-          <div className="space-y-6 pt-2">
-            <Button
-              type="submit"
-              className="w-full h-12 text-base font-medium bg-primary hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Entrando...</span>
-                </div>
-              ) : (
-                "Entrar"
-              )}
-            </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-primary-100" />
+          <Button className="w-full" type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Entrando...</span>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-4 text-primary-500">
-                  ou continue com
-                </span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-12 text-base font-medium border-2 border-primary-100 hover:bg-primary-50 text-primary-700 transition-colors opacity-50 cursor-not-allowed"
-              onClick={handleKeycloakSignIn}
-              disabled={true}
-              title="Login com SSO ainda não está disponível"
-            >
-              <FcGoogle className="w-6 h-6 mr-3" />
-              Entrar com SSO
-            </Button>
-
-            <p className="text-center text-base text-primary-600">
-              Ainda não tem uma conta?{" "}
-              <Link
-                href="/register"
-                className="font-medium text-primary-700 hover:text-primary-800 transition-colors"
-              >
-                Cadastre-se
-              </Link>
-            </p>
-          </div>
+            ) : (
+              "Entrar"
+            )}
+          </Button>
         </form>
       </Form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            Ou continue com
+          </span>
+        </div>
+      </div>
+
+      <Button
+        variant="outline"
+        type="button"
+        disabled={true}
+        className="w-full"
+        title="Login com SSO ainda não está disponível"
+      >
+        <FcGoogle className="mr-2 h-4 w-4" />
+        SSO
+      </Button>
+
+      <p className="px-8 text-center text-sm text-muted-foreground">
+        Não tem uma conta?{" "}
+        <Link
+          href="/register"
+          className="underline underline-offset-4 hover:text-primary"
+        >
+          Cadastre-se
+        </Link>
+      </p>
     </div>
   );
 }

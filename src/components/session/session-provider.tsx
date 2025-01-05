@@ -2,7 +2,7 @@
 
 import { verifySession } from "@/app/actions/auth";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 
 interface SessionProviderProps {
@@ -11,8 +11,14 @@ interface SessionProviderProps {
 
 export function SessionProvider({ children }: SessionProviderProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Skip session check for guest pages
+    if (!pathname.startsWith("/dashboard")) {
+      return;
+    }
+
     const interval = setInterval(async () => {
       const { isAuthenticated, error } = await verifySession();
 
@@ -26,7 +32,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }, 60000); // Check session every 60 seconds
 
     return () => clearInterval(interval);
-  }, [router]);
+  }, [router, pathname]);
 
   return <>{children}</>;
 }

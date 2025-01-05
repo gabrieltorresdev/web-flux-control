@@ -81,16 +81,16 @@ export const CategoryList = memo(function CategoryList({
   }
 
   const defaultExpenseCategories = categories.filter(
-    (cat) => cat.type === "expense" && cat.is_default
+    (cat) => cat.type === "expense" && cat.isDefault
   );
   const defaultIncomeCategories = categories.filter(
-    (cat) => cat.type === "income" && cat.is_default
+    (cat) => cat.type === "income" && cat.isDefault
   );
   const customExpenseCategories = categories.filter(
-    (cat) => cat.type === "expense" && !cat.is_default
+    (cat) => cat.type === "expense" && !cat.isDefault
   );
   const customIncomeCategories = categories.filter(
-    (cat) => cat.type === "income" && !cat.is_default
+    (cat) => cat.type === "income" && !cat.isDefault
   );
 
   return (

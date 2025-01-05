@@ -157,7 +157,7 @@ function useEditCategory({ category, onOpenChange }: UseEditCategoryProps) {
           id: category.id,
           name: data.name.trim(),
           type: data.type,
-          is_default: category.is_default,
+          isDefault: category.isDefault,
           icon: data.icon,
         });
         onOpenChange(false);
@@ -184,7 +184,7 @@ function useEditCategory({ category, onOpenChange }: UseEditCategoryProps) {
         setIsSubmitting(false);
       }
     },
-    [category.id, category.is_default, onOpenChange, setError, toast]
+    [category.id, category.isDefault, onOpenChange, setError, toast]
   );
 
   const onSubmit = handleSubmit(handleUpdateCategory);

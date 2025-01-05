@@ -79,7 +79,7 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
         </h3>
         <span className="text-xs text-muted-foreground">
           {isIncome ? "Receita" : "Despesa"}
-          {category.is_default && " • Padrão"}
+          {category.isDefault && " • Padrão"}
         </span>
       </div>
       {!isMobile && (
@@ -105,7 +105,7 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
               <DropdownMenuItem
                 onSelect={() => setShowDeleteAlert(true)}
                 className="gap-2 text-destructive"
-                disabled={category.is_default}
+                disabled={category.isDefault}
               >
                 <Trash className="h-4 w-4" />
                 Excluir
@@ -137,7 +137,7 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
               className="p-2 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               style={{ scale }}
               onClick={() => setShowDeleteAlert(true)}
-              disabled={category.is_default}
+              disabled={category.isDefault}
             >
               <Trash className="h-4 w-4" />
             </motion.button>
@@ -195,16 +195,16 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {category.is_default ? "Categoria padrão" : "Tem certeza?"}
+              {category.isDefault ? "Categoria padrão" : "Tem certeza?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {category.is_default
+              {category.isDefault
                 ? "Esta é uma categoria padrão do sistema e não pode ser excluída."
                 : "Esta ação não pode ser desfeita. A categoria será excluída permanentemente."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            {category.is_default ? (
+            {category.isDefault ? (
               <AlertDialogCancel>Entendi</AlertDialogCancel>
             ) : (
               <>

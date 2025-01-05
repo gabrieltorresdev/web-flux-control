@@ -16,13 +16,15 @@ export class CategoryService {
     name?: string
   ): Promise<ApiPaginatedResponse<Category[]>> {
     return this.httpClient.get<ApiPaginatedResponse<Category[]>>(
-      getBackendApiUrl(this.route) + (name ? `?name=${name}` : "")
+      getBackendApiUrl(this.route) + (name ? `?name=${name}` : ""),
+      true
     );
   }
 
   public async findByName(name: string): Promise<ApiResponse<Category>> {
     return this.httpClient.get<ApiResponse<Category>>(
-      `${getBackendApiUrl(this.route)}/by-name/${name}`
+      `${getBackendApiUrl(this.route)}/by-name/${name}`,
+      true
     );
   }
 
@@ -31,18 +33,20 @@ export class CategoryService {
   ): Promise<ApiResponse<Category>> {
     return this.httpClient.post<ApiResponse<Category>, CreateCategoryInput>(
       getBackendApiUrl(this.route),
-      data
+      data,
+      true
     );
   }
 
   public async delete(id: string): Promise<void> {
-    this.httpClient.delete(getBackendApiUrl(`${this.route}/${id}`));
+    this.httpClient.delete(getBackendApiUrl(`${this.route}/${id}`), true);
   }
 
   public async update(data: Category): Promise<ApiResponse<Category>> {
     return this.httpClient.put<ApiResponse<Category>, Category>(
       `${getBackendApiUrl(this.route)}/${data.id}`,
-      data
+      data,
+      true
     );
   }
 }

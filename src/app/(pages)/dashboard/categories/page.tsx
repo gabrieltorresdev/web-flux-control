@@ -10,7 +10,6 @@ export const revalidate = 0;
 export default async function CategoriesPage() {
   // Fetch initial data on the server
   const initialCategories = await getCategories();
-  console.log("initialCategories", initialCategories);
 
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 px-3">

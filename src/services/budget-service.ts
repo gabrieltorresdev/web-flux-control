@@ -1,4 +1,5 @@
-import { v4 as uuidv4 } from "uuid";
+import { HttpClient } from "@/lib/api/http-client";
+import { getBackendApiUrl } from "@/lib/config";
 import {
   ApiBudgetListResponse,
   ApiBudgetResponse,
@@ -8,187 +9,57 @@ import {
 } from "@/types/budget";
 import { Transaction } from "@/types/transaction";
 
-// Mock data
-const mockBudgets: Budget[] = [
-  {
-    id: uuidv4(),
-    name: "Orçamento Mensal de Alimentação",
-    amount: 1000,
-    spent: 650,
-    startDate: new Date(2024, 0, 1),
-    endDate: new Date(2024, 0, 31),
-    isRecurring: true,
-    recurringPeriod: "monthly",
-    category: {
-      id: "1",
-      name: "Alimentação",
-      type: "expense",
-      icon: "🍽️",
-      is_default: false,
-    },
-  },
-  {
-    id: uuidv4(),
-    name: "Orçamento de Lazer",
-    amount: 500,
-    spent: 200,
-    startDate: new Date(2024, 0, 1),
-    endDate: new Date(2024, 0, 31),
-    isRecurring: true,
-    recurringPeriod: "monthly",
-    category: {
-      id: "2",
-      name: "Lazer",
-      type: "expense",
-      icon: "🎮",
-      is_default: false,
-    },
-  },
-];
-
 export class BudgetService {
-  private calculateSpentAmount(
-    budget: Budget,
-    transactions: Transaction[]
-  ): number {
-    return transactions
-      .filter(
-        (transaction) =>
-          transaction.category?.id === budget.category?.id &&
-          new Date(transaction.dateTime) >= budget.startDate &&
-          new Date(transaction.dateTime) <= budget.endDate &&
-          transaction.amount < 0
-      )
-      .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
-  }
+  private httpClient: HttpClient;
+  private route: string;
 
-  private getTransactionsForBudget(
-    budget: Budget,
-    transactions: Transaction[]
-  ): Transaction[] {
-    return transactions.filter(
-      (transaction) =>
-        transaction.category?.id === budget.category?.id &&
-        new Date(transaction.dateTime) >= budget.startDate &&
-        new Date(transaction.dateTime) <= budget.endDate &&
-        transaction.amount < 0
-    );
-  }
-
-  private createRecurringBudgets(budget: Budget): Budget[] {
-    const recurringBudgets: Budget[] = [];
-    let currentDate = new Date(budget.startDate);
-    const endDate = new Date(budget.endDate);
-
-    for (let i = 0; i < 3; i++) {
-      const nextStartDate = new Date(currentDate);
-      const nextEndDate = new Date(endDate);
-
-      if (budget.recurringPeriod === "monthly") {
-        nextStartDate.setMonth(nextStartDate.getMonth() + 1);
-        nextEndDate.setMonth(nextEndDate.getMonth() + 1);
-      } else {
-        nextStartDate.setFullYear(nextStartDate.getFullYear() + 1);
-        nextEndDate.setFullYear(nextEndDate.getFullYear() + 1);
-      }
-
-      const newBudget: Budget = {
-        ...budget,
-        id: uuidv4(),
-        startDate: nextStartDate,
-        endDate: nextEndDate,
-        spent: 0,
-      };
-
-      recurringBudgets.push(newBudget);
-      currentDate = nextStartDate;
-    }
-
-    return recurringBudgets;
+  constructor() {
+    this.httpClient = new HttpClient();
+    this.route = "budgets";
   }
 
   async create(input: CreateBudgetInput): Promise<ApiBudgetResponse> {
-    const newBudget: Budget = {
-      ...input,
-      id: uuidv4(),
-      spent: 0,
-      category: input.categoryId
-        ? {
-            id: input.categoryId,
-            name: "Categoria Mock",
-            type: "expense",
-            icon: "📊",
-            is_default: false,
-          }
-        : undefined,
-    };
-
-    mockBudgets.push(newBudget);
-
-    if (input.isRecurring) {
-      const recurringBudgets = this.createRecurringBudgets(newBudget);
-      mockBudgets.push(...recurringBudgets);
-    }
-
-    return { data: newBudget };
+    return this.httpClient.post<ApiBudgetResponse, CreateBudgetInput>(
+      getBackendApiUrl(this.route),
+      input,
+      true
+    );
   }
 
   async list(): Promise<ApiBudgetListResponse> {
-    return { data: mockBudgets };
+    return this.httpClient.get<ApiBudgetListResponse>(
+      getBackendApiUrl(this.route),
+      true
+    );
   }
 
   async getSummary(): Promise<ApiBudgetSummaryResponse> {
-    const totalBudget = mockBudgets.reduce(
-      (sum, budget) => sum + budget.amount,
-      0
+    return this.httpClient.get<ApiBudgetSummaryResponse>(
+      `${getBackendApiUrl(this.route)}/summary`,
+      true
     );
-    const totalSpent = mockBudgets.reduce(
-      (sum, budget) => sum + budget.spent,
-      0
-    );
-
-    return {
-      data: {
-        totalBudget,
-        totalSpent,
-        remainingBudget: totalBudget - totalSpent,
-        budgetCount: mockBudgets.length,
-      },
-    };
   }
 
   async getById(id: string): Promise<ApiBudgetResponse> {
-    const budget = mockBudgets.find((b) => b.id === id);
-    if (!budget) {
-      throw new Error("Orçamento não encontrado");
-    }
-    return { data: budget };
+    return this.httpClient.get<ApiBudgetResponse>(
+      `${getBackendApiUrl(this.route)}/${id}`,
+      true
+    );
   }
 
   async delete(id: string): Promise<void> {
-    const index = mockBudgets.findIndex((b) => b.id === id);
-    if (index > -1) {
-      mockBudgets.splice(index, 1);
-    }
+    await this.httpClient.delete(`${getBackendApiUrl(this.route)}/${id}`, true);
   }
 
   async update(
     id: string,
     input: Partial<CreateBudgetInput>
   ): Promise<ApiBudgetResponse> {
-    const budget = mockBudgets.find((b) => b.id === id);
-    if (!budget) {
-      throw new Error("Orçamento não encontrado");
-    }
-
-    Object.assign(budget, input);
-
-    if (input.isRecurring && !budget.isRecurring) {
-      const recurringBudgets = this.createRecurringBudgets(budget);
-      mockBudgets.push(...recurringBudgets);
-    }
-
-    return { data: budget };
+    return this.httpClient.put<ApiBudgetResponse, Partial<CreateBudgetInput>>(
+      `${getBackendApiUrl(this.route)}/${id}`,
+      input,
+      true
+    );
   }
 
   async getBudgetStatus(budget: Budget): Promise<{
@@ -206,23 +77,18 @@ export class BudgetService {
     return { status: "normal", percentageUsed };
   }
 
-  async getBudgetTransactions(_budgetId: string): Promise<Transaction[]> {
-    // Em um cenário real, você buscaria as transações da API usando o budgetId
-    return [];
+  async getBudgetTransactions(budgetId: string): Promise<Transaction[]> {
+    return this.httpClient.get<Transaction[]>(
+      `${getBackendApiUrl(this.route)}/${budgetId}/transactions`,
+      true
+    );
   }
 
-  async updateBudgetSpent(transaction: Transaction): Promise<void> {
-    const budgets = mockBudgets.filter(
-      (budget) =>
-        budget.category?.id === transaction.category?.id &&
-        new Date(transaction.dateTime) >= budget.startDate &&
-        new Date(transaction.dateTime) <= budget.endDate
+  async updateBudgetSpent(budgetId: string, amount: number): Promise<void> {
+    await this.httpClient.post(
+      `${getBackendApiUrl(this.route)}/${budgetId}/spent`,
+      { amount },
+      true
     );
-
-    for (const budget of budgets) {
-      if (transaction.amount < 0) {
-        budget.spent += Math.abs(transaction.amount);
-      }
-    }
   }
 }

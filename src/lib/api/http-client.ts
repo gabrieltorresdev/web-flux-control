@@ -1,9 +1,11 @@
 import { ApiError, handleApiError } from "./error-handler";
+import { ClientCredentialsManager } from "../auth/client-credentials";
 
 type FetchOptions<B> = {
   method?: string;
   headers?: Record<string, string>;
   body?: B;
+  useClientCredentials?: boolean;
 };
 
 export class HttpClient {
@@ -12,11 +14,17 @@ export class HttpClient {
     options: FetchOptions<B> = {}
   ): Promise<T> {
     try {
-      const headers = {
+      const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
         ...options.headers,
       };
+
+      if (options.useClientCredentials) {
+        const clientCredentials = ClientCredentialsManager.getInstance();
+        const token = await clientCredentials.getToken();
+        headers["Authorization"] = `Bearer ${token}`;
+      }
 
       const response = await fetch(url, {
         ...options,
@@ -45,19 +53,27 @@ export class HttpClient {
     }
   }
 
-  async get<T>(url: string) {
-    return this.request<T>(url);
+  async get<T>(url: string, useClientCredentials = false) {
+    return this.request<T>(url, { useClientCredentials });
   }
 
-  async post<T, B>(url: string, body: B) {
-    return this.request<T, B>(url, { method: "POST", body });
+  async post<T, B>(url: string, body: B, useClientCredentials = false) {
+    return this.request<T, B>(url, {
+      method: "POST",
+      body,
+      useClientCredentials,
+    });
   }
 
-  async put<T, B>(url: string, body: B) {
-    return this.request<T, B>(url, { method: "PUT", body });
+  async put<T, B>(url: string, body: B, useClientCredentials = false) {
+    return this.request<T, B>(url, {
+      method: "PUT",
+      body,
+      useClientCredentials,
+    });
   }
 
-  async delete(url: string) {
-    return this.request(url, { method: "DELETE" });
+  async delete(url: string, useClientCredentials = false) {
+    return this.request(url, { method: "DELETE", useClientCredentials });
   }
 }

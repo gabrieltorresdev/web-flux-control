@@ -44,7 +44,8 @@ export class TransactionService {
     }
 
     return this.httpClient.get<ApiTransactionPaginatedList>(
-      `${getBackendApiUrl(this.route)}?${params.toString()}`
+      `${getBackendApiUrl(this.route)}?${params.toString()}`,
+      true
     );
   }
 
@@ -69,19 +70,27 @@ export class TransactionService {
     }
 
     return this.httpClient.get<ApiTransactionSummaryResponse>(
-      `${getBackendApiUrl(this.route)}/summary?${params.toString()}`
+      `${getBackendApiUrl(this.route)}/summary?${params.toString()}`,
+      true
     );
   }
 
   async create(input: CreateTransactionInput) {
-    return this.httpClient.post(getBackendApiUrl(this.route), input);
+    return this.httpClient.post(getBackendApiUrl(this.route), input, true);
   }
 
   async update(id: string, input: CreateTransactionInput) {
-    return this.httpClient.put(`${getBackendApiUrl(this.route)}/${id}`, input);
+    return this.httpClient.put(
+      `${getBackendApiUrl(this.route)}/${id}`,
+      input,
+      true
+    );
   }
 
   async delete(id: string) {
-    return this.httpClient.delete(`${getBackendApiUrl(this.route)}/${id}`);
+    return this.httpClient.delete(
+      `${getBackendApiUrl(this.route)}/${id}`,
+      true
+    );
   }
 }
