@@ -100,13 +100,19 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
       <CategoryIcon
         icon={category.icon}
         isIncome={isIncome}
-        className={cn("w-10 h-10", category.isDefault && "opacity-75")}
+        className={cn(
+          "w-10 h-10",
+          category.isDefault && "opacity-75",
+          isIncome
+            ? "text-[hsl(var(--income-foreground))]"
+            : "text-[hsl(var(--expense-foreground))]"
+        )}
       />
       <div className="flex-1 min-w-0">
         <h3
           className={cn(
-            "font-medium text-base text-foreground/90 line-clamp-1 break-all",
-            category.isDefault && "text-foreground/75"
+            "font-medium text-base line-clamp-1 break-all",
+            category.isDefault ? "text-foreground/75" : "text-foreground/90"
           )}
         >
           {category.name}
@@ -114,10 +120,10 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
         <div className="flex items-center gap-2 mt-0.5">
           <span
             className={cn(
-              "text-xs px-2 py-0.5 rounded-full",
+              "text-xs px-2 py-0.5 rounded-full font-medium",
               isIncome
-                ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-400/10 dark:text-emerald-400"
-                : "bg-rose-500/10 text-rose-500 dark:bg-rose-400/10 dark:text-rose-400"
+                ? "bg-[hsl(var(--income)/0.08)] text-[hsl(var(--income-foreground))]"
+                : "bg-[hsl(var(--expense)/0.08)] text-[hsl(var(--expense-foreground))]"
             )}
           >
             {isIncome ? "Receita" : "Despesa"}
@@ -266,9 +272,9 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
       </AlertDialog>
 
       <EditCategoryDialog
-        category={category}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
+        category={category}
       />
     </>
   );

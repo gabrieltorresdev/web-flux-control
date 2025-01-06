@@ -66,22 +66,22 @@ const CategoryGroup = memo(function CategoryGroup({
           )}
         >
           <div className="flex items-center gap-2 px-4 py-3 border-b">
-            <h2 className="text-base font-medium text-foreground/80">
+            <h2 className="text-base font-medium text-foreground/90">
               {title}
             </h2>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm font-medium text-muted-foreground">
               ({categories.length})
             </span>
           </div>
 
           {skipAnimation ? (
-            <div className="grid gap-0">
+            <div className="grid gap-0 divide-y divide-border/50">
               {categories.map((category) => (
                 <div
                   key={category.id}
                   className={cn(
                     "rounded-xl sm:rounded-none overflow-hidden",
-                    type === "default" && "opacity-75"
+                    type === "default" && "opacity-90 bg-muted/50"
                   )}
                 >
                   <CategoryItem category={category} />
@@ -102,7 +102,7 @@ const CategoryGroup = memo(function CategoryGroup({
                   }}
                   className={cn(
                     "rounded-xl sm:rounded-none overflow-hidden",
-                    type === "default" && "opacity-75"
+                    type === "default" && "opacity-90 bg-muted/50"
                   )}
                 >
                   <CategoryItem category={category} />

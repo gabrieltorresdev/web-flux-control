@@ -23,7 +23,7 @@ export default async function RootLayout({
   return (
     <>
       <DashboardStatusChecker />
-      <div className="flex-1 flex flex-col bg-foreground/[0.03] min-h-screen w-full">
+      <div className="flex-1 flex flex-col bg-foreground/[0.02] min-h-screen w-full">
         <AppHeader />
         <div className="flex-1 overflow-y-auto py-3 relative">{children}</div>
       </div>
