@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useMemo } from "react";
 import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import {
   Command,
@@ -26,12 +26,18 @@ import {
 } from "@/components/ui/sheet";
 import { CategorySelectItem } from "./category-select-item";
 import { useDebounce } from "@/hooks/lib/use-debounce";
-import { useCategories } from "@/hooks/use-categories";
+import {
+  useCategoryStore,
+  createCategoryStore,
+  createCategorySelectors,
+} from "@/stores/category-store";
+import { Category } from "@/types/category";
 import { CreateCategoryDialog } from "./create-category-dialog";
 
 interface CategorySelectorProps {
   value?: string;
-  onChange?: (value: string | undefined) => void;
+  selectedCategory?: Category;
+  onChange?: (value: string | undefined, category?: Category) => void;
   placeholder?: string;
   showAsBadge?: boolean;
   className?: string;
@@ -39,10 +45,12 @@ interface CategorySelectorProps {
   insideSheet?: boolean;
   onCategoryCreated?: () => Promise<void>;
   showAllOption?: boolean;
+  store?: ReturnType<typeof createCategoryStore>;
 }
 
 export const CategorySelector = memo(function CategorySelector({
   value,
+  selectedCategory,
   onChange,
   placeholder = "Selecione uma categoria",
   showAsBadge = false,
@@ -51,6 +59,7 @@ export const CategorySelector = memo(function CategorySelector({
   insideSheet = false,
   onCategoryCreated,
   showAllOption = false,
+  store = useCategoryStore,
 }: CategorySelectorProps) {
   const [state, setState] = useState({
     open: false,
@@ -60,10 +69,21 @@ export const CategorySelector = memo(function CategorySelector({
 
   const isMobile = useIsMobile();
   const debouncedSearchTerm = useDebounce(state.searchTerm, 500);
-  const { data, isLoading } = useCategories(debouncedSearchTerm);
-  const categories = data?.data ?? [];
 
-  const selectedCategory = categories.find((cat) => cat.id === value);
+  // Use store selectors
+  const useStoreSelectors = useMemo(
+    () => createCategorySelectors(store),
+    [store]
+  );
+  const { categories, isLoading } = useStoreSelectors();
+
+  // Filter categories based on search term
+  const filteredCategories = useMemo(() => {
+    if (!debouncedSearchTerm) return categories;
+    return categories.filter((cat: Category) =>
+      cat.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [categories, debouncedSearchTerm]);
 
   const handleOpenChange = useCallback((open: boolean) => {
     setState((prev) => ({ ...prev, open }));
@@ -80,9 +100,14 @@ export const CategorySelector = memo(function CategorySelector({
         open: false,
         searchTerm: "",
       }));
-      onChange?.(categoryId === null ? undefined : categoryId);
+      if (categoryId === null) {
+        onChange?.(undefined, undefined);
+      } else {
+        const category = categories.find((cat) => cat.id === categoryId);
+        onChange?.(categoryId, category);
+      }
     },
-    [onChange]
+    [onChange, categories]
   );
 
   const handleCreateCategory = useCallback(() => {
@@ -92,12 +117,13 @@ export const CategorySelector = memo(function CategorySelector({
   const handleCreateSuccess = useCallback(
     async (categoryId: string) => {
       setState((prev) => ({ ...prev, showCreateDialog: false }));
-      onChange?.(categoryId);
+      const category = categories.find((cat) => cat.id === categoryId);
+      onChange?.(categoryId, category);
       if (onCategoryCreated) {
         await onCategoryCreated();
       }
     },
-    [onChange, onCategoryCreated]
+    [onChange, onCategoryCreated, categories]
   );
 
   const content = (
@@ -141,8 +167,8 @@ export const CategorySelector = memo(function CategorySelector({
                 Todas as categorias
               </CommandItem>
             )}
-            {categories?.length > 0 &&
-              categories.map((category) => (
+            {filteredCategories?.length > 0 &&
+              filteredCategories.map((category) => (
                 <CommandItem
                   key={category.id}
                   value={category.id}
@@ -157,7 +183,7 @@ export const CategorySelector = memo(function CategorySelector({
                   </div>
                 </CommandItem>
               ))}
-            {categories?.length === 0 && (
+            {filteredCategories?.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-4">
                 <p className="text-sm text-muted-foreground">
                   Nenhuma categoria encontrada

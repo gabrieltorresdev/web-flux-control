@@ -5,18 +5,15 @@ import { memo } from "react";
 import { Card } from "../ui/card";
 import { CategoryItem } from "./category-item";
 import { Tag } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "../ui/collapsible";
-import { Button } from "../ui/button";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { ApiPaginatedResponse } from "@/types/service";
+import { motion, AnimatePresence } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface CategoryGroupProps {
   title: string;
   categories: Category[];
+  type: "default" | "custom";
 }
 
 interface CategoryListProps {
@@ -34,47 +31,108 @@ const EmptyState = memo(function EmptyState() {
   );
 });
 
-EmptyState.displayName = "EmptyState";
-
 const CategoryGroup = memo(function CategoryGroup({
   title,
   categories,
+  type,
 }: CategoryGroupProps) {
+  const isMobile = useIsMobile();
+
   if (!categories.length) return null;
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-medium text-foreground">{title}</h2>
-          <span className="text-sm text-muted-foreground">
-            ({categories.length})
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <ChevronRight
-            className="h-4 w-4 text-muted-foreground/50"
-            aria-hidden="true"
-          />
-        </div>
-      </div>
-      <Card className="overflow-hidden">
-        <div className="divide-y">
-          {categories.map((category) => (
-            <CategoryItem key={category.id} category={category} />
-          ))}
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-3"
+    >
+      <Card
+        className={cn(
+          "overflow-hidden border-0 bg-transparent shadow-none",
+          !isMobile && "bg-background border shadow-sm"
+        )}
+      >
+        <div
+          className={cn(
+            "divide-y divide-border/50",
+            isMobile &&
+              "rounded-xl bg-background shadow-sm space-y-2 divide-y-0"
+          )}
+        >
+          <div className="flex items-center gap-2 px-4 py-3 border-b">
+            <h2 className="text-base font-medium text-foreground/80">
+              {title}
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              ({categories.length})
+            </span>
+          </div>
+
+          <AnimatePresence mode="popLayout">
+            {categories.map((category, index) => (
+              <motion.div
+                key={category.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ delay: index * 0.05 }}
+                className={cn(
+                  isMobile && "rounded-xl overflow-hidden",
+                  type === "default" && "opacity-75"
+                )}
+              >
+                <CategoryItem category={category} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </Card>
-    </section>
+    </motion.section>
   );
 });
 
-CategoryGroup.displayName = "CategoryGroup";
+const CategoryColumn = memo(function CategoryColumn({
+  title,
+  customCategories,
+  defaultCategories,
+}: {
+  title: string;
+  customCategories: Category[];
+  defaultCategories: Category[];
+}) {
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-2 px-1">
+        <h2 className="text-lg font-semibold text-foreground/90">{title}</h2>
+        <span className="text-sm text-muted-foreground">
+          ({customCategories.length + defaultCategories.length})
+        </span>
+      </div>
+
+      {customCategories.length > 0 && (
+        <CategoryGroup
+          title="Personalizadas"
+          categories={customCategories}
+          type="custom"
+        />
+      )}
+
+      {defaultCategories.length > 0 && (
+        <CategoryGroup
+          title="Padrão"
+          categories={defaultCategories}
+          type="default"
+        />
+      )}
+    </div>
+  );
+});
 
 export const CategoryList = memo(function CategoryList({
   initialData,
 }: CategoryListProps) {
   const categories = initialData.data;
+  const isMobile = useIsMobile();
 
   if (!categories.length) {
     return <EmptyState />;
@@ -93,60 +151,60 @@ export const CategoryList = memo(function CategoryList({
     (cat) => cat.type === "income" && !cat.isDefault
   );
 
-  return (
-    <div className="animate-in fade-in-50 duration-500 space-y-6">
-      {/* Default Categories */}
-      {(defaultExpenseCategories.length > 0 ||
-        defaultIncomeCategories.length > 0) && (
-        <Collapsible>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-medium text-foreground">
-                Categorias padrão
-              </h2>
-              <span className="text-sm text-muted-foreground">
-                (
-                {defaultExpenseCategories.length +
-                  defaultIncomeCategories.length}
-                )
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-0 h-auto">
-                  <ChevronDown className="h-4 w-4 text-muted-foreground/50" />
-                </Button>
-              </CollapsibleTrigger>
-            </div>
+  if (isMobile) {
+    return (
+      <div className="animate-in fade-in-50 duration-500 space-y-8">
+        {/* Custom Categories */}
+        {(customExpenseCategories.length > 0 ||
+          customIncomeCategories.length > 0) && (
+          <div className="space-y-8">
+            <CategoryGroup
+              title="Despesas"
+              categories={customExpenseCategories}
+              type="custom"
+            />
+            <CategoryGroup
+              title="Receitas"
+              categories={customIncomeCategories}
+              type="custom"
+            />
           </div>
-          <CollapsibleContent className="mt-3">
-            <Card className="overflow-hidden">
-              <div className="divide-y">
-                {defaultExpenseCategories.map((category) => (
-                  <CategoryItem key={category.id} category={category} />
-                ))}
-                {defaultIncomeCategories.map((category) => (
-                  <CategoryItem key={category.id} category={category} />
-                ))}
-              </div>
-            </Card>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+        )}
 
-      {/* Custom Categories */}
-      {(customExpenseCategories.length > 0 ||
-        customIncomeCategories.length > 0) && (
-        <div className="space-y-6">
-          <CategoryGroup
-            title="Despesas"
-            categories={customExpenseCategories}
-          />
-          <CategoryGroup title="Receitas" categories={customIncomeCategories} />
-        </div>
-      )}
+        {/* Default Categories */}
+        {(defaultExpenseCategories.length > 0 ||
+          defaultIncomeCategories.length > 0) && (
+          <div className="space-y-8">
+            <CategoryGroup
+              title="Despesas Padrão"
+              categories={defaultExpenseCategories}
+              type="default"
+            />
+            <CategoryGroup
+              title="Receitas Padrão"
+              categories={defaultIncomeCategories}
+              type="default"
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-in fade-in-50 duration-500">
+      <div className="grid grid-cols-2 gap-8">
+        <CategoryColumn
+          title="Despesas"
+          customCategories={customExpenseCategories}
+          defaultCategories={defaultExpenseCategories}
+        />
+        <CategoryColumn
+          title="Receitas"
+          customCategories={customIncomeCategories}
+          defaultCategories={defaultIncomeCategories}
+        />
+      </div>
     </div>
   );
 });
-
-CategoryList.displayName = "CategoryList";

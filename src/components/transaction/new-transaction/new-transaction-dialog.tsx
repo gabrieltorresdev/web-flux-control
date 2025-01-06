@@ -32,6 +32,7 @@ import { useDraftTransaction } from "@/hooks/use-draft-transaction";
 import { createTransaction } from "@/app/actions/transactions";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/get-query-client";
+import { useCategoryStore } from "@/stores/category-store";
 
 interface NewTransactionDialogProps {
   initialDate?: Date;
@@ -59,6 +60,14 @@ export function NewTransactionDialog({
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+
+  // Load categories when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadCategories();
+    }
+  }, [open, loadCategories]);
 
   const {
     register,

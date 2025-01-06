@@ -13,15 +13,20 @@ export default async function CategoriesPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 px-3">
-      <div className="text-muted-foreground text-sm md:text-base text-center">
-        Gerencie suas <strong>categorias</strong> de transações
+      <div>
+        <div className="flex items-center justify-between">
+          <h1 className="text-muted-foreground text-sm font-medium">
+            Minhas <strong className="text-primary">categorias</strong>
+          </h1>
+        </div>
       </div>
-      <div className="flex flex-col gap-3">
-        <NewCategoryButton />
-        <Suspense fallback={<LoadingSpinner />}>
-          <CategoryList initialData={initialCategories} />
-        </Suspense>
-      </div>
+
+      {/* Content */}
+      <Suspense fallback={<LoadingSpinner />}>
+        <CategoryList initialData={initialCategories} />
+      </Suspense>
+
+      <NewCategoryButton />
     </div>
   );
 }

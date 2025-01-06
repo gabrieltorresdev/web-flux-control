@@ -4,30 +4,22 @@ import { CircleDollarSign, Loader2 } from "lucide-react";
 import { Card } from "../ui/card";
 import { TransactionItem } from "./transaction-item";
 import { cn, formatNumberToBRL } from "@/lib/utils";
-import {
-  formatDateHeader,
-  groupTransactionsByDate,
-} from "@/lib/utils/transactions";
+import { formatDateHeader } from "@/lib/utils/transactions";
 import { useInView } from "react-intersection-observer";
-import {
-  useCallback,
-  useTransition,
-  cache,
-  useState,
-  useEffect,
-  memo,
-  useMemo,
-  useRef,
-} from "react";
+import { useTransition, memo, useMemo, useRef, useEffect } from "react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "../ui/accordion";
-import { getTransactionsList } from "@/app/actions/transactions";
 import { Transaction } from "@/types/transaction";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FixedSizeList as List, ListChildComponentProps } from "react-window";
+import {
+  createTransactionStore,
+  createTransactionSelectors,
+} from "@/stores/transaction-store";
 
 interface TransactionGroupProps {
   date: Date;
@@ -43,7 +35,12 @@ interface SearchParams {
 }
 
 interface TransactionListProps {
-  initialData: Awaited<ReturnType<typeof getTransactionsList>>;
+  initialData: {
+    transactions: {
+      data: Transaction[];
+    };
+    nextPage: number | undefined;
+  };
   searchParams: SearchParams;
 }
 
@@ -55,25 +52,6 @@ const calculateGroupTotal = (transactions: Transaction[]) => {
     return t.category.type === "income" ? acc + t.amount : acc - t.amount;
   }, 0);
 };
-
-// Cache the fetch function to avoid unnecessary refetches
-const fetchTransactionsPage = cache(
-  async (params: SearchParams, page: number, perPage: number) => {
-    try {
-      return await getTransactionsList({
-        month: params.month ? parseInt(params.month) : undefined,
-        year: params.year ? parseInt(params.year) : undefined,
-        categoryId: params.categoryId || undefined,
-        search: params.search || undefined,
-        page,
-        perPage,
-      });
-    } catch (error) {
-      console.error("Error fetching next page:", error);
-      throw error;
-    }
-  }
-);
 
 const EmptyState = memo(function EmptyState() {
   return (
@@ -155,127 +133,139 @@ const TransactionGroup = memo(function TransactionGroup({
   );
 });
 
+const ITEM_HEIGHT = 72; // Height of each transaction item in pixels
+const LIST_HEIGHT = 600; // Maximum height of the virtualized list
+
+interface RowData {
+  date: Date;
+  transactions: Transaction[];
+  total: number;
+}
+
+const Row = memo(function Row({
+  index,
+  style,
+  data,
+}: ListChildComponentProps<RowData[]>) {
+  const group = data[index];
+  return (
+    <div style={style}>
+      <TransactionGroup
+        date={group.date}
+        transactions={group.transactions}
+        total={group.total}
+      />
+    </div>
+  );
+});
+
 const TransactionListContent = memo(function TransactionListContent({
   initialData,
   searchParams,
 }: TransactionListProps) {
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
-    rootMargin: "150px", // Increased for better mobile experience
+    rootMargin: "150px",
   });
   const [isPending, startTransition] = useTransition();
-  const isLoadingRef = useRef(false);
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // State for pagination with optimized page size for mobile
-  const pageSize = isMobile ? 5 : ITEMS_PER_PAGE;
-  const [pages, setPages] = useState<Transaction[][]>([
-    initialData.transactions.data,
-  ]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(initialData.nextPage);
-
-  // Memoized fetch function for next pages
-  const fetchNextPage = useCallback(async () => {
-    if (!hasNextPage || isLoadingRef.current) return;
-
-    isLoadingRef.current = true;
-    startTransition(async () => {
-      try {
-        const nextPageData = await fetchTransactionsPage(
-          searchParams,
-          currentPage + 1,
-          pageSize
-        );
-        setPages((prev) => [...prev, nextPageData.transactions.data]);
-        setCurrentPage((prev) => prev + 1);
-        setHasNextPage(nextPageData.nextPage);
-      } catch (error) {
-        console.error("Error fetching next page:", error);
-      } finally {
-        isLoadingRef.current = false;
-      }
-    });
-  }, [searchParams, currentPage, hasNextPage, pageSize]);
-
-  // Handle infinite scroll with debounce for mobile
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (inView && hasNextPage && !isPending) {
-      timeoutId = setTimeout(
-        () => {
-          fetchNextPage();
+  // Create store instance with initial data
+  const store = useMemo(
+    () =>
+      createTransactionStore({
+        initialData: {
+          transactions: initialData.transactions.data,
+          hasNextPage: Boolean(initialData.nextPage),
         },
-        isMobile ? 150 : 0
-      ); // Small delay on mobile for smoother scrolling
-    }
-    return () => clearTimeout(timeoutId);
-  }, [inView, hasNextPage, isPending, fetchNextPage, isMobile]);
+      }),
+    [initialData.transactions.data, initialData.nextPage]
+  );
 
-  // Reset pagination when filters change
+  // Create selectors for this store instance
+  const useInstanceSelectors = useMemo(
+    () => createTransactionSelectors(store),
+    [store]
+  );
+
+  // Use the store-specific selectors
+  const {
+    transactions,
+    groupedTransactions,
+    isLoading,
+    hasNextPage,
+    currentPage,
+  } = useInstanceSelectors();
+
+  const { fetchTransactions, setFilters } = store();
+
+  const groupedTransactionsWithTotals = useMemo(() => {
+    return groupedTransactions.map((group) => ({
+      ...group,
+      total: calculateGroupTotal(group.transactions),
+    }));
+  }, [groupedTransactions]);
+
+  // Set filters when they change
   useEffect(() => {
-    setPages([initialData.transactions.data]);
-    setCurrentPage(1);
-    setHasNextPage(initialData.nextPage);
-    isLoadingRef.current = false;
-
-    // Scroll to top when filters change
-    if (containerRef.current) {
-      containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setFilters({
+      month: searchParams.month ? parseInt(searchParams.month) : undefined,
+      year: searchParams.year ? parseInt(searchParams.year) : undefined,
+      categoryId: searchParams.categoryId || undefined,
+      search: searchParams.search || undefined,
+    });
   }, [
     searchParams.month,
     searchParams.year,
     searchParams.categoryId,
     searchParams.search,
-    initialData.transactions.data,
-    initialData.nextPage,
+    setFilters,
   ]);
 
-  // Memoize expensive calculations
-  const { transactions, groupedTransactionsWithTotals } = useMemo(() => {
-    const allTransactions = pages.flat();
-    const grouped = groupTransactionsByDate(allTransactions);
-    const withTotals = grouped.map((group) => ({
-      ...group,
-      total: calculateGroupTotal(group.transactions),
-    }));
-    return {
-      transactions: allTransactions,
-      groupedTransactionsWithTotals: withTotals,
-    };
-  }, [pages]);
+  // Handle infinite scroll
+  useEffect(() => {
+    if (inView && hasNextPage && !isLoading && !isPending) {
+      startTransition(() => {
+        fetchTransactions(currentPage + 1, isMobile ? 5 : ITEMS_PER_PAGE);
+      });
+    }
+  }, [
+    inView,
+    hasNextPage,
+    isLoading,
+    isPending,
+    currentPage,
+    isMobile,
+    fetchTransactions,
+  ]);
 
   if (transactions.length === 0) {
     return <EmptyState />;
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        "animate-in fade-in-50 duration-500 space-y-3",
-        isMobile && "pb-safe-area-bottom"
-      )}
-    >
-      {groupedTransactionsWithTotals.map((group) => (
-        <TransactionGroup
-          key={group.date.toISOString()}
-          date={group.date}
-          transactions={group.transactions}
-          total={group.total}
-        />
-      ))}
+    <div ref={containerRef} className="space-y-4">
+      <List
+        height={LIST_HEIGHT}
+        itemCount={groupedTransactionsWithTotals.length}
+        itemSize={ITEM_HEIGHT}
+        width="100%"
+        itemData={groupedTransactionsWithTotals}
+      >
+        {Row}
+      </List>
       {hasNextPage && (
         <div
           ref={loadMoreRef}
-          className="flex justify-center py-3"
-          role="status"
-          aria-label="Carregando mais transações"
+          className="flex justify-center py-4"
+          aria-hidden="true"
         >
-          {isPending && (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          {(isPending || isLoading) && (
+            <Loader2
+              className="h-6 w-6 animate-spin text-muted-foreground"
+              aria-hidden="true"
+            />
           )}
         </div>
       )}
@@ -283,14 +273,6 @@ const TransactionListContent = memo(function TransactionListContent({
   );
 });
 
-export function TransactionList({
-  initialData,
-  searchParams,
-}: TransactionListProps) {
-  return (
-    <TransactionListContent
-      initialData={initialData}
-      searchParams={searchParams}
-    />
-  );
+export function TransactionList(props: TransactionListProps) {
+  return <TransactionListContent {...props} />;
 }

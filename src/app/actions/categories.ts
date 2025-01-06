@@ -17,6 +17,17 @@ export const getCategories = cache(async (searchTerm?: string) => {
 });
 
 // Cache the fetch function to avoid unnecessary refetches
+export const getCategoryById = cache(async (id: string) => {
+  try {
+    const categoryService = new CategoryService();
+    return await categoryService.findById(id);
+  } catch (error) {
+    console.error("Error fetching category by id:", error);
+    throw error;
+  }
+});
+
+// Cache the fetch function to avoid unnecessary refetches
 export const getCategoryByName = cache(async (name: string) => {
   try {
     const categoryService = new CategoryService();

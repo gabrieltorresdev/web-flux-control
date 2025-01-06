@@ -20,17 +20,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useCategories } from "@/hooks/use-categories";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Category } from "@/types/category";
 
 interface TransactionFiltersProps {
   initialCategoryId?: string;
+  initialCategory?: Category;
   initialSearch?: string;
   className?: string;
 }
 
 export function TransactionFilters({
   initialCategoryId,
+  initialCategory,
   initialSearch,
   className,
 }: TransactionFiltersProps) {
@@ -38,15 +40,10 @@ export function TransactionFilters({
   const [search, setSearch] = React.useState(initialSearch ?? "");
   const [selectedCategoryId, setSelectedCategoryId] =
     React.useState(initialCategoryId);
+  const [selectedCategory, setSelectedCategory] =
+    React.useState(initialCategory);
   const [isOpen, setIsOpen] = React.useState(false);
-  const { data, isLoading } = useCategories();
-  const categories = data?.data ?? [];
   const isMobile = useIsMobile();
-
-  const selectedCategory = React.useMemo(
-    () => categories.find((cat) => cat.id === selectedCategoryId),
-    [categories, selectedCategoryId]
-  );
 
   const updateSearch = React.useCallback(
     (value: string) => {
@@ -60,8 +57,9 @@ export function TransactionFilters({
   );
 
   const handleCategoryChange = React.useCallback(
-    (categoryId: string | undefined) => {
+    (categoryId: string | undefined, category?: Category) => {
       setSelectedCategoryId(categoryId);
+      setSelectedCategory(category);
       setParam("categoryId", categoryId ?? null);
     },
     [setParam]
@@ -74,7 +72,8 @@ export function TransactionFilters({
 
   React.useEffect(() => {
     setSelectedCategoryId(initialCategoryId);
-  }, [initialCategoryId]);
+    setSelectedCategory(initialCategory);
+  }, [initialCategoryId, initialCategory]);
 
   // Update search params when search changes
   React.useEffect(() => {
@@ -86,17 +85,6 @@ export function TransactionFilters({
   }, [search, updateSearch]);
 
   const hasActiveFilters = search || selectedCategoryId;
-
-  if (isLoading) {
-    return (
-      <Card className={className}>
-        <div className="flex items-center gap-3 p-3">
-          <div className="h-6 w-32 bg-muted rounded animate-pulse" />
-          <div className="h-8 w-8 bg-muted rounded shrink-0 animate-pulse" />
-        </div>
-      </Card>
-    );
-  }
 
   return (
     <Card className={className}>
@@ -168,6 +156,7 @@ export function TransactionFilters({
                 <Label>Categoria</Label>
                 <CategoryFilter
                   initialCategoryId={selectedCategoryId}
+                  initialCategory={selectedCategory}
                   onCategoryChange={handleCategoryChange}
                   insideSheet={true}
                 />

@@ -10,6 +10,7 @@ import {
   getTransactionsList,
   getTransactionsSummary,
 } from "@/app/actions/transactions";
+import { getCategoryById } from "@/app/actions/categories";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,22 +23,24 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const { month, year, categoryId, search } = await searchParams;
 
   // Fetch initial data on the server
-  const [initialTransactions, initialSummary] = await Promise.all([
-    getTransactionsList({
-      month: month ? parseInt(month) : undefined,
-      year: year ? parseInt(year) : undefined,
-      categoryId,
-      search,
-      page: 1,
-      perPage: 10,
-    }),
-    getTransactionsSummary({
-      month: month ? parseInt(month) : undefined,
-      year: year ? parseInt(year) : undefined,
-      categoryId,
-      search,
-    }),
-  ]);
+  const [initialTransactions, initialSummary, initialCategoryResponse] =
+    await Promise.all([
+      getTransactionsList({
+        month: month ? parseInt(month) : undefined,
+        year: year ? parseInt(year) : undefined,
+        categoryId,
+        search,
+        page: 1,
+        perPage: 10,
+      }),
+      getTransactionsSummary({
+        month: month ? parseInt(month) : undefined,
+        year: year ? parseInt(year) : undefined,
+        categoryId,
+        search,
+      }),
+      categoryId ? getCategoryById(categoryId) : null,
+    ]);
 
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 px-3">
@@ -52,6 +55,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
           <TransactionFilters
             initialCategoryId={categoryId}
+            initialCategory={initialCategoryResponse?.data}
             initialSearch={search}
           />
         </div>

@@ -21,6 +21,13 @@ export class CategoryService {
     );
   }
 
+  public async findById(id: string): Promise<ApiResponse<Category>> {
+    return this.httpClient.get<ApiResponse<Category>>(
+      `${getBackendApiUrl(this.route)}/${id}`,
+      true
+    );
+  }
+
   public async findByName(name: string): Promise<ApiResponse<Category>> {
     return this.httpClient.get<ApiResponse<Category>>(
       `${getBackendApiUrl(this.route)}/by-name/${name}`,
