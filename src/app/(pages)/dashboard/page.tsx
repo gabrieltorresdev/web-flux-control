@@ -11,6 +11,7 @@ import {
   getTransactionsSummary,
 } from "@/app/actions/transactions";
 import { getCategoryById } from "@/app/actions/categories";
+import { AnimatedPage } from "@/components/layout/animated-page";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -43,38 +44,40 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     ]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 px-3">
-      <div>
-        <div className="flex flex-col gap-3 w-full">
-          <div className="flex items-center justify-between">
-            <h1 className="text-muted-foreground text-sm font-medium">
-              Minhas <strong className="text-primary">transações</strong>
-            </h1>
-            <MonthFilter initialMonth={month} initialYear={year} />
-          </div>
+    <AnimatedPage className="max-w-4xl mx-auto px-3">
+      <div className="flex flex-col gap-3">
+        <div>
+          <div className="flex flex-col gap-3 w-full">
+            <div className="flex items-center justify-between">
+              <h1 className="text-muted-foreground text-sm font-medium">
+                Minhas <strong className="text-primary">transações</strong>
+              </h1>
+              <MonthFilter initialMonth={month} initialYear={year} />
+            </div>
 
-          <TransactionFilters
-            initialCategoryId={categoryId}
-            initialCategory={initialCategoryResponse?.data}
-            initialSearch={search}
-          />
+            <TransactionFilters
+              initialCategoryId={categoryId}
+              initialCategory={initialCategoryResponse?.data}
+              initialSearch={search}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <NewTransactionButton />
+          <Suspense fallback={<LoadingSpinner />}>
+            <TransactionSummary initialSummary={initialSummary} />
+            <TransactionList
+              initialData={initialTransactions}
+              searchParams={{
+                month: month || null,
+                year: year || null,
+                categoryId: categoryId || null,
+                search: search || null,
+              }}
+            />
+          </Suspense>
         </div>
       </div>
-      <div className="flex flex-col gap-3">
-        <NewTransactionButton />
-        <Suspense fallback={<LoadingSpinner />}>
-          <TransactionSummary initialSummary={initialSummary} />
-          <TransactionList
-            initialData={initialTransactions}
-            searchParams={{
-              month: month || null,
-              year: year || null,
-              categoryId: categoryId || null,
-              search: search || null,
-            }}
-          />
-        </Suspense>
-      </div>
-    </div>
+    </AnimatedPage>
   );
 }
