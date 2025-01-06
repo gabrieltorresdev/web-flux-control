@@ -42,6 +42,7 @@ export function EditTransactionDialog({
     getValues,
     setValue,
     setError,
+    watch,
   } = useForm<CreateTransactionInput>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -111,7 +112,7 @@ export function EditTransactionDialog({
     <ResponsiveModal open={open} onOpenChange={onOpenChange}>
       <ResponsiveModalContent>
         <ResponsiveModalHeader>
-          <ResponsiveModalTitle>Editar transação</ResponsiveModalTitle>
+          <ResponsiveModalTitle>Editar Transação</ResponsiveModalTitle>
           <ResponsiveModalDescription />
         </ResponsiveModalHeader>
 
@@ -121,6 +122,7 @@ export function EditTransactionDialog({
           errors={errors}
           getValues={getValues}
           setValue={setValue}
+          watch={watch}
           isSubmitting={isSubmitting}
         />
       </ResponsiveModalContent>
