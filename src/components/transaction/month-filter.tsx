@@ -42,21 +42,26 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
   // Update URL when debounced date changes
   useEffect(() => {
     const searchParams = new URLSearchParams(getParams());
-    searchParams.set("month", (debouncedDate.getMonth() + 1).toString());
-    searchParams.set("year", debouncedDate.getFullYear().toString());
+    const newMonth = (debouncedDate.getMonth() + 1).toString();
+    const newYear = debouncedDate.getFullYear().toString();
 
-    startTransition(() => {
-      router.replace(`?${searchParams.toString()}`, { scroll: false });
-    });
+    // Only update if values actually changed
+    if (
+      newMonth !== searchParams.get("month") ||
+      newYear !== searchParams.get("year")
+    ) {
+      searchParams.set("month", newMonth);
+      searchParams.set("year", newYear);
+
+      startTransition(() => {
+        router.replace(`?${searchParams.toString()}`, { scroll: false });
+      });
+    }
   }, [debouncedDate, getParams, router, startTransition]);
 
-  const handleDateChange = useCallback((newDate: Date) => {
-    setCurrentDate(newDate);
-  }, []);
-
-  const debouncedHandleDateChange = useCallback(
+  const handleDateChange = useCallback(
     (newDate: Date) => {
-      handleDateChange(newDate);
+      setCurrentDate(newDate);
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -67,7 +72,7 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
         setLoading(true);
       }, 500);
     },
-    [handleDateChange, setLoading]
+    [setLoading]
   );
 
   useEffect(() => {
@@ -79,14 +84,14 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
   const handlePreviousMonth = useCallback(() => {
     const newDate = new Date(currentDate);
     newDate.setMonth(currentDate.getMonth() - 1);
-    debouncedHandleDateChange(newDate);
-  }, [currentDate, debouncedHandleDateChange]);
+    handleDateChange(newDate);
+  }, [currentDate, handleDateChange]);
 
   const handleNextMonth = useCallback(() => {
     const newDate = new Date(currentDate);
     newDate.setMonth(currentDate.getMonth() + 1);
-    debouncedHandleDateChange(newDate);
-  }, [currentDate, debouncedHandleDateChange]);
+    handleDateChange(newDate);
+  }, [currentDate, handleDateChange]);
 
   const handleSelectMonth = useCallback(
     (month: number) => {
