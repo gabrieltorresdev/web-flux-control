@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
+import { checkUserStatus } from "@/app/actions/user";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
@@ -63,7 +64,14 @@ export function LoginForm() {
         return;
       }
 
-      router.push("/dashboard");
+      // Check user status after successful login
+      const userStatus = await checkUserStatus();
+
+      if (userStatus === "completed") {
+        router.push("/dashboard");
+      } else {
+        router.push("/environment-preparation");
+      }
     } catch (error) {
       console.error("Unexpected login error:", error);
       setError(

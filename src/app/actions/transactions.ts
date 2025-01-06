@@ -43,6 +43,8 @@ export async function getTransactionsList({
     { page, perPage }
   );
 
+  console.log(transactions);
+
   return {
     transactions,
     nextPage:

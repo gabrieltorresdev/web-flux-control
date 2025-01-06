@@ -4,5 +4,6 @@ export const config = {
 };
 
 export const getBackendApiUrl = (path: string) => {
-  return `${config.backendUrl}/api/${config.apiVersion}/${path}`;
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  return `${config.backendUrl}/api/${config.apiVersion}/${cleanPath}`;
 };
