@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, memo, useState } from "react";
+import { useCallback, useEffect, memo, useState, useRef } from "react";
 import { useVoiceRecognition } from "@/hooks/lib/use-voice-recognition";
 import { Button } from "../../ui/button";
 import { Textarea } from "../../ui/textarea";
@@ -16,9 +16,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CreateTransactionInput } from "@/types/transaction";
-import { AiTransactionService } from "@/services/ai/ai-transaction-service";
 import { TransactionForm } from "./transaction-form";
 import {
   FieldErrors,
@@ -26,12 +25,13 @@ import {
   UseFormRegister,
   UseFormSetValue,
   UseFormSetError,
+  UseFormWatch,
 } from "react-hook-form";
 import { CreateCategoryDialog } from "@/components/category/create-category-dialog";
-import { GoogleGenerativeAiService } from "@/services/ai/providers/google-generative-ai-service";
 import { useDebounce } from "@/hooks/lib/use-debounce";
-import { getCategoryByName } from "@/app/actions/categories";
-import { MockGoogleGenerativeAiService } from "@/services/ai/providers/mocks/mock-google-generative-ai-service";
+import { processAiTransaction } from "@/app/actions/transactions";
+import { motion, AnimatePresence } from "framer-motion";
+import { queryKeys } from "@/lib/get-query-client";
 
 interface VoiceTransactionFormProps {
   onDataChange: (hasData: boolean) => void;
@@ -40,6 +40,7 @@ interface VoiceTransactionFormProps {
   getValues: UseFormGetValues<CreateTransactionInput>;
   setValue: UseFormSetValue<CreateTransactionInput>;
   setError: UseFormSetError<CreateTransactionInput>;
+  watch: UseFormWatch<CreateTransactionInput>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   saveDraft: (transcript?: string, suggestedCategory?: string) => void;
   loadTranscript: () => string | undefined;
@@ -53,15 +54,18 @@ export const VoiceTransactionForm = memo(
     errors,
     getValues,
     setValue,
+    watch,
     onSubmit,
     saveDraft,
     loadTranscript,
     loadSuggestedCategory,
   }: VoiceTransactionFormProps) => {
     const [transcript, setTranscript] = useState("");
+    const lastProcessedTranscript = useRef("");
     const [showCreateCategoryDialog, setShowCreateCategoryDialog] =
       useState(false);
     const [formVisible, setFormVisible] = useState(false);
+    const queryClient = useQueryClient();
 
     const {
       listening,
@@ -101,19 +105,27 @@ export const VoiceTransactionForm = memo(
 
     useEffect(() => {
       if (currentTranscript && !listening) {
-        const newTranscript = transcript
-          ? `${transcript} ${currentTranscript}`
-          : currentTranscript;
-        setTranscript(newTranscript);
+        const trimmedCurrent = currentTranscript.trim();
+        if (
+          trimmedCurrent &&
+          trimmedCurrent !== lastProcessedTranscript.current
+        ) {
+          const newTranscript = transcript
+            ? `${transcript.trim()} ${trimmedCurrent}`
+            : trimmedCurrent;
+
+          lastProcessedTranscript.current = trimmedCurrent;
+          setTranscript(newTranscript);
+        }
       }
-    }, [currentTranscript, listening, transcript]);
+    }, [currentTranscript, listening]);
 
     useEffect(() => {
       onDataChange(transcript.trim().length > 0);
     }, [transcript, onDataChange]);
 
     const handleCategoryCreated = useCallback(
-      (categoryId: string, categoryName: string) => {
+      async (categoryId: string, categoryName: string) => {
         setValue("categoryId", categoryId);
         // Se o nome da categoria foi modificado, salvar ambos os nomes
         if (categoryName !== suggestedCategory) {
@@ -122,8 +134,13 @@ export const VoiceTransactionForm = memo(
           saveDraft(transcript, `${categoryName}|${categoryName}`);
         }
         setShowCreateCategoryDialog(false);
+
+        // Revalidar o cache das categorias
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.categories.all,
+        });
       },
-      [setValue, saveDraft, transcript, suggestedCategory]
+      [setValue, saveDraft, transcript, suggestedCategory, queryClient]
     );
 
     // Função para verificar se a categoria sugerida já foi criada
@@ -201,81 +218,93 @@ export const VoiceTransactionForm = memo(
     }, []);
 
     return (
-      <div className="relative">
-        <div
-          className={cn(
-            "flex flex-col items-center gap-6 mt-4 transition-all duration-500",
-            formVisible
-              ? "-translate-x-full opacity-0 absolute inset-0"
-              : "translate-x-0 opacity-100 static"
-          )}
-        >
-          <div className="flex flex-col items-center gap-2">
-            {listening && <RecordingStatus />}
-            {!listening && <RecordingInstruction />}
-            <MicrophoneButton
-              listening={listening}
-              onClick={listening ? stopListening : startListening}
-              disabled={!speechRecognitionSupported || !isMicrophoneAvailable}
-            />
-          </div>
+      <div className="relative overflow-hidden p-0.5">
+        <AnimatePresence mode="wait">
+          {!formVisible && (
+            <motion.div
+              key="recording"
+              initial={{ opacity: 1, x: 0 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "-100%" }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center gap-6 mt-4"
+            >
+              <div className="flex flex-col items-center gap-2">
+                {listening && <RecordingStatus />}
+                {!listening && <RecordingInstruction />}
+                <MicrophoneButton
+                  listening={listening}
+                  onClick={listening ? stopListening : startListening}
+                  disabled={
+                    !speechRecognitionSupported || !isMicrophoneAvailable
+                  }
+                />
+              </div>
 
-          <Textarea
-            className="text-center resize-none min-h-[100px] !text-xl"
-            placeholder="A transcrição aparecerá aqui"
-            value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            readOnly={listening}
-          />
+              <div className="w-full px-2">
+                <Textarea
+                  className="text-center resize-none min-h-[100px] !text-xl w-full"
+                  placeholder="A transcrição aparecerá aqui"
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  readOnly={listening}
+                />
+              </div>
 
-          <Button
-            className="w-full"
-            onClick={handleConvertTranscript}
-            disabled={
-              !transcript.trim().length || convertTranscriptMutation.isPending
-            }
-          >
-            {convertTranscriptMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <SendHorizonal className="h-4 w-4 mr-2" />
-            )}
-            Processar
-          </Button>
-        </div>
-
-        <div
-          className={cn(
-            "transition-all duration-500 gap-3 flex flex-col",
-            formVisible
-              ? "translate-x-0 opacity-100 static"
-              : "translate-x-full opacity-0 absolute inset-0"
-          )}
-        >
-          {formVisible && (
-            <>
               <Button
-                variant="outline"
+                className="w-full"
+                onClick={handleConvertTranscript}
+                disabled={
+                  !transcript.trim().length ||
+                  convertTranscriptMutation.isPending
+                }
+              >
+                {convertTranscriptMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <SendHorizonal className="h-4 w-4 mr-2" />
+                )}
+                Processar
+              </Button>
+            </motion.div>
+          )}
+
+          {formVisible && (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ duration: 0.3 }}
+              className="relative"
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute left-0 top-0"
                 onClick={handleBack}
-                className="w-full sm:w-auto"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar
               </Button>
 
-              <TransactionForm
-                onSubmit={onSubmit}
-                register={register}
-                errors={errors}
-                getValues={getValues}
-                setValue={setValue}
-                isSubmitting={convertTranscriptMutation.isPending}
-              />
+              <div className="mt-12">
+                <TransactionForm
+                  onSubmit={onSubmit}
+                  register={register}
+                  errors={errors}
+                  getValues={getValues}
+                  setValue={setValue}
+                  watch={watch}
+                  isSubmitting={convertTranscriptMutation.isPending}
+                />
+              </div>
 
               <SuggestedCategoryState />
-            </>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
 
         <CreateCategoryDialog
           open={showCreateCategoryDialog}
@@ -357,12 +386,6 @@ const useTranscriptConversion = (
 ) => {
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
 
-  const aiService = new AiTransactionService(
-    process.env.NODE_ENV === "development"
-      ? new MockGoogleGenerativeAiService()
-      : new GoogleGenerativeAiService()
-  );
-
   const convertTranscriptMutation = useMutation({
     mutationFn: async (): Promise<CreateTransactionInput> => {
       // Verificar se já existe um rascunho com o mesmo transcript
@@ -391,22 +414,21 @@ const useTranscriptConversion = (
       }
 
       // Se não houver rascunho válido, converter o transcript
-      const aiTransaction = await aiService.convertTranscriptToNewTransaction(
-        transcript
-      );
+      const result = await processAiTransaction(transcript);
 
-      let categoryId = "";
-      try {
-        const categoryResponse = await getCategoryByName(
-          aiTransaction.category
-        );
-        categoryId = categoryResponse?.data?.id;
-        setSuggestedCategory("");
-      } catch {
-        setSuggestedCategory(aiTransaction.category);
+      if (result.error) {
+        throw result.error;
       }
 
-      return { ...aiTransaction, categoryId };
+      if (!result.data) {
+        throw new Error("Failed to process transaction");
+      }
+
+      if (!result.data.categoryId) {
+        setSuggestedCategory(result.data.title);
+      }
+
+      return result.data;
     },
     onSuccess(transaction) {
       setValue("dateTime", transaction.dateTime);

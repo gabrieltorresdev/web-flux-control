@@ -227,9 +227,7 @@ export function NewTransactionDialog({
       <ResponsiveModalContent>
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>Nova Transação</ResponsiveModalTitle>
-          <ResponsiveModalDescription>
-            Adicione uma nova transação manualmente ou por voz.
-          </ResponsiveModalDescription>
+          <ResponsiveModalDescription />
         </ResponsiveModalHeader>
 
         <Tabs value={currentTab} onValueChange={handleTabChange}>
@@ -245,32 +243,38 @@ export function NewTransactionDialog({
           </TabsList>
 
           <TabsContent value="manual">
-            <ManualTransactionForm
-              onDataChange={setHasManualData}
-              register={register}
-              errors={errors}
-              getValues={getValues}
-              setValue={setValue}
-              setError={setError}
-              onSubmit={onSubmit}
-              isSubmitting={isSubmitting}
-              saveDraft={saveDraft}
-            />
+            {currentTab === "manual" && (
+              <ManualTransactionForm
+                onDataChange={setHasManualData}
+                register={register}
+                errors={errors}
+                getValues={getValues}
+                setValue={setValue}
+                setError={setError}
+                watch={watch}
+                onSubmit={onSubmit}
+                isSubmitting={isSubmitting}
+                saveDraft={saveDraft}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="voice">
-            <VoiceTransactionForm
-              onSubmit={onSubmit}
-              register={register}
-              errors={errors}
-              getValues={getValues}
-              setValue={setValue}
-              setError={setError}
-              onDataChange={setHasVoiceData}
-              saveDraft={saveDraft}
-              loadTranscript={loadTranscript}
-              loadSuggestedCategory={loadSuggestedCategory}
-            />
+            {currentTab === "voice" && (
+              <VoiceTransactionForm
+                onDataChange={setHasVoiceData}
+                register={register}
+                errors={errors}
+                getValues={getValues}
+                setValue={setValue}
+                setError={setError}
+                watch={watch}
+                onSubmit={onSubmit}
+                saveDraft={saveDraft}
+                loadTranscript={loadTranscript}
+                loadSuggestedCategory={loadSuggestedCategory}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </ResponsiveModalContent>

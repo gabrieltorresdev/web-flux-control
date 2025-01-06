@@ -12,8 +12,11 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
+  UseFormWatch,
 } from "react-hook-form";
 import { CategorySelector } from "@/components/category/category-selector";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/get-query-client";
 
 interface TransactionFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -21,6 +24,7 @@ interface TransactionFormProps {
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
   setValue: UseFormSetValue<CreateTransactionInput>;
+  watch: UseFormWatch<CreateTransactionInput>;
   suggestedCategory?: string;
   onCreateCategory?: (name: string) => void;
   isSubmitting?: boolean;
@@ -32,8 +36,18 @@ export const TransactionForm = memo(function TransactionForm({
   errors,
   getValues,
   setValue,
+  watch,
   isSubmitting,
 }: TransactionFormProps) {
+  const queryClient = useQueryClient();
+  const categoryId = watch("categoryId");
+
+  const handleCategoryCreated = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.categories.all,
+    });
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -85,9 +99,10 @@ export const TransactionForm = memo(function TransactionForm({
 
       <div className="space-y-2">
         <CategorySelector
-          value={getValues("categoryId") ?? undefined}
-          onChange={(value) => setValue("categoryId", value ?? "")}
+          value={categoryId || undefined}
+          onChange={(value) => setValue("categoryId", value || "")}
           error={!!errors.categoryId}
+          onCategoryCreated={handleCategoryCreated}
         />
         {errors.categoryId && (
           <p className="text-sm text-destructive">

@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useState, useCallback } from "react";
 import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import {
@@ -35,6 +37,8 @@ interface CategorySelectorProps {
   className?: string;
   error?: boolean;
   insideSheet?: boolean;
+  onCategoryCreated?: () => Promise<void>;
+  showAllOption?: boolean;
 }
 
 export const CategorySelector = memo(function CategorySelector({
@@ -45,6 +49,8 @@ export const CategorySelector = memo(function CategorySelector({
   className,
   error,
   insideSheet = false,
+  onCategoryCreated,
+  showAllOption = false,
 }: CategorySelectorProps) {
   const [state, setState] = useState({
     open: false,
@@ -74,7 +80,7 @@ export const CategorySelector = memo(function CategorySelector({
         open: false,
         searchTerm: "",
       }));
-      onChange?.(categoryId ?? undefined);
+      onChange?.(categoryId === null ? undefined : categoryId);
     },
     [onChange]
   );
@@ -84,11 +90,14 @@ export const CategorySelector = memo(function CategorySelector({
   }, []);
 
   const handleCreateSuccess = useCallback(
-    (categoryId: string) => {
+    async (categoryId: string) => {
       setState((prev) => ({ ...prev, showCreateDialog: false }));
       onChange?.(categoryId);
+      if (onCategoryCreated) {
+        await onCategoryCreated();
+      }
     },
-    [onChange]
+    [onChange, onCategoryCreated]
   );
 
   const content = (
@@ -117,19 +126,21 @@ export const CategorySelector = memo(function CategorySelector({
           </div>
         ) : (
           <>
-            <CommandItem
-              value="all"
-              onSelect={() => handleSelect(null)}
-              className="py-3 text-base"
-            >
-              <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  !value ? "opacity-100" : "opacity-0"
-                )}
-              />
-              Todas as categorias
-            </CommandItem>
+            {showAllOption && (
+              <CommandItem
+                value="all"
+                onSelect={() => handleSelect(null)}
+                className="py-3 text-base"
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    !value ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                Todas as categorias
+              </CommandItem>
+            )}
             {categories?.length > 0 &&
               categories.map((category) => (
                 <CommandItem

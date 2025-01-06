@@ -8,6 +8,10 @@ import {
   handleServerActionError,
   ServerActionResult,
 } from "@/lib/api/error-handler";
+import { AiTransactionService } from "@/services/ai/ai-transaction-service";
+import { MockGoogleGenerativeAiService } from "@/services/ai/providers/mocks/mock-google-generative-ai-service";
+import { GoogleGenerativeAiService } from "@/services/ai/providers/google-generative-ai-service";
+import { getCategoryByName } from "./categories";
 
 const transactionService = new TransactionService();
 
@@ -42,8 +46,6 @@ export async function getTransactionsList({
     search,
     { page, perPage }
   );
-
-  console.log(transactions);
 
   return {
     transactions,
@@ -102,6 +104,41 @@ export async function deleteTransaction(
     await transactionService.delete(id);
     revalidatePath("/transactions");
     return { data: undefined };
+  } catch (error) {
+    return handleServerActionError(error);
+  }
+}
+
+export async function processAiTransaction(
+  transcript: string
+): Promise<ServerActionResult<CreateTransactionInput>> {
+  try {
+    const aiService = new AiTransactionService(
+      process.env.NODE_ENV === "development"
+        ? new MockGoogleGenerativeAiService()
+        : new GoogleGenerativeAiService()
+    );
+
+    const aiTransaction = await aiService.convertTranscriptToNewTransaction(
+      transcript
+    );
+
+    let categoryId = "";
+    try {
+      const categoryResponse = await getCategoryByName(aiTransaction.category);
+      categoryId = categoryResponse?.data?.id ?? "";
+    } catch {
+      // If category doesn't exist, we'll return empty categoryId and let the frontend handle it
+    }
+
+    return {
+      data: {
+        title: aiTransaction.title,
+        amount: aiTransaction.amount,
+        dateTime: aiTransaction.dateTime,
+        categoryId,
+      },
+    };
   } catch (error) {
     return handleServerActionError(error);
   }

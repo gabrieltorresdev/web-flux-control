@@ -22,6 +22,7 @@ export const CategoryFilter = memo(function CategoryFilter({
       onChange={onCategoryChange}
       showAsBadge={showAsBadge}
       insideSheet={insideSheet}
+      showAllOption={true}
     />
   );
 });
