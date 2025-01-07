@@ -25,6 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateCategory } from "@/app/actions/categories";
 import { memo, useCallback, useState } from "react";
+import { useCategoryStore } from "@/stores/category-store";
 
 const updateCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -160,6 +161,7 @@ function useEditCategory({ category, onOpenChange }: UseEditCategoryProps) {
           isDefault: category.isDefault,
           icon: data.icon,
         });
+        await useCategoryStore.getState().forceReload();
         onOpenChange(false);
         toast({
           title: "Categoria atualizada",

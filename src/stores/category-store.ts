@@ -25,6 +25,8 @@ interface CategoryActions {
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   loadCategories: () => Promise<void>;
+  clearStore: () => void;
+  forceReload: () => Promise<void>;
 }
 
 // Export the store creator
@@ -68,6 +70,30 @@ export const createCategoryStore = ({
           // Se já tiver categorias, não precisa carregar
           if (state.categories.length > 0) return;
 
+          try {
+            set({ isLoading: true, error: null });
+            const response = await getCategories();
+            set({
+              categories: response.data,
+              isLoading: false,
+            });
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to load categories";
+            set({
+              error: errorMessage,
+              isLoading: false,
+            });
+          }
+        },
+
+        clearStore: () => {
+          set(defaultState);
+        },
+
+        forceReload: async () => {
           try {
             set({ isLoading: true, error: null });
             const response = await getCategories();

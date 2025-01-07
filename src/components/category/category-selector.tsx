@@ -85,9 +85,16 @@ export const CategorySelector = memo(function CategorySelector({
     );
   }, [categories, debouncedSearchTerm]);
 
-  const handleOpenChange = useCallback((open: boolean) => {
-    setState((prev) => ({ ...prev, open }));
-  }, []);
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setState((prev) => ({ ...prev, open }));
+      if (open) {
+        // Força o recarregamento das categorias quando o seletor é aberto
+        store.getState().forceReload();
+      }
+    },
+    [store]
+  );
 
   const handleSearchChange = useCallback((value: string) => {
     setState((prev) => ({ ...prev, searchTerm: value }));

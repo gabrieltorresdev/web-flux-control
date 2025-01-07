@@ -1,6 +1,7 @@
 import { TokenManager } from "@/lib/auth/token-manager";
 import { auth, signOut } from "@/auth";
 import type { Session } from "next-auth";
+import { useCategoryStore } from "@/stores/category-store";
 
 interface AuthResponse {
   isAuthenticated: boolean;
@@ -18,7 +19,7 @@ export class AuthService {
       }
 
       if (session.error === "RefreshAccessTokenError") {
-        await signOut({ redirect: false });
+        await this.handleLogout();
         return { isAuthenticated: false, error: "RefreshAccessTokenError" };
       }
 
@@ -35,7 +36,7 @@ export class AuthService {
           );
 
           if (!refreshedToken) {
-            await signOut({ redirect: false });
+            await this.handleLogout();
             return { isAuthenticated: false, error: "RefreshAccessTokenError" };
           }
 
@@ -44,7 +45,7 @@ export class AuthService {
             typeof refreshedToken === "string" &&
             TokenManager.isTokenExpired(refreshedToken)
           ) {
-            await signOut({ redirect: false });
+            await this.handleLogout();
             return { isAuthenticated: false, error: "TokenExpiredError" };
           }
 
@@ -63,7 +64,7 @@ export class AuthService {
             error instanceof Error &&
             error.message.includes("Expired token")
           ) {
-            await signOut({ redirect: false });
+            await this.handleLogout();
             return { isAuthenticated: false, error: "TokenExpiredError" };
           }
           return { isAuthenticated: false, error: "TokenRefreshError" };
@@ -73,10 +74,17 @@ export class AuthService {
       return { isAuthenticated: true, session };
     } catch (error) {
       if (error instanceof Error && error.message.includes("Expired token")) {
-        await signOut({ redirect: false });
+        await this.handleLogout();
         return { isAuthenticated: false, error: "TokenExpiredError" };
       }
       return { isAuthenticated: false, error: "AuthenticationError" };
     }
+  }
+
+  private static async handleLogout() {
+    // Limpa o cache das categorias
+    useCategoryStore.getState().clearStore();
+    // Faz o logout
+    await signOut({ redirect: false });
   }
 }

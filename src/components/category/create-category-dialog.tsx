@@ -25,6 +25,7 @@ import { z } from "zod";
 import { IconPicker } from "./icon-picker";
 import { ValidationError } from "@/lib/api/error-handler";
 import { createCategory } from "@/app/actions/categories";
+import { useCategoryStore } from "@/stores/category-store";
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -161,6 +162,7 @@ function useCreateCategory({
     try {
       setIsSubmitting(true);
       const response = await createCategory(data);
+      await useCategoryStore.getState().forceReload();
       onSuccess(response.data.id, data.name);
       onOpenChange(false);
     } catch (error) {

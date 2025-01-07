@@ -27,6 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { CategoryIcon } from "./category-icon";
 import { deleteCategory } from "@/app/actions/categories";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { useCategoryStore } from "@/stores/category-store";
 
 interface CategoryItemProps {
   category: Category;
@@ -51,6 +52,8 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
     try {
       setIsDeleting(true);
       await deleteCategory(category.id);
+      // Força o recarregamento das categorias após a exclusão
+      await useCategoryStore.getState().forceReload();
       toast({
         title: "Categoria excluída",
         description: "A categoria foi excluída com sucesso.",
