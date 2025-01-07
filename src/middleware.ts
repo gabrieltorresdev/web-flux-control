@@ -29,10 +29,18 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const { isAuthenticated } = await verifySession();
+    const response = await verifySession();
+
+    // Se houver erro de token expirado, redireciona para o login
+    if (
+      response?.error &&
+      ["TokenExpiredError", "RefreshAccessTokenError"].includes(response.error)
+    ) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
 
     // Se não estiver autenticado e tentar acessar rota protegida, redireciona para o login
-    if (!isAuthenticated && isProtectedRoute) {
+    if (!response?.isAuthenticated && isProtectedRoute) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
