@@ -7,7 +7,7 @@ import type { TransactionFilters as TransactionFiltersType } from "@/types/filte
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useDebounce } from "@/hooks/lib/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useTransactions } from "@/hooks/use-transactions";
 
 interface MonthFilterProps {

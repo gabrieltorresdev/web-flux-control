@@ -25,7 +25,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { CategorySelectItem } from "./category-select-item";
-import { useDebounce } from "@/hooks/lib/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   useCategoryStore,
   createCategoryStore,

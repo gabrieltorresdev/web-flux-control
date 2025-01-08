@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, memo, useState, useRef } from "react";
-import { useVoiceRecognition } from "@/hooks/lib/use-voice-recognition";
+import { useVoiceRecognition } from "@/hooks/use-voice-recognition";
 import { Button } from "../../ui/button";
 import { Textarea } from "../../ui/textarea";
 import {
@@ -28,7 +28,7 @@ import {
   UseFormWatch,
 } from "react-hook-form";
 import { CreateCategoryDialog } from "@/components/category/create-category-dialog";
-import { useDebounce } from "@/hooks/lib/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import { processAiTransaction } from "@/app/actions/transactions";
 import { motion, AnimatePresence } from "framer-motion";
 import { queryKeys } from "@/lib/get-query-client";

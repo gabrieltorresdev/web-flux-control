@@ -11,7 +11,7 @@ import {
   UseFormSetError,
   UseFormWatch,
 } from "react-hook-form";
-import { useDebounce } from "@/hooks/lib/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface ManualTransactionFormProps {
   onDataChange: (hasData: boolean) => void;
