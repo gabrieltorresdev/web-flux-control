@@ -1,7 +1,7 @@
-import { CategoryList } from "@/components/category/category-list";
-import { NewCategoryButton } from "@/components/category/new-category-button";
-import { getCategories } from "@/app/actions/categories";
-import { AnimatedPage } from "@/components/layout/animated-page";
+import { CategoryList } from "@/features/categories/components/category-list";
+import { NewCategoryButton } from "@/features/categories/components/new-category-button";
+import { getCategories } from "@/features/categories/actions/categories";
+import { AnimatedPage } from "@/shared/components/layout/animated-page";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;

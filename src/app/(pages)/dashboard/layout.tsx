@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AppHeader } from "@/components/layout/app-header";
-import { auth } from "@/auth";
+import { AppHeader } from "@/shared/components/layout/app-header";
+import { auth } from "@/features/auth/lib/auth";
 import { redirect } from "next/navigation";
-import { DashboardStatusChecker } from "@/components/dashboard/status-checker";
+import { DashboardStatusChecker } from "@/features/dashboard/components/status-checker";
 
 export const metadata: Metadata = {
   title: "Dashboard - Flux Control",

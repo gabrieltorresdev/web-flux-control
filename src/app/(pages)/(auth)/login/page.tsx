@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginForm } from "@/features/auth/components/login-form";
 
 export const metadata: Metadata = {
   title: "Login - Flux Control",

@@ -1,17 +1,17 @@
-import { TransactionList } from "@/components/transaction/transaction-list";
-import { TransactionSummary } from "@/components/transaction/transaction-summary";
-import { TransactionFilters } from "@/components/transaction/filters/transaction-filters";
+import { TransactionList } from "@/features/transactions/components/transaction-list";
+import { TransactionSummary } from "@/features/transactions/components/transaction-summary";
+import { TransactionFilters } from "@/features/transactions/components/transaction-filters";
 import { Suspense } from "react";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { MonthFilter } from "@/components/transaction/month-filter";
-import { TransactionFilters as TransactionFiltersType } from "@/types/filters";
-import { NewTransactionButton } from "@/components/transaction/new-transaction/new-transaction-button";
+import { LoadingSpinner } from "@/shared/components/ui/loading-spinner";
+import { MonthFilter } from "@/features/transactions/components/month-filter";
+import { TransactionFilters as TransactionFiltersType } from "@/features/transactions/types";
+import { NewTransactionButton } from "@/features/transactions/components/new-transaction-button";
 import {
   getTransactionsList,
   getTransactionsSummary,
-} from "@/app/actions/transactions";
-import { getCategoryById } from "@/app/actions/categories";
-import { AnimatedPage } from "@/components/layout/animated-page";
+} from "@/features/transactions/actions/transactions";
+import { getCategoryById } from "@/features/categories/actions/categories";
+import { AnimatedPage } from "@/shared/components/layout/animated-page";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -29,16 +29,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       getTransactionsList({
         month: month ? parseInt(month) : undefined,
         year: year ? parseInt(year) : undefined,
-        categoryId,
-        search,
-        page: 1,
         perPage: 10,
       }),
       getTransactionsSummary({
         month: month ? parseInt(month) : undefined,
         year: year ? parseInt(year) : undefined,
-        categoryId,
-        search,
       }),
       categoryId ? getCategoryById(categoryId) : null,
     ]);

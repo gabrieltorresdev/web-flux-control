@@ -1,6 +1,6 @@
-import { BudgetSummary } from "@/components/budget/budget-summary";
-import { BudgetList } from "@/components/budget/budget-list";
-import { Button } from "@/components/ui/button";
+import { BudgetSummary } from "@/features/budget/components/budget-summary";
+import { BudgetList } from "@/features/budget/components/budget-list";
+import { Button } from "@/shared/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -8,9 +8,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { BudgetForm } from "@/components/budget/budget-form";
-import { Separator } from "@/components/ui/separator";
+} from "@/shared/components/ui/sheet";
+import { BudgetForm } from "@/features/budget/components/budget-form";
+import { Separator } from "@/shared/components/ui/separator";
 
 export default function BudgetPage() {
   return (

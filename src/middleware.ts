@@ -1,4 +1,4 @@
-import { verifySession } from "@/app/actions/auth";
+import { verifySession } from "@/features/auth/actions/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 

@@ -1,6 +1,10 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { auth } from "@/auth";
-import { SettingsOptions } from "@/components/settings/settings-options";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/shared/components/ui/avatar";
+import { auth } from "@/features/auth/lib/auth";
+import { SettingsOptions } from "@/features/settings/components/settings-options";
 
 export default async function SettingsPage() {
   const session = await auth();

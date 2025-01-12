@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorBoundary } from "@/components/error/error-boundary";
+import { ErrorBoundary } from "@/shared/components/error/error-boundary";
 
 interface ErrorProps {
   error: Error;
