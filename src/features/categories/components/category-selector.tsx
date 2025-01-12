@@ -79,10 +79,21 @@ export const CategorySelector = memo(function CategorySelector({
 
   // Filter categories based on search term
   const filteredCategories = useMemo(() => {
-    if (!debouncedSearchTerm) return categories;
-    return categories.filter((cat: Category) =>
-      cat.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    );
+    if (!debouncedSearchTerm) {
+      // Sort categories with default categories first
+      return [...categories].sort((a, b) => {
+        if (a.isDefault === b.isDefault) return 0;
+        return a.isDefault ? -1 : 1;
+      });
+    }
+    return categories
+      .filter((cat: Category) =>
+        cat.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      )
+      .sort((a, b) => {
+        if (a.isDefault === b.isDefault) return 0;
+        return a.isDefault ? -1 : 1;
+      });
   }, [categories, debouncedSearchTerm]);
 
   const handleOpenChange = useCallback(
@@ -224,7 +235,7 @@ export const CategorySelector = memo(function CategorySelector({
     </Button>
   );
 
-  if (isMobile && !insideSheet) {
+  if (isMobile || insideSheet) {
     return (
       <>
         <Sheet open={state.open} onOpenChange={handleOpenChange}>

@@ -138,20 +138,20 @@ const CategoryColumn = memo(function CategoryColumn({
         </span>
       </div>
 
-      {customCategories.length > 0 && (
-        <CategoryGroup
-          title="Personalizadas"
-          categories={customCategories}
-          type="custom"
-          skipAnimation={skipAnimation}
-        />
-      )}
-
       {defaultCategories.length > 0 && (
         <CategoryGroup
           title="Padrão"
           categories={defaultCategories}
           type="default"
+          skipAnimation={skipAnimation}
+        />
+      )}
+
+      {customCategories.length > 0 && (
+        <CategoryGroup
+          title="Personalizadas"
+          categories={customCategories}
+          type="custom"
           skipAnimation={skipAnimation}
         />
       )}
@@ -186,25 +186,6 @@ export const CategoryList = memo(function CategoryList({
     <div className={cn(!skipAnimation && "animate-in fade-in-50 duration-300")}>
       {/* Mobile Layout */}
       <div className="space-y-6 sm:hidden">
-        {/* Custom Categories */}
-        {(customExpenseCategories.length > 0 ||
-          customIncomeCategories.length > 0) && (
-          <div className="space-y-6">
-            <CategoryGroup
-              title="Despesas"
-              categories={customExpenseCategories}
-              type="custom"
-              skipAnimation={skipAnimation}
-            />
-            <CategoryGroup
-              title="Receitas"
-              categories={customIncomeCategories}
-              type="custom"
-              skipAnimation={skipAnimation}
-            />
-          </div>
-        )}
-
         {/* Default Categories */}
         {(defaultExpenseCategories.length > 0 ||
           defaultIncomeCategories.length > 0) && (
@@ -219,6 +200,25 @@ export const CategoryList = memo(function CategoryList({
               title="Receitas Padrão"
               categories={defaultIncomeCategories}
               type="default"
+              skipAnimation={skipAnimation}
+            />
+          </div>
+        )}
+
+        {/* Custom Categories */}
+        {(customExpenseCategories.length > 0 ||
+          customIncomeCategories.length > 0) && (
+          <div className="space-y-6">
+            <CategoryGroup
+              title="Despesas"
+              categories={customExpenseCategories}
+              type="custom"
+              skipAnimation={skipAnimation}
+            />
+            <CategoryGroup
+              title="Receitas"
+              categories={customIncomeCategories}
+              type="custom"
               skipAnimation={skipAnimation}
             />
           </div>
