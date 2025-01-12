@@ -94,7 +94,11 @@ export const TransactionForm = memo(function TransactionForm({
               type="number"
               step="0.01"
               min="0"
-              {...register("amount", { required: true, min: 0 })}
+              {...register("amount", { 
+                required: true, 
+                min: 0,
+                valueAsNumber: true 
+              })}
               className={`h-10 ${errors.amount ? "border-destructive" : ""}`}
               placeholder="0,00"
               autoComplete="off"
