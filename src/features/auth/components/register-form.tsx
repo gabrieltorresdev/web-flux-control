@@ -15,7 +15,7 @@ import {
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
 import { useToast } from "@/shared/hooks/use-toast";
-import { registerUser } from "@/features/auth/actions";
+import { registerUser } from "@/features/auth/actions/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";

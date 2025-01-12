@@ -1,4 +1,4 @@
-import { auth } from "@/features/auth";
+import { auth } from "@/features/auth/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function EnvironmentPreparationLayout({

@@ -5,8 +5,8 @@ import { UserStatus } from "@/features/user/services/user-service";
 import { Loader2, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Button } from "./ui/button";
-import { checkUserStatus } from "@/features/user/actions";
+import { Button } from "@/shared/components/ui/button";
+import { checkUserStatus } from "@/features/user/actions/user";
 import { motion, AnimatePresence } from "framer-motion";
 
 const loadingMessages = [

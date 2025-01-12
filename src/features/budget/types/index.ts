@@ -1,4 +1,4 @@
-import { Category } from "./category";
+import { Category } from "@/features/categories/types";
 
 export interface Budget {
   id: string;

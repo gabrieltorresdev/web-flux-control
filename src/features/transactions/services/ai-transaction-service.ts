@@ -1,5 +1,5 @@
 import { AiTransactionInput } from "@/features/transactions/types";
-import { IGenerativeAiService } from "./providers/generative-ai-service";
+import { IGenerativeAiService } from "@/shared/services/ai/providers/generative-ai-service";
 
 export class AiTransactionService {
   constructor(private generativeAiService: IGenerativeAiService) {}
