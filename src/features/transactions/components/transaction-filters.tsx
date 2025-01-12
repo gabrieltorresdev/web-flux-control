@@ -242,7 +242,7 @@ export function TransactionFilters({
                   initialCategoryId={selectedCategoryId}
                   initialCategory={selectedCategory}
                   onCategoryChange={handleCategoryChange}
-                  insideSheet={true}
+                  insideSheet={isMobile}
                 />
               </div>
             </motion.div>
