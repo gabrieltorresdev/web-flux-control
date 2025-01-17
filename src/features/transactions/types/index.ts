@@ -33,6 +33,12 @@ export interface AiTransactionInput {
   category: string;
 }
 
+export interface AiAssistantResponse {
+  type: "request_details" | "transaction";
+  message?: string;
+  transaction?: AiTransactionInput;
+}
+
 export interface ApiTransactionResponse {
   data: Transaction;
 }
@@ -64,4 +70,19 @@ export interface ApiTransactionPaginatedList {
 export interface PaginationParams {
   page: number;
   perPage: number;
+}
+
+export interface AiAssistantMessage {
+  id: string;
+  content: string;
+  type: "user" | "assistant";
+  timestamp: Date;
+  data?: {
+    transaction?: CreateTransactionInput;
+    suggestedCategory?: {
+      name: string;
+      type: "income" | "expense";
+    };
+    error?: string;
+  };
 }

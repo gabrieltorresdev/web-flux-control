@@ -14,21 +14,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { toast } from "@/shared/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { CreateCategoryInput } from "@/features/categories/types";
 import { cn } from "@/shared/utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { IconPicker } from "./icon-picker";
 import { ValidationError } from "@/shared/lib/api/error-handler";
 import { createCategory } from "@/features/categories/actions/categories";
 import { useCategoryStore } from "@/features/categories/stores/category-store";
+import { ApiError } from "@/shared/lib/api/error-handler";
+import { useToast } from "@/shared/hooks/use-toast";
 
 const createCategorySchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
+  name: z.string()
+    .min(1, "Nome é obrigatório")
+    .max(50, "O nome deve ter no máximo 50 caracteres")
+    .transform(name => name.trim())
+    .refine(name => name.length > 0, {
+      message: "O nome não pode estar em branco"
+    }),
   type: z.enum(["income", "expense"]),
   icon: z.string().optional(),
 });
@@ -36,94 +43,120 @@ const createCategorySchema = z.object({
 interface CreateCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (categoryId: string, categoryName: string) => void;
   defaultCategoryName?: string;
+  defaultCategoryType?: "income" | "expense";
+  onSuccess?: (categoryId: string, categoryName: string) => void;
+}
+
+interface CreateCategoryHookReturn {
+  form: ReturnType<typeof useForm<CreateCategoryInput>>;
+  isSubmitting: boolean;
+  selectedIcon: string | undefined;
+  handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
 }
 
 export function CreateCategoryDialog({
   open,
   onOpenChange,
-  onSuccess,
   defaultCategoryName,
+  defaultCategoryType,
+  onSuccess,
 }: CreateCategoryDialogProps) {
-  const { form, isSubmitting, selectedIcon, handleCreateCategory } =
-    useCreateCategory({
-      open,
-      onOpenChange,
-      onSuccess,
-      defaultCategoryName,
-    });
+  const { form, isSubmitting, selectedIcon, handleSubmit } = useCreateCategory({
+    open,
+    onOpenChange,
+    defaultCategoryName,
+    defaultCategoryType,
+    onSuccess,
+  });
 
   return (
     <ResponsiveModal open={open} onOpenChange={onOpenChange}>
       <ResponsiveModalContent>
         <ResponsiveModalHeader>
-          <ResponsiveModalTitle>Nova Categoria</ResponsiveModalTitle>
-          <ResponsiveModalDescription />
+          <ResponsiveModalTitle>Nova categoria</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            Crie uma nova categoria para organizar suas transações
+          </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <form onSubmit={handleCreateCategory} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Nome</label>
-            <Input
-              {...form.register("name")}
-              placeholder="Ex: Alimentação"
-              className={cn(
-                "h-12 text-base px-4",
-                form.formState.errors.name && "border-red-500"
+            <div className="relative">
+              <Input
+                placeholder="Nome da categoria"
+                {...form.register("name")}
+                disabled={isSubmitting}
+                className={cn(
+                  form.formState.errors.name && "border-destructive focus-visible:ring-destructive"
+                )}
+                aria-invalid={!!form.formState.errors.name}
+                aria-describedby={form.formState.errors.name ? "name-error" : undefined}
+              />
+              {form.formState.errors.name && (
+                <p 
+                  id="name-error" 
+                  className="text-sm text-destructive mt-1 flex items-center gap-1"
+                >
+                  <span className="sr-only">Erro:</span>
+                  {form.formState.errors.name.message}
+                </p>
               )}
-              autoComplete="off"
-              autoCapitalize="words"
-            />
-            {form.formState.errors.name && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.name.message}
-              </p>
-            )}
+            </div>
           </div>
+
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tipo</label>
             <Select
-              defaultValue="expense"
+              defaultValue={form.getValues("type")}
               onValueChange={(value) =>
                 form.setValue("type", value as "income" | "expense")
               }
+              disabled={isSubmitting}
             >
-              <SelectTrigger className="h-12 text-base">
-                <SelectValue />
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="expense" className="py-3 text-base">
-                  Despesa
-                </SelectItem>
-                <SelectItem value="income" className="py-3 text-base">
-                  Receita
-                </SelectItem>
+                <SelectItem value="expense">Despesa</SelectItem>
+                <SelectItem value="income">Receita</SelectItem>
               </SelectContent>
             </Select>
             {form.formState.errors.type && (
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-destructive mt-1">
                 {form.formState.errors.type.message}
               </p>
             )}
           </div>
+
           <div className="space-y-2">
-            <label className="text-sm font-medium">Ícone (opcional)</label>
             <IconPicker
               value={selectedIcon}
-              onChange={(icon) => form.setValue("icon", icon)}
+              onChange={(icon: string) => form.setValue("icon", icon)}
             />
           </div>
-          <Button
-            type="submit"
-            className="w-full h-12 text-base"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              "Criar Categoria"
-            )}
-          </Button>
+
+          <div className="flex justify-end gap-4 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              type="button"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              disabled={isSubmitting} 
+              type="submit"
+              className={cn(
+                "relative",
+                isSubmitting && "cursor-not-allowed opacity-50"
+              )}
+            >
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Criar
+            </Button>
+          </div>
         </form>
       </ResponsiveModalContent>
     </ResponsiveModal>
@@ -133,13 +166,15 @@ export function CreateCategoryDialog({
 function useCreateCategory({
   open,
   onOpenChange,
-  onSuccess,
+  onSuccess = () => {},
   defaultCategoryName,
-}: CreateCategoryDialogProps) {
+  defaultCategoryType = "expense",
+}: CreateCategoryDialogProps): CreateCategoryHookReturn {
+  const { toast } = useToast();
   const form = useForm<CreateCategoryInput>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
-      type: "expense",
+      type: defaultCategoryType,
       name: "",
       icon: undefined,
     },
@@ -151,14 +186,14 @@ function useCreateCategory({
   useEffect(() => {
     if (open) {
       form.reset({
-        type: "expense",
+        type: defaultCategoryType,
         name: defaultCategoryName || "",
         icon: undefined,
       });
     }
-  }, [open, defaultCategoryName, form, form.reset]);
+  }, [open, defaultCategoryName, defaultCategoryType, form]);
 
-  const handleCreateCategory = form.handleSubmit(async (data) => {
+  const handleCreateCategory = useCallback(async (data: CreateCategoryInput) => {
     try {
       setIsSubmitting(true);
       const response = await createCategory(data);
@@ -168,27 +203,63 @@ function useCreateCategory({
     } catch (error) {
       if (error instanceof ValidationError) {
         Object.entries(error.errors).forEach(([field, messages]) => {
-          form.setError(field as keyof CreateCategoryInput, {
-            type: "manual",
-            message: messages[0],
-          });
+          if (field === "name" && messages[0]?.includes("já está sendo utilizado")) {
+            form.setError("name", {
+              type: "manual",
+              message: "Já existe uma categoria com este nome. Por favor, escolha outro nome.",
+            });
+            toast({
+              title: "Nome já existente",
+              description: "Já existe uma categoria com este nome. Por favor, escolha outro nome.",
+              variant: "destructive",
+            });
+          } else {
+            form.setError(field as keyof CreateCategoryInput, {
+              type: "manual",
+              message: messages[0],
+            });
+          }
         });
+      } else if (error instanceof ApiError) {
+        if (error.status === 401 || error.status === 403) {
+          toast({
+            title: "Sessão expirada",
+            description: "Sua sessão expirou. Por favor, faça login novamente.",
+            variant: "destructive",
+          });
+        } else if (error.status === 409) {
+          form.setError("name", {
+            type: "manual",
+            message: "Já existe uma categoria com este nome. Por favor, escolha outro nome.",
+          });
+          toast({
+            title: "Nome já existente",
+            description: "Já existe uma categoria com este nome. Por favor, escolha outro nome.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro ao criar categoria",
+            description: error.message || "Ocorreu um erro ao criar a categoria.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Erro ao criar categoria",
-          description: "Ocorreu um erro ao criar a categoria.",
+          description: error instanceof Error ? error.message : "Ocorreu um erro ao criar a categoria.",
           variant: "destructive",
         });
       }
     } finally {
       setIsSubmitting(false);
     }
-  });
+  }, [form, onSuccess, onOpenChange, toast]);
 
   return {
     form,
     isSubmitting,
     selectedIcon,
-    handleCreateCategory,
+    handleSubmit: form.handleSubmit(handleCreateCategory),
   };
 }

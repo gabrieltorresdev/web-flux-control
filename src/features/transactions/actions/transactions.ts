@@ -111,7 +111,7 @@ export async function deleteTransaction(
 
 export async function processAiTransaction(
   transcript: string
-): Promise<ServerActionResult<CreateTransactionInput>> {
+): Promise<ServerActionResult<CreateTransactionInput & { suggestedCategory?: { name: string; type: "income" | "expense" } } | { type: "request_details"; message: string }>> {
   try {
     const aiService = new AiTransactionService(
       process.env.NODE_ENV === "development"
@@ -119,24 +119,44 @@ export async function processAiTransaction(
         : new GoogleGenerativeAiService()
     );
 
-    const aiTransaction = await aiService.convertTranscriptToNewTransaction(
-      transcript
-    );
+    const result = await aiService.convertTranscriptToNewTransaction(transcript);
+
+    // Se for uma solicitação de detalhes, retorna a mensagem
+    if (result.type === "request_details") {
+      return {
+        data: {
+          type: "request_details",
+          message: result.message || "Por favor, forneça os detalhes da transação."
+        }
+      };
+    }
+
+    // Se não tiver transação, retorna erro
+    if (!result.transaction) {
+      throw new Error("Não foi possível processar a transação");
+    }
 
     let categoryId = "";
+    let suggestedCategory;
+
     try {
-      const categoryResponse = await getCategoryByName(aiTransaction.title);
+      const categoryResponse = await getCategoryByName(result.transaction.category);
       categoryId = categoryResponse?.data?.id ?? "";
     } catch {
-      // Se a categoria não existir, retornamos o título como sugestão
+      // Se a categoria não existir, incluímos como sugestão
+      suggestedCategory = {
+        name: result.transaction.category,
+        type: result.transaction.amount > 0 ? "income" : "expense"
+      };
     }
 
     return {
       data: {
-        title: aiTransaction.title,
-        amount: aiTransaction.amount,
-        dateTime: aiTransaction.dateTime,
+        title: result.transaction.title,
+        amount: result.transaction.amount,
+        dateTime: result.transaction.dateTime,
         categoryId,
+        suggestedCategory
       },
     };
   } catch (error) {

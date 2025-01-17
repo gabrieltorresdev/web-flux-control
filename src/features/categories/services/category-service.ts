@@ -30,7 +30,7 @@ export class CategoryService {
 
   public async findByName(name: string): Promise<ApiResponse<Category>> {
     return this.httpClient.get<ApiResponse<Category>>(
-      `${getBackendApiUrl(this.route)}/by-name/${name}`,
+      `${getBackendApiUrl(this.route)}/by-name/${encodeURIComponent(name.trim())}`,
       true
     );
   }

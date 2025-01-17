@@ -3,6 +3,7 @@ import { AppHeader } from "@/shared/components/layout/app-header";
 import { auth } from "@/features/auth/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardStatusChecker } from "@/features/dashboard/components/status-checker";
+import { FloatingAiAssistant } from "@/features/ai-assistant/components/floating-ai-assistant";
 
 export const metadata: Metadata = {
   title: "Dashboard - Flux Control",
@@ -23,9 +24,19 @@ export default async function RootLayout({
   return (
     <>
       <DashboardStatusChecker />
-      <div className="flex-1 flex flex-col bg-foreground/[0.02] min-h-screen w-full">
-        <AppHeader />
-        <div className="flex-1 overflow-y-auto py-3 relative">{children}</div>
+      <div className="flex flex-col h-screen w-full bg-background">
+        <AppHeader className="border-b" />
+        <div className="flex flex-1 min-h-0">
+        <div className="hidden md:block w-[400px] border-l border-border/40 bg-muted/30 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 transition-all duration-200">
+            <div className="h-full w-full overflow-hidden">
+              <FloatingAiAssistant />
+            </div>
+          </div>
+          <main className="flex-1 overflow-y-auto">
+            {children}
+          </main>
+          
+        </div>
       </div>
     </>
   );

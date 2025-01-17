@@ -21,9 +21,14 @@ export class HttpClient {
       };
 
       if (options.useClientCredentials) {
-        const clientCredentials = ClientCredentialsManager.getInstance();
-        const token = await clientCredentials.getToken();
-        headers["Authorization"] = `Bearer ${token}`;
+        try {
+          const clientCredentials = ClientCredentialsManager.getInstance();
+          const token = await clientCredentials.getToken();
+          headers["Authorization"] = `Bearer ${token}`;
+        } catch (error) {
+          console.error("Error getting client credentials:", error);
+          throw new ApiError(401, "Unauthorized: Invalid or expired token");
+        }
       }
 
       const response = await fetch(url, {
@@ -32,6 +37,10 @@ export class HttpClient {
         headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
       });
+
+      if (response.status === 401 || response.status === 403) {
+        throw new ApiError(response.status, "Unauthorized: Please login again");
+      }
 
       if (response.status >= 300) {
         const errorData = await response.json().catch(() => ({}));
@@ -49,6 +58,14 @@ export class HttpClient {
       const data = await response.json();
       return data;
     } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 401 || error.status === 403) {
+          // Force a page refresh to trigger re-authentication
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }
+      }
       return handleApiError(error);
     }
   }

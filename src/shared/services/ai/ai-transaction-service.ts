@@ -1,4 +1,4 @@
-import { AiTransactionInput } from "@/features/transactions/types";
+import { AiTransactionInput, AiAssistantResponse } from "@/features/transactions/types";
 import { IGenerativeAiService } from "./providers/generative-ai-service";
 
 export class AiTransactionService {
@@ -6,7 +6,7 @@ export class AiTransactionService {
 
   public async convertTranscriptToNewTransaction(
     newTransactionTranscript: string
-  ): Promise<AiTransactionInput> {
+  ): Promise<AiAssistantResponse> {
     const now = new Date();
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -28,12 +28,25 @@ export class AiTransactionService {
     `;
 
     const { text } = await this.generativeAiService.generateContent(prompt);
-    const result = JSON.parse(this.unquoteAiJsonString(text));
+    const result = JSON.parse(this.unquoteAiJsonString(text)) as AiAssistantResponse;
 
-    return {
-      ...result,
-      dateTime: new Date(result.dateTime),
-    };
+    // Se for uma resposta de solicitação de detalhes, retorna como está
+    if (result.type === "request_details") {
+      return result;
+    }
+
+    // Se for uma transação, converte a data
+    if (result.transaction) {
+      return {
+        type: "transaction",
+        transaction: {
+          ...result.transaction,
+          dateTime: new Date(result.transaction.dateTime),
+        }
+      };
+    }
+
+    throw new Error("Resposta inválida do serviço de IA");
   }
 
   protected unquoteAiJsonString(text: string): string {

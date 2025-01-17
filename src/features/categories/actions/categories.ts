@@ -1,12 +1,10 @@
 "use server";
 
 import { CategoryService } from "@/features/categories/services/category-service";
-import { cache } from "react";
 import { CreateCategoryInput, Category } from "@/features/categories/types";
 import { revalidatePath } from "next/cache";
 
-// Cache the fetch function to avoid unnecessary refetches
-export const getCategories = cache(async (searchTerm?: string) => {
+export async function getCategories(searchTerm?: string) {
   try {
     const categoryService = new CategoryService();
     return await categoryService.findAllPaginated(searchTerm);
@@ -14,10 +12,9 @@ export const getCategories = cache(async (searchTerm?: string) => {
     console.error("Error fetching categories:", error);
     throw error;
   }
-});
+}
 
-// Cache the fetch function to avoid unnecessary refetches
-export const getCategoryById = cache(async (id: string) => {
+export async function getCategoryById(id: string) {
   try {
     const categoryService = new CategoryService();
     return await categoryService.findById(id);
@@ -25,10 +22,9 @@ export const getCategoryById = cache(async (id: string) => {
     console.error("Error fetching category by id:", error);
     throw error;
   }
-});
+}
 
-// Cache the fetch function to avoid unnecessary refetches
-export const getCategoryByName = cache(async (name: string) => {
+export async function getCategoryByName(name: string) {
   try {
     const categoryService = new CategoryService();
     return await categoryService.findByName(name);
@@ -36,13 +32,15 @@ export const getCategoryByName = cache(async (name: string) => {
     console.error("Error fetching category by name:", error);
     throw error;
   }
-});
+}
 
 export async function createCategory(data: CreateCategoryInput) {
   try {
     const categoryService = new CategoryService();
     const response = await categoryService.create(data);
+    // Revalidate all paths that might use the category
     revalidatePath("/categories");
+    revalidatePath(`/categories/by-name/${data.name}`);
     return response;
   } catch (error) {
     console.error("Error creating category:", error);

@@ -1,10 +1,8 @@
 import { IGenerativeAiService } from "@/shared/services/ai/providers/generative-ai-service";
+import { AiAssistantResponse } from "@/features/transactions/types";
 
 export class MockGoogleGenerativeAiService implements IGenerativeAiService {
-  private titles = [
-    "Xbox 360",
-    "PlayStation 5",
-    "Nintendo Switch",
+  private expenseTitles = [
     "Café",
     "Almoço",
     "Uber",
@@ -13,20 +11,39 @@ export class MockGoogleGenerativeAiService implements IGenerativeAiService {
     "Farmácia",
   ];
 
-  private categories = [
-    "Compras",
-    "Alimentação",
-    "Transporte",
-    "Lazer",
-    "Saúde",
+  private incomeTitles = [
+    "Salário",
+    "Freelance",
+    "Investimentos",
+    "Venda",
+    "Aluguel",
+    "Consultoria",
+  ];
+
+  private expenseCategories = [
+    "Alimentação e Bebidas",
+    "Transporte e Mobilidade",
+    "Lazer e Entretenimento",
+    "Saúde e Bem-estar",
+    "Compras e Shopping",
+  ];
+
+  private incomeCategories = [
+    "Salário e Renda Fixa",
+    "Investimentos e Dividendos",
+    "Vendas e Comissões",
+    "Serviços e Freelance",
+    "Outros Rendimentos",
   ];
 
   private getRandomItem<T>(items: T[]): T {
     return items[Math.floor(Math.random() * items.length)];
   }
 
-  private getRandomAmount(): number {
-    return Number((Math.random() * 1000).toFixed(2));
+  private getRandomAmount(isIncome: boolean): number {
+    // Incomes tend to be higher than expenses in the mock
+    const multiplier = isIncome ? 5000 : 1000;
+    return Number((Math.random() * multiplier).toFixed(2));
   }
 
   private getRandomDateTime(): Date {
@@ -38,14 +55,36 @@ export class MockGoogleGenerativeAiService implements IGenerativeAiService {
     return new Date(currentYear, currentMonth, randomDay);
   }
 
-  public async generateContent() {
-    return {
-      text: JSON.stringify({
-        title: this.getRandomItem(this.titles),
-        amount: this.getRandomAmount(),
-        category: this.getRandomItem(this.categories),
+  public async generateContent(prompt?: string) {
+    const isIncome = prompt?.toLowerCase().includes("receita") ?? false;
+    const isInitialPrompt = prompt?.toLowerCase().includes("quero registrar");
+
+    // Se for o prompt inicial, retorna uma mensagem pedindo os detalhes
+    if (isInitialPrompt) {
+      const response: AiAssistantResponse = {
+        type: "request_details",
+        message: isIncome 
+          ? "Por favor, me diga os detalhes da sua receita (título, valor e data)."
+          : "Por favor, me diga os detalhes da sua despesa (título, valor e data)."
+      };
+
+      return {
+        text: JSON.stringify(response)
+      };
+    }
+
+    const response: AiAssistantResponse = {
+      type: "transaction",
+      transaction: {
+        title: this.getRandomItem(isIncome ? this.incomeTitles : this.expenseTitles),
+        amount: this.getRandomAmount(isIncome),
+        category: this.getRandomItem(isIncome ? this.incomeCategories : this.expenseCategories),
         dateTime: this.getRandomDateTime(),
-      }),
+      }
+    };
+
+    return {
+      text: JSON.stringify(response)
     };
   }
 }

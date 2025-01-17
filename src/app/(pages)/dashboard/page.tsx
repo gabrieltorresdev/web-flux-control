@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { LoadingSpinner } from "@/shared/components/ui/loading-spinner";
 import { MonthFilter } from "@/features/transactions/components/month-filter";
 import { TransactionFilters as TransactionFiltersType } from "@/features/transactions/types";
-import { NewTransactionButton } from "@/features/transactions/components/new-transaction-button";
 import {
   getTransactionsList,
   getTransactionsSummary,
@@ -39,7 +38,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     ]);
 
   return (
-    <AnimatedPage className="max-w-4xl mx-auto px-3">
+    <AnimatedPage className="max-w-4xl mx-auto p-3 overflow-y-auto">
       <div className="flex flex-col gap-3">
         <div>
           <div className="flex flex-col gap-3 w-full">
@@ -58,7 +57,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
         </div>
         <div className="flex flex-col gap-3">
-          <NewTransactionButton />
           <Suspense fallback={<LoadingSpinner />}>
             <TransactionSummary initialSummary={initialSummary} />
             <TransactionList

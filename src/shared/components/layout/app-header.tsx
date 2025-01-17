@@ -1,11 +1,17 @@
 "use client";
 
-import { LayoutDashboard, Tags, Settings, Menu } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/shared/utils";
 import { usePathname } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
-import { ThemeToggle } from "@/shared/components/theme/theme-toggle";
+import { cn } from "@/shared/utils";
+import {
+  Menu,
+  Settings,
+  LayoutDashboard,
+  Receipt,
+  PiggyBank,
+  Tags,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -15,17 +21,35 @@ import {
   SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import { useState } from "react";
+import { FloatingAiAssistant } from "@/features/ai-assistant/components/floating-ai-assistant";
+import { ThemeToggle } from "@/shared/components/theme/theme-toggle";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Tags, label: "Categorias", href: "/dashboard/categories" },
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/dashboard/transactions",
+    label: "Transações",
+    icon: Receipt,
+  },
+  {
+    href: "/dashboard/budget",
+    label: "Orçamentos",
+    icon: PiggyBank,
+  },
+  {
+    href: "/dashboard/categories",
+    label: "Categorias",
+    icon: Tags,
+  },
 ];
 
-export function AppHeader() {
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const Logo = () => (
+// Logo component inline para simplicidade
+function Logo() {
+  return (
     <Link href="/dashboard" className="flex items-center gap-2">
       <div className="bg-primary/10 dark:bg-primary/20 w-8 h-8 rounded-lg flex items-center justify-center">
         <span className="text-primary font-semibold text-lg">F</span>
@@ -35,10 +59,15 @@ export function AppHeader() {
       </h1>
     </Link>
   );
+}
+
+export function AppHeader({ className }: { className?: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
-    <div className="sticky top-0 z-20 bg-background/60 backdrop-blur-xl border-b">
-      <header className="h-16 flex items-center px-3 max-w-4xl mx-auto">
+    <div className={cn("sticky top-0 z-20 bg-background/60 backdrop-blur-xl", className)}>
+      <header className="h-16 flex items-center px-3">
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetHeader>
@@ -118,6 +147,10 @@ export function AppHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botão do assistente em mobile */}
+          <div className="md:hidden">
+            <FloatingAiAssistant />
+          </div>
           <ThemeToggle />
           <Link href="/dashboard/settings">
             <Button

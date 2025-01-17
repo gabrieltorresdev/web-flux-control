@@ -163,7 +163,7 @@ export function TransactionList({ initialData }: TransactionListProps) {
   }
 
   return (
-    <div ref={containerRef} className="space-y-4 pb-24">
+    <div ref={containerRef} className="space-y-4">
       {groupedTransactionsWithTotals.map((group) => (
         <TransactionGroup
           key={group.date.toISOString()}
