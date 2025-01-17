@@ -21,8 +21,7 @@ export default async function CategoriesPage() {
           </div>
         </div>
 
-        {/* Renderiza inicialmente sem animações para melhor performance */}
-        <CategoryList initialData={initialCategories} skipAnimation={true} />
+        <CategoryList initialData={initialCategories} />
 
         <NewCategoryButton />
       </div>
