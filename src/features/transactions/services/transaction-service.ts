@@ -30,12 +30,8 @@ export class TransactionService {
     if (endDate) {
       params.append("endDate", endDate.toISOString());
     }
-    if (categoryId) {
-      params.append("categoryId", categoryId);
-    }
-    if (search) {
-      params.append("search", search);
-    }
+    params.append("categoryId", categoryId || "");
+    params.append("search", search || "");
     if (pagination?.page) {
       params.append("page", pagination.page.toString());
     }
@@ -62,12 +58,8 @@ export class TransactionService {
     if (endDate) {
       params.append("endDate", endDate.toISOString());
     }
-    if (categoryId) {
-      params.append("categoryId", categoryId);
-    }
-    if (search) {
-      params.append("search", search);
-    }
+    params.append("categoryId", categoryId || "");
+    params.append("search", search || "");
 
     return this.httpClient.get<ApiTransactionSummaryResponse>(
       `${getBackendApiUrl(this.route)}/summary?${params.toString()}`,
