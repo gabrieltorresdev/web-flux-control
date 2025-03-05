@@ -3,7 +3,7 @@ import * as React from "react";
 
 type InputType = React.HTMLInputTypeAttribute | "currency";
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   currencyFormat?: Intl.NumberFormat;
   type?: InputType;
 }

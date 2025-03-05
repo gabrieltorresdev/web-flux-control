@@ -1,7 +1,7 @@
 import { HttpClient } from "@/shared/lib/api/http-client";
 import { getBackendApiUrl } from "@/shared/lib/config";
 
-export interface InsightItem {
+interface InsightItem {
   type: 'success' | 'warning' | 'info';
   category: string;
   title: string;

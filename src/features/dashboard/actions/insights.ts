@@ -30,7 +30,7 @@ export async function getInsights(params?: GetInsightsParams): Promise<InsightsR
   }
 }
 
-export async function getInsightsByCategory(category: string): Promise<InsightsResponse> {
+async function getInsightsByCategory(category: string): Promise<InsightsResponse> {
   try {
     const insightsService = InsightsService.getInstance();
     const response = await insightsService.getInsightsByCategory(category);
@@ -42,7 +42,7 @@ export async function getInsightsByCategory(category: string): Promise<InsightsR
   }
 }
 
-export async function getInsightsByDateRange(
+async function getInsightsByDateRange(
   startDate: Date,
   endDate: Date
 ): Promise<InsightsResponse> {

@@ -379,8 +379,8 @@ export const VoiceTransactionForm = memo(
           <CreateCategoryDialog
             open={showCreateCategoryDialog}
             onOpenChange={setShowCreateCategoryDialog}
-            suggestedName={getSuggestedCategoryNames().original}
-            onCategoryCreated={handleCategoryCreated}
+            defaultCategoryName={getSuggestedCategoryNames().original}
+            onSuccess={handleCategoryCreated}
           />
         )}
       </div>
@@ -430,8 +430,9 @@ const useTranscriptConversion = (
           setValue("dateTime", new Date(transaction.data.dateTime));
         }
         
-        if (transaction.data.suggestedCategory) {
-          setSuggestedCategory(transaction.data.suggestedCategory);
+        // If categoryId is empty, use the title as a suggested category
+        if (!transaction.data.categoryId && transaction.data.title) {
+          setSuggestedCategory(transaction.data.title);
         }
       }
     }

@@ -1,6 +1,6 @@
 {
     "entry": ["index.{js,ts,tsx}", "src/index.{js,ts,tsx}", "src/app/*.css", "tailwind.config.{js,ts}", "postcss.config.{js,ts}"],
     "project": ["**/*.{js,ts,tsx}"],
-    "ignore": ["src/shared/components/ui/*", "**/tailwind.config.{js,ts}", "**/postcss.config.{js,ts}", "**/*.css"],
+    "ignore": ["**/tailwind.config.{js,ts}", "**/postcss.config.{js,ts}", "**/*.css"],
     "ignoreDependencies": ["tailwindcss", "postcss", "tailwindcss-animate"]
 }

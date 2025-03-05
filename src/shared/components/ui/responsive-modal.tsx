@@ -135,13 +135,13 @@ ResponsiveModalDescription.displayName =
 
 export {
   ResponsiveModal,
-  ResponsiveModalPortal,
-  ResponsiveModalOverlay,
+  
+  
   ResponsiveModalTrigger,
-  ResponsiveModalClose,
+  
   ResponsiveModalContent,
   ResponsiveModalHeader,
-  ResponsiveModalFooter,
+  
   ResponsiveModalTitle,
   ResponsiveModalDescription,
 };
