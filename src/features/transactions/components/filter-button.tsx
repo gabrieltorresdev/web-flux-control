@@ -4,7 +4,7 @@ import * as React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils";
 
-export interface FilterButtonProps extends React.ComponentProps<typeof Button> {
+interface FilterButtonProps extends React.ComponentProps<typeof Button> {
   active?: boolean;
 }
 

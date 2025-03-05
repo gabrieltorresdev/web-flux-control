@@ -1,6 +1,12 @@
 "use client";
 
-import { LayoutDashboard, Tags, Settings, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  Tags,
+  Settings,
+  Menu,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/shared/utils";
 import { usePathname } from "next/navigation";
@@ -18,6 +24,7 @@ import { useState } from "react";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: Wallet, label: "Transações", href: "/dashboard/transactions" },
   { icon: Tags, label: "Categorias", href: "/dashboard/categories" },
 ];
 
@@ -38,7 +45,7 @@ export function AppHeader() {
 
   return (
     <div className="sticky top-0 z-20 bg-background/60 backdrop-blur-xl border-b">
-      <header className="h-16 flex items-center px-3 max-w-4xl mx-auto">
+      <header className="h-16 flex items-center px-3 max-w-7xl mx-auto">
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetHeader>

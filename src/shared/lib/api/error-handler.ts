@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
 
-export interface ValidationErrorResponse {
+interface ValidationErrorResponse {
   message: string;
   errors: Record<string, string[]>;
 }
@@ -94,7 +94,7 @@ export function handleApiError(error: unknown): never {
   });
 }
 
-export function convertValidationErrorToFormError(error: ValidationError) {
+function convertValidationErrorToFormError(error: ValidationError) {
   const formattedErrors: Record<string, { message: string }> = {};
 
   Object.entries(error.errors).forEach(([field, messages]) => {

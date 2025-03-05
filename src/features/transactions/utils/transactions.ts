@@ -7,7 +7,7 @@ interface GroupedTransactions {
   transactions: Transaction[];
 }
 
-export function groupTransactionsByDate(
+function groupTransactionsByDate(
   transactions: Transaction[]
 ): GroupedTransactions[] {
   const groups = transactions.reduce((acc, transaction) => {

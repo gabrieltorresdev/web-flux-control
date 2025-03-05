@@ -15,7 +15,7 @@ import { getCategoryByName } from "@/features/categories/actions/categories";
 
 const transactionService = new TransactionService();
 
-export type TransactionListParams = {
+type TransactionListParams = {
   month?: number;
   year?: number;
   categoryId?: string;

@@ -24,8 +24,8 @@ interface RefreshResponse {
 }
 
 export class TokenManager {
-  private static readonly TOKEN_EXPIRY_THRESHOLD = 30; // 30 segundos antes de expirar
-  private static readonly REFRESH_TOKEN_EXPIRY_THRESHOLD = 60; // 1 minuto antes de expirar o refresh token
+  private static readonly TOKEN_EXPIRY_THRESHOLD = 30 * 60; // 30 minutos antes de expirar
+  private static readonly REFRESH_TOKEN_EXPIRY_THRESHOLD = 10 * 60; // 10 minutos antes de expirar o refresh token
 
   static isTokenExpired(token: string, storedExpiry?: number): boolean {
     try {

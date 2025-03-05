@@ -3,6 +3,7 @@ import { AppHeader } from "@/shared/components/layout/app-header";
 import { auth } from "@/features/auth/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardStatusChecker } from "@/features/dashboard/components/status-checker";
+import { SessionKeepAlive } from "@/shared/components/session/session-keep-alive";
 
 export const metadata: Metadata = {
   title: "Dashboard - Flux Control",
@@ -23,6 +24,12 @@ export default async function RootLayout({
   return (
     <>
       <DashboardStatusChecker />
+      <SessionKeepAlive 
+        refreshInterval={15 * 60 * 1000}  // 15 minutes in milliseconds
+        idleTimeout={30 * 60 * 1000}      // 30 minutes in milliseconds
+        activityCheckInterval={30 * 1000}  // 30 seconds in milliseconds
+        showNotifications={false}
+      />
       <div className="flex-1 flex flex-col bg-foreground/[0.02] min-h-screen w-full">
         <AppHeader />
         <div className="flex-1 overflow-y-auto py-3 relative">{children}</div>

@@ -15,16 +15,16 @@ export class AuthService {
       const session = await auth();
 
       if (!session) {
-        return { isAuthenticated: false };
+        return { isAuthenticated: false, error: "SessionExpiredError" };
       }
 
       if (session.error === "RefreshAccessTokenError") {
         await this.handleLogout();
-        return { isAuthenticated: false, error: "RefreshAccessTokenError" };
+        return { isAuthenticated: false, error: "SessionExpiredError" };
       }
 
       if (!session.accessToken || !session.refreshToken) {
-        return { isAuthenticated: false };
+        return { isAuthenticated: false, error: "SessionExpiredError" };
       }
 
       // Verifica se o token está expirado
@@ -37,47 +37,33 @@ export class AuthService {
 
           if (!refreshedToken) {
             await this.handleLogout();
-            return { isAuthenticated: false, error: "RefreshAccessTokenError" };
+            return { isAuthenticated: false, error: "SessionExpiredError" };
           }
 
           // Verifica se o token atualizado também está expirado
-          if (
-            typeof refreshedToken === "string" &&
-            TokenManager.isTokenExpired(refreshedToken)
-          ) {
+          if (TokenManager.isTokenExpired(refreshedToken.access_token)) {
             await this.handleLogout();
-            return { isAuthenticated: false, error: "TokenExpiredError" };
+            return { isAuthenticated: false, error: "SessionExpiredError" };
           }
 
           return {
             isAuthenticated: true,
             session: {
               ...session,
-              accessToken:
-                typeof refreshedToken === "string"
-                  ? refreshedToken
-                  : session.accessToken,
+              accessToken: refreshedToken.access_token,
+              refreshToken: refreshedToken.refresh_token,
             },
           };
         } catch (error) {
-          if (
-            error instanceof Error &&
-            error.message.includes("Expired token")
-          ) {
-            await this.handleLogout();
-            return { isAuthenticated: false, error: "TokenExpiredError" };
-          }
-          return { isAuthenticated: false, error: "TokenRefreshError" };
+          await this.handleLogout();
+          return { isAuthenticated: false, error: "SessionExpiredError" };
         }
       }
 
       return { isAuthenticated: true, session };
     } catch (error) {
-      if (error instanceof Error && error.message.includes("Expired token")) {
-        await this.handleLogout();
-        return { isAuthenticated: false, error: "TokenExpiredError" };
-      }
-      return { isAuthenticated: false, error: "AuthenticationError" };
+      await this.handleLogout();
+      return { isAuthenticated: false, error: "SessionExpiredError" };
     }
   }
 

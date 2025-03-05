@@ -147,4 +147,4 @@ export const createCategorySelectors =
 
 // Create the default store and selectors
 export const useCategoryStore = createCategoryStore();
-export const useCategorySelectors = createCategorySelectors(useCategoryStore);
+const useCategorySelectors = createCategorySelectors(useCategoryStore);

@@ -62,7 +62,7 @@ export function useTransactions() {
 }
 
 // Mutation hooks with optimistic updates
-export function useCreateTransaction() {
+function useCreateTransaction() {
   const queryClient = getQueryClient();
   const router = useRouter();
 
@@ -111,7 +111,7 @@ export function useCreateTransaction() {
   });
 }
 
-export function useUpdateTransaction() {
+function useUpdateTransaction() {
   const queryClient = getQueryClient();
   const router = useRouter();
 
@@ -160,7 +160,7 @@ export function useUpdateTransaction() {
   });
 }
 
-export function useDeleteTransaction() {
+function useDeleteTransaction() {
   const queryClient = getQueryClient();
   const router = useRouter();
 

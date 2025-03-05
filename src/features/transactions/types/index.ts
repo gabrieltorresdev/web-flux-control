@@ -33,11 +33,11 @@ export interface AiTransactionInput {
   category: string;
 }
 
-export interface ApiTransactionResponse {
+interface ApiTransactionResponse {
   data: Transaction;
 }
 
-export interface ApiTransactionListResponse {
+interface ApiTransactionListResponse {
   data: Transaction[];
 }
 

@@ -14,7 +14,7 @@ import { Separator } from "@/shared/components/ui/separator";
 
 export default function BudgetPage() {
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-3">
+    <div className="w-full max-w-7xl mx-auto flex flex-col gap-3">
       <div className="text-muted-foreground text-sm md:text-base text-center">
         Gerencie seus <strong>orçamentos</strong> e acompanhe seus gastos
       </div>

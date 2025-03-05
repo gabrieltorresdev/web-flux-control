@@ -170,7 +170,7 @@ async function authenticateKeycloak(
 }
 
 // Auth configuration
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth,  signOut } = NextAuth({
   providers: [
     CredentialsProvider({
       id: "keycloak",
@@ -231,7 +231,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           familyName: (user as User).familyName,
           emailVerified: (user as User).emailVerified,
           username: (user as User).username,
-          accessTokenExpires: Math.floor(Date.now() / 1000 + 300), // 5 minutos de expiração
+          accessTokenExpires: Math.floor(Date.now() / 1000 + 30 * 60), // 30 minutos de expiração
         };
       }
 
@@ -276,9 +276,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               ...token,
               accessToken: response.access_token,
               refreshToken: response.refresh_token,
-              accessTokenExpires: Math.floor(
-                Date.now() / 1000 + response.expires_in
-              ),
+              accessTokenExpires: Math.floor(Date.now() / 1000 + 30 * 60), // 30 minutos de expiração
               error: undefined,
             };
           }

@@ -13,7 +13,7 @@ export default async function SettingsPage() {
     (session?.user?.familyName?.[0] || "");
 
   return (
-    <div className="max-w-lg mx-auto p-4">
+    <div className="max-w-7xl mx-auto p-4">
       <div className="mb-6">
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">

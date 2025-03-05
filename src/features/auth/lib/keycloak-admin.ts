@@ -17,7 +17,7 @@ export async function getKeycloakAdmin() {
 
   keycloakAdmin = new KcAdminClient({
     baseUrl,
-    realmName: "fluxcontrol",
+    realmName: process.env.KEYCLOAK_REALM,
   });
 
   try {
@@ -30,7 +30,7 @@ export async function getKeycloakAdmin() {
 
     // Configure o realm após a autenticação
     keycloakAdmin.setConfig({
-      realmName: "fluxcontrol",
+      realmName: process.env.KEYCLOAK_REALM,
     });
 
     return keycloakAdmin;

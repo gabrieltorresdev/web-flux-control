@@ -11,7 +11,7 @@ export default async function CategoriesPage() {
   const initialCategories = await getCategories();
 
   return (
-    <AnimatedPage className="max-w-4xl mx-auto px-3">
+    <AnimatedPage className="max-w-7xl mx-auto px-3">
       <div className="flex flex-col gap-3">
         <div>
           <div className="flex items-center justify-between">

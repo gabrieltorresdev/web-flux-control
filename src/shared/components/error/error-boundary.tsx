@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 import { signOut } from "next-auth/react";
+import { toast } from "@/shared/hooks/use-toast";
 
 interface ErrorBoundaryProps {
   error: Error;
-  reset: () => void;
 }
 
 export function ErrorBoundary({ error }: ErrorBoundaryProps) {
@@ -20,18 +20,19 @@ export function ErrorBoundary({ error }: ErrorBoundaryProps) {
       error.message.includes("RefreshAccessTokenError");
 
     if (isSessionExpired) {
-      // Redireciona imediatamente para o login
+      // Show session expired toast
+      toast({
+        title: "Sessão Encerrada",
+        description: "Sua sessão foi encerrada por inatividade. Por favor, faça login novamente.",
+        variant: "destructive",
+        duration: 5000,
+      });
+
+      // Redirect to login
       signOut({ redirect: true, callbackUrl: "/login" });
     }
   }, [error]);
 
-  // Não mostra nada enquanto está redirecionando
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h2 className="text-xl font-semibold mb-4">Redirecionando...</h2>
-      <p className="text-muted-foreground mb-4 text-center">
-        Por favor, aguarde enquanto redirecionamos você.
-      </p>
-    </div>
-  );
+  // Don't show anything while redirecting
+  return null;
 }
