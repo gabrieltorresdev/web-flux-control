@@ -21,7 +21,6 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useState } from "react";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 
 interface TransactionActionsProps {
   transaction: Transaction;
@@ -35,7 +34,6 @@ export function TransactionActions({
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const isMobile = useIsMobile();
 
   const handleDelete = async () => {
     try {
@@ -49,56 +47,33 @@ export function TransactionActions({
 
   return (
     <>
-      {isMobile ? (
-        <div className="flex items-center justify-center gap-4 py-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
-            size="lg"
-            onClick={() => setShowEditDialog(true)}
-            className="flex-1 gap-2"
+            variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-muted"
+            aria-label="Abrir menu"
           >
-            <Pencil className="h-5 w-5" />
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onSelect={() => setShowEditDialog(true)}
+            className="gap-2"
+          >
+            <Pencil className="h-4 w-4" />
             Editar
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => setShowDeleteAlert(true)}
-            className="flex-1 gap-2 text-red-600 hover:text-red-600 hover:border-red-600"
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => setShowDeleteAlert(true)}
+            className="gap-2 text-red-600"
           >
-            <Trash className="h-5 w-5" />
+            <Trash className="h-4 w-4" />
             Excluir
-          </Button>
-        </div>
-      ) : (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted"
-              aria-label="Abrir menu"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => setShowEditDialog(true)}
-              className="gap-2"
-            >
-              <Pencil className="h-4 w-4" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => setShowDeleteAlert(true)}
-              className="gap-2 text-red-600"
-            >
-              <Trash className="h-4 w-4" />
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>

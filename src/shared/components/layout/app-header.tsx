@@ -117,9 +117,9 @@ export function AppHeader() {
   );
 
   return (
-    <div className="sticky top-0 z-20 flex flex-col">
+    <div className="sticky top-0 z-20 flex flex-col bg-background">
       {/* Main Header */}
-      <div className="bg-background/60 backdrop-blur-xl border-b">
+      <div className="bg-background backdrop-blur-xl border-b">
         <header className="h-14 flex items-center px-3 max-w-7xl mx-auto">
           <div className="flex-1">
             <Logo />

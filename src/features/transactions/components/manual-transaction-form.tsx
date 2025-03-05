@@ -8,27 +8,23 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
-  UseFormSetError,
   UseFormWatch,
 } from "react-hook-form";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 
 interface ManualTransactionFormProps {
-  onDataChange: (hasData: boolean) => void;
   register: UseFormRegister<CreateTransactionInput>;
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
   setValue: UseFormSetValue<CreateTransactionInput>;
-  setError: UseFormSetError<CreateTransactionInput>;
   watch: UseFormWatch<CreateTransactionInput>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   isSubmitting?: boolean;
-  saveDraft: () => void;
+  onDataChanged: () => void;
 }
 
 export const ManualTransactionForm = memo(
   ({
-    onDataChange,
     register,
     errors,
     getValues,
@@ -36,21 +32,21 @@ export const ManualTransactionForm = memo(
     watch,
     onSubmit,
     isSubmitting = false,
-    saveDraft,
+    onDataChanged,
   }: ManualTransactionFormProps) => {
-    const formValues = getValues();
+    const formValues = watch();
     const debouncedFormValues = useDebounce(formValues, 500);
 
     useEffect(() => {
-      const hasData = Object.values(formValues).some((value) => value);
-      onDataChange(hasData);
-    }, [formValues, onDataChange]);
-
-    useEffect(() => {
-      if (Object.values(debouncedFormValues).some((value) => value)) {
-        saveDraft();
+      const hasData = 
+        (formValues.title && formValues.title.trim() !== "") || 
+        formValues.amount > 0 || 
+        (formValues.categoryId && formValues.categoryId.trim() !== "");
+        
+      if (hasData) {
+        onDataChanged();
       }
-    }, [debouncedFormValues, saveDraft]);
+    }, [formValues, onDataChanged]);
 
     return (
       <div>

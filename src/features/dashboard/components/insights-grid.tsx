@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, ArrowUpRight, Info, ChevronDown, AlertTriangle, ExternalLink } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, Info, ChevronDown, AlertTriangle, ExternalLink, ChevronRight } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
   Alert,
@@ -37,12 +37,14 @@ interface InsightsGridProps {
 }
 
 function InsightCard({ insight, index }: { insight: Insight; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  
   return (
     <Alert
       key={`${insight.category}-${index}`}
       variant={insight.type === 'danger' ? 'destructive' : insight.type}
       className={cn(
-        "relative overflow-hidden pl-12 pr-4 py-3 min-h-[5rem] h-full",
+        "relative overflow-hidden pl-10 pr-3 py-2.5 min-h-[4.5rem] h-full",
         {
           'bg-success/10 dark:bg-success/10': insight.type === 'success',
           'bg-warning/10 dark:bg-warning/10': insight.type === 'warning',
@@ -52,7 +54,7 @@ function InsightCard({ insight, index }: { insight: Insight; index: number }) {
       )}
     >
       <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center",
+        "absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center",
         {
           'bg-success/20 dark:bg-success/20': insight.type === 'success',
           'bg-warning/20 dark:bg-warning/20': insight.type === 'warning',
@@ -60,47 +62,71 @@ function InsightCard({ insight, index }: { insight: Insight; index: number }) {
           'bg-destructive/20 dark:bg-destructive/20': insight.type === 'danger'
         }
       )}>
-        {insight.type === 'success' && <TrendingUp className="h-5 w-5" />}
-        {insight.type === 'warning' && <ArrowUpRight className="h-5 w-5" />}
-        {insight.type === 'info' && <Info className="h-5 w-5" />}
-        {insight.type === 'danger' && <AlertTriangle className="h-5 w-5" />}
+        {insight.type === 'success' && <TrendingUp className="h-4 w-4" />}
+        {insight.type === 'warning' && <ArrowUpRight className="h-4 w-4" />}
+        {insight.type === 'info' && <Info className="h-4 w-4" />}
+        {insight.type === 'danger' && <AlertTriangle className="h-4 w-4" />}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <AlertTitle className="text-sm font-medium">
+          <AlertTitle className="text-sm font-medium line-clamp-1">
             {insight.title}
           </AlertTitle>
-          {insight.metadata.actionUrl && (
-            <Link href={insight.metadata.actionUrl}>
-              <Button 
-                size="icon"
-                variant="ghost"
-                className={cn(
-                  "h-6 w-6",
-                  {
-                    'text-success hover:text-success/80 hover:bg-success/10': insight.type === 'success',
-                    'text-warning hover:text-warning/80 hover:bg-warning/10': insight.type === 'warning',
-                    'text-info hover:text-info/80 hover:bg-info/10': insight.type === 'info',
-                    'text-destructive hover:text-destructive/80 hover:bg-destructive/10': insight.type === 'danger'
-                  }
-                )}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center space-x-1">
+            {insight.metadata.actionUrl && (
+              <Link href={insight.metadata.actionUrl}>
+                <Button 
+                  size="icon"
+                  variant="ghost"
+                  className={cn(
+                    "h-6 w-6",
+                    {
+                      'text-success hover:text-success/80 hover:bg-success/10': insight.type === 'success',
+                      'text-warning hover:text-warning/80 hover:bg-warning/10': insight.type === 'warning',
+                      'text-info hover:text-info/80 hover:bg-info/10': insight.type === 'info',
+                      'text-destructive hover:text-destructive/80 hover:bg-destructive/10': insight.type === 'danger'
+                    }
+                  )}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <AlertDescription className="text-xs text-muted-foreground line-clamp-2 mt-1 flex items-center">
+        
+        <div className="text-xs text-muted-foreground mt-1 relative">
+          {expanded ? (
+            <AlertDescription className="text-xs text-muted-foreground">
               {insight.description}
             </AlertDescription>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[300px]">
-            <p className="text-xs">{insight.description}</p>
-          </TooltipContent>
-        </Tooltip>
+          ) : (
+            <div className="flex items-center">
+              <span className="line-clamp-1 flex-1">{insight.description}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-5 w-5 p-0 ml-1"
+                onClick={() => setExpanded(true)}
+              >
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+          
+          {expanded && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-[10px] px-1.5 py-0 h-5 mt-1 opacity-60 hover:opacity-100"
+              onClick={() => setExpanded(false)}
+            >
+              <ChevronDown className="h-3 w-3 rotate-180 mr-1" />
+              <span>Menos</span>
+            </Button>
+          )}
+        </div>
       </div>
     </Alert>
   );
@@ -131,15 +157,15 @@ function MobileCarousel({ insights }: { insights: Insight[] }) {
   }, [emblaApi]);
 
   return (
-    <div className="relative">
+    <div className="relative pb-5">
       <div ref={emblaRef} className="overflow-hidden -mx-4">
         <div className="flex touch-pan-y pl-4">
           {insights.map((insight, index) => (
             <div 
               key={index} 
               className={cn(
-                "flex-[0_0_90%] min-w-0 relative pr-4 transition-opacity duration-300",
-                index !== currentSlide && "opacity-50"
+                "flex-[0_0_95%] min-w-0 relative pr-4 transition-opacity duration-300",
+                index !== currentSlide && "opacity-60"
               )}
             >
               <InsightCard insight={insight} index={index} />
@@ -149,15 +175,15 @@ function MobileCarousel({ insights }: { insights: Insight[] }) {
       </div>
       
       {/* Minimal Progress Indicator */}
-      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
         {insights.map((_, index) => (
           <div
             key={index}
             className={cn(
-              "h-0.5 rounded-full transition-all duration-300",
+              "h-1 rounded-full transition-all duration-300",
               currentSlide === index
-                ? "bg-primary/60 w-8"
-                : "bg-primary/20 w-4"
+                ? "bg-primary/80 w-5"
+                : "bg-primary/20 w-2.5"
             )}
           />
         ))}

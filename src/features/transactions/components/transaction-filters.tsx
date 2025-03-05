@@ -101,7 +101,7 @@ export function TransactionFilters({
             ? "var(--active-filter-bg)"
             : "var(--card-bg)",
         }}
-        className="relative flex items-center gap-3 p-3 transition-colors"
+        className="relative flex items-center gap-3 p-3 transition-colors rounded-md"
       >
         <ScrollArea className="flex-1">
           <div className="flex items-center gap-2">

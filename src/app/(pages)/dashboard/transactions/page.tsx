@@ -12,6 +12,7 @@ import {
 } from "@/features/transactions/actions/transactions";
 import { getCategoryById } from "@/features/categories/actions/categories";
 import { AnimatedPage } from "@/shared/components/layout/animated-page";
+import { TransactionsContainer } from "@/features/transactions/components/transactions-container";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -57,21 +58,18 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
             />
           </div>
         </div>
-        <div className="flex flex-col gap-3">
-          <NewTransactionButton />
-          <Suspense fallback={<LoadingSpinner />}>
-            <TransactionSummary initialSummary={initialSummary} />
-            <TransactionList
-              initialData={initialTransactions}
-              searchParams={{
-                month: month || null,
-                year: year || null,
-                categoryId: categoryId || null,
-                search: search || null,
-              }}
-            />
-          </Suspense>
-        </div>
+        <Suspense fallback={<LoadingSpinner />}>
+          <TransactionsContainer 
+            initialData={initialTransactions}
+            initialSummary={initialSummary}
+            searchParams={{
+              month: month || null,
+              year: year || null,
+              categoryId: categoryId || null,
+              search: search || null,
+            }}
+          />
+        </Suspense>
       </div>
     </AnimatedPage>
   );

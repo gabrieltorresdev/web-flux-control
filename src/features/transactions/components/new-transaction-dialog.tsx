@@ -38,6 +38,8 @@ import { createTransaction } from "@/features/transactions/actions/transactions"
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/lib/get-query-client";
 import { useCategoryStore } from "@/features/categories/stores/category-store";
+import { useQueryParams } from "@/shared/hooks/use-search-params";
+import { TransactionFilters } from "@/features/transactions/types";
 
 interface NewTransactionDialogProps {
   initialDate?: Date;
@@ -66,6 +68,37 @@ export function NewTransactionDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const { getParams } = useQueryParams<TransactionFilters>();
+
+  // Get month and year from URL query parameters
+  const getInitialDateFromQueryParams = useCallback(() => {
+    const params = getParams();
+    let date = initialDate ?? new Date();
+    
+    const monthParam = params.month ? parseInt(params.month) : null;
+    const yearParam = params.year ? parseInt(params.year) : null;
+    
+    if (monthParam !== null && yearParam !== null) {
+      // Create a new date with the first day of the month from URL params
+      date = new Date(yearParam, monthParam - 1, 1);
+      
+      // Keep the current time from today
+      const now = new Date();
+      date.setHours(now.getHours());
+      date.setMinutes(now.getMinutes());
+      date.setSeconds(0);
+      date.setMilliseconds(0);
+      
+      // If the day is in the future, use the current day of the month
+      if (date > now) {
+        date = new Date();
+        date.setMonth(monthParam - 1);
+        date.setFullYear(yearParam);
+      }
+    }
+    
+    return date;
+  }, [getParams, initialDate]);
 
   // Load categories when dialog opens
   useEffect(() => {
@@ -88,13 +121,25 @@ export function NewTransactionDialog({
     defaultValues: {
       title: "",
       amount: 0,
-      dateTime: initialDate ?? new Date(),
+      dateTime: getInitialDateFromQueryParams(),
       categoryId: "",
     },
   });
 
   const { saveDraft, loadTranscript, loadSuggestedCategory, clearDraft } =
     useDraftTransaction(setValue, reset, getValues);
+
+  // Reset form with the correct date when dialog opens
+  useEffect(() => {
+    if (open) {
+      const currentValues = getValues();
+      reset({
+        ...currentValues,
+        dateTime: getInitialDateFromQueryParams(),
+        amount: 0 // Reset amount to empty
+      });
+    }
+  }, [open, getInitialDateFromQueryParams, getValues, reset]);
 
   // Salvar rascunho quando houver mudanças no formulário
   useEffect(() => {
@@ -210,13 +255,18 @@ export function NewTransactionDialog({
               setHasVoiceData(false);
             }
             clearDraft();
-            reset();
+            reset({
+              title: "",
+              amount: 0,
+              dateTime: getInitialDateFromQueryParams(),
+              categoryId: "",
+            });
             setCurrentTab(value as "manual" | "voice");
           }
         }
       }
     },
-    [currentTab, hasVoiceData, hasManualData, getValues, clearDraft, reset]
+    [currentTab, hasVoiceData, hasManualData, getValues, clearDraft, reset, getInitialDateFromQueryParams]
   );
 
   const confirmTabChange = useCallback(() => {
@@ -225,14 +275,19 @@ export function NewTransactionDialog({
       setPendingTabChange(null);
       setShowAlert(false);
       clearDraft();
-      reset();
+      reset({
+        title: "",
+        amount: 0,
+        dateTime: getInitialDateFromQueryParams(),
+        categoryId: "",
+      });
       if (pendingTabChange === "voice") {
         setHasManualData(false);
       } else {
         setHasVoiceData(false);
       }
     }
-  }, [pendingTabChange, clearDraft, reset]);
+  }, [pendingTabChange, clearDraft, reset, getInitialDateFromQueryParams]);
 
   return (
     <ResponsiveModal open={open} onOpenChange={onClose}>
@@ -252,63 +307,55 @@ export function NewTransactionDialog({
             </TabsTrigger>
             <TabsTrigger value="voice">
               <Mic className="mr-2 h-4 w-4" />
-              Voz
+              Por voz
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="manual">
-            {currentTab === "manual" && (
-              <ManualTransactionForm
-                onDataChange={setHasManualData}
-                register={register}
-                errors={errors}
-                getValues={getValues}
-                setValue={setValue}
-                setError={setError}
-                watch={watch}
-                onSubmit={onSubmit}
-                isSubmitting={isSubmitting}
-                saveDraft={saveDraft}
-              />
-            )}
+          <TabsContent value="manual" className="mt-3">
+            <ManualTransactionForm
+              register={register}
+              errors={errors}
+              setValue={setValue}
+              watch={watch}
+              getValues={getValues}
+              onSubmit={onSubmit}
+              isSubmitting={isSubmitting}
+              onDataChanged={() => setHasManualData(true)}
+            />
           </TabsContent>
 
-          <TabsContent value="voice">
-            {currentTab === "voice" && (
-              <VoiceTransactionForm
-                onDataChange={setHasVoiceData}
-                register={register}
-                errors={errors}
-                getValues={getValues}
-                setValue={setValue}
-                setError={setError}
-                watch={watch}
-                onSubmit={onSubmit}
-                saveDraft={saveDraft}
-                loadTranscript={loadTranscript}
-                loadSuggestedCategory={loadSuggestedCategory}
-              />
-            )}
+          <TabsContent value="voice" className="mt-3">
+            <VoiceTransactionForm
+              register={register}
+              errors={errors}
+              setValue={setValue}
+              watch={watch}
+              getValues={getValues}
+              onSubmit={onSubmit}
+              isSubmitting={isSubmitting}
+              onDataChanged={() => setHasVoiceData(true)}
+            />
           </TabsContent>
         </Tabs>
-      </ResponsiveModalContent>
 
-      <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você tem alterações não salvas. Deseja descartá-las?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmTabChange}>
-              Descartar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Alternar modo de inserção</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você tem dados não salvos. Mudar o modo de inserção irá
+                descartar estas alterações. Deseja continuar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmTabChange}>
+                Continuar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </ResponsiveModalContent>
     </ResponsiveModal>
   );
 }

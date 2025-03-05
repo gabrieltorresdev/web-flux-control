@@ -43,6 +43,7 @@ export const TransactionForm = memo(function TransactionForm({
 }: TransactionFormProps) {
   const queryClient = useQueryClient();
   const categoryId = watch("categoryId");
+  const amount = watch("amount");
   const selectors = createCategorySelectors(useCategoryStore);
   const { categories } = selectors();
   const selectedCategory = useMemo(
@@ -91,17 +92,16 @@ export const TransactionForm = memo(function TransactionForm({
             </label>
             <Input
               id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("amount", { 
-                required: true, 
-                min: 0,
-                valueAsNumber: true 
-              })}
+              type="currency"
               className={`h-10 ${errors.amount ? "border-destructive" : ""}`}
               placeholder="0,00"
               autoComplete="off"
+              defaultValue={amount > 0 ? amount : undefined}
+              onChange={(e) => {
+                // Extract numeric value from formatted string (e.g., "R$ 10,00" -> 10)
+                const numericValue = Number(e.target.value.replace(/\D/g, "")) / 100;
+                setValue("amount", numericValue, { shouldValidate: true });
+              }}
             />
             {errors.amount && (
               <p className="text-sm font-medium text-destructive">

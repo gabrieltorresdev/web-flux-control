@@ -7,6 +7,8 @@ import { MonthFilter } from '@/features/transactions/components/month-filter';
 import { auth } from "@/features/auth/lib/auth";
 import { Card } from '@/shared/components/ui/card';
 import { InsightsGrid } from '@/features/dashboard/components/insights-grid';
+import { InsightsSkeleton } from '@/features/dashboard/components/insights-skeleton';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 type SearchParams = {
   month?: string;
@@ -67,8 +69,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="animate-pulse text-sm text-muted-foreground">Carregando insights...</div>
+      <div className="max-w-7xl mx-auto flex flex-col gap-3 px-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-9 w-36" />
+        </div>
+        <InsightsSkeleton />
       </div>
     }>
       <DashboardContent month={month} year={year} />

@@ -24,7 +24,6 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
-  UseFormSetError,
   UseFormWatch,
 } from "react-hook-form";
 import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog";
@@ -32,33 +31,29 @@ import { useDebounce } from "@/shared/hooks/use-debounce";
 import { processAiTransaction } from "@/features/transactions/actions/transactions";
 import { motion, AnimatePresence } from "framer-motion";
 import { queryKeys } from "@/shared/lib/get-query-client";
+import { useDraftTransaction } from "@/features/transactions/hooks/use-draft-transaction";
 
 interface VoiceTransactionFormProps {
-  onDataChange: (hasData: boolean) => void;
   register: UseFormRegister<CreateTransactionInput>;
   errors: FieldErrors<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
   setValue: UseFormSetValue<CreateTransactionInput>;
-  setError: UseFormSetError<CreateTransactionInput>;
   watch: UseFormWatch<CreateTransactionInput>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
-  saveDraft: (transcript?: string, suggestedCategory?: string) => void;
-  loadTranscript: () => string | undefined;
-  loadSuggestedCategory: () => string | undefined;
+  isSubmitting?: boolean;
+  onDataChanged: () => void;
 }
 
 export const VoiceTransactionForm = memo(
   ({
-    onDataChange,
     register,
     errors,
     getValues,
     setValue,
     watch,
     onSubmit,
-    saveDraft,
-    loadTranscript,
-    loadSuggestedCategory,
+    isSubmitting = false,
+    onDataChanged,
   }: VoiceTransactionFormProps) => {
     const [transcript, setTranscript] = useState("");
     const lastProcessedTranscript = useRef("");
@@ -66,6 +61,16 @@ export const VoiceTransactionForm = memo(
       useState(false);
     const [formVisible, setFormVisible] = useState(false);
     const queryClient = useQueryClient();
+    const { loadTranscript, loadSuggestedCategory, saveDraft } = useDraftTransaction(setValue, () => {}, getValues);
+
+    // Load saved transcript and suggested category on mount
+    useEffect(() => {
+      const savedTranscript = loadTranscript();
+      if (savedTranscript) {
+        setTranscript(savedTranscript);
+        setFormVisible(!!getValues("title")); // Show form if we have a title
+      }
+    }, [loadTranscript, getValues]);
 
     const {
       listening,
@@ -82,19 +87,7 @@ export const VoiceTransactionForm = memo(
       setSuggestedCategory,
     } = useTranscriptConversion(transcript, setValue, loadSuggestedCategory);
 
-    // Carregar transcript e categoria sugerida salvos
-    useEffect(() => {
-      const savedTranscript = loadTranscript();
-      const savedSuggestedCategory = loadSuggestedCategory();
-      if (savedTranscript) {
-        setTranscript(savedTranscript);
-      }
-      if (savedSuggestedCategory) {
-        setSuggestedCategory(savedSuggestedCategory);
-      }
-    }, [loadTranscript, loadSuggestedCategory, setSuggestedCategory]);
-
-    // Salvar transcript e categoria sugerida com debounce
+    // Save transcript with debounce
     const debouncedTranscript = useDebounce(transcript, 500);
 
     useEffect(() => {
@@ -121,8 +114,10 @@ export const VoiceTransactionForm = memo(
     }, [currentTranscript, listening, transcript]);
 
     useEffect(() => {
-      onDataChange(transcript.trim().length > 0);
-    }, [transcript, onDataChange]);
+      if (transcript.trim().length > 0) {
+        onDataChanged();
+      }
+    }, [transcript, onDataChanged]);
 
     const handleCategoryCreated = useCallback(
       async (categoryId: string, categoryName: string) => {
@@ -248,75 +243,96 @@ export const VoiceTransactionForm = memo(
                   {listening ? "Ouvindo..." : "Nova Transação por Voz"}
                 </div>
                 <div className="text-sm text-muted-foreground max-w-md">
-                  {listening
-                    ? "Fale naturalmente sobre a transação. Ex: 'Gastei 50 reais com almoço hoje'"
-                    : "Clique no microfone para começar a gravar ou digite manualmente"}
+                  {speechRecognitionSupported
+                    ? "Descreva sua transação naturalmente, por exemplo: 'Gastei 50 reais em comida ontem'"
+                    : "Seu navegador não suporta reconhecimento de voz. Use o modo manual."}
                 </div>
+              </div>
+
+              {/* Indicador de Gravação */}
+              <div
+                className={cn(
+                  "w-24 h-24 rounded-full flex items-center justify-center border-8 transition-all",
+                  listening
+                    ? "border-red-500 animate-pulse"
+                    : "border-muted-foreground/20"
+                )}
+              >
+                {listening ? (
+                  <Mic
+                    className={cn(
+                      "h-12 w-12 text-red-500 animate-pulse",
+                      listening && "animate-pulse"
+                    )}
+                  />
+                ) : (
+                  <MicOff className="h-12 w-12 text-muted-foreground/50" />
+                )}
               </div>
 
               {/* Controles de Gravação */}
-              <div className="flex flex-col items-center gap-4">
-                <MicrophoneButton
-                  listening={listening}
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className={cn(
+                    "border-2",
+                    listening
+                      ? "border-red-500 text-red-500 hover:bg-red-500/10"
+                      : ""
+                  )}
                   onClick={listening ? stopListening : startListening}
-                  disabled={
-                    !speechRecognitionSupported || !isMicrophoneAvailable
-                  }
-                />
-                {!speechRecognitionSupported && (
-                  <div className="text-sm text-destructive">
-                    Seu navegador não suporta reconhecimento de voz
-                  </div>
-                )}
+                  disabled={!speechRecognitionSupported || !isMicrophoneAvailable}
+                >
+                  {listening ? "Parar" : "Iniciar Gravação"}
+                </Button>
               </div>
 
-              {/* Área de Texto */}
-              <div className="w-full space-y-2 px-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Transcrição</label>
-                  {transcript.trim().length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClear}
-                      className="h-8"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-1.5" />
-                      Limpar
-                    </Button>
-                  )}
-                </div>
+              {/* Text Area para Visualizar/Editar */}
+              <div className="w-full space-y-2">
                 <Textarea
-                  className="resize-none min-h-[120px] text-lg"
-                  placeholder="A transcrição aparecerá aqui automaticamente, ou você pode digitar manualmente"
                   value={transcript}
                   onChange={(e) => setTranscript(e.target.value)}
-                  readOnly={listening || convertTranscriptMutation.isPending}
+                  placeholder="O que você disse aparecerá aqui..."
+                  className="min-h-[120px]"
+                  disabled={listening}
                 />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClear}
+                    disabled={!transcript.trim() || listening}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Limpar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleConvertTranscript}
+                    disabled={
+                      !transcript.trim() ||
+                      listening ||
+                      convertTranscriptMutation.isPending
+                    }
+                    size="sm"
+                  >
+                    {convertTranscriptMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <SendHorizonal className="h-4 w-4 mr-2" />
+                        Continuar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-
-              {/* Botão de Processamento */}
-              <Button
-                className="w-full max-w-md"
-                size="lg"
-                onClick={handleConvertTranscript}
-                disabled={
-                  !transcript.trim().length ||
-                  convertTranscriptMutation.isPending
-                }
-              >
-                {convertTranscriptMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Processando transcrição...
-                  </>
-                ) : (
-                  <>
-                    <SendHorizonal className="h-5 w-5 mr-2" />
-                    Processar Transação
-                  </>
-                )}
-              </Button>
             </motion.div>
           )}
 
@@ -327,168 +343,99 @@ export const VoiceTransactionForm = memo(
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: "100%" }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="relative space-y-6"
+              className="flex flex-col"
             >
-              <div className="flex items-center justify-between border-b pb-4">
+              <div className="flex items-center mb-4">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handleBack}
-                  className="gap-2 hover:bg-background"
+                  disabled={isSubmitting}
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar
                 </Button>
-                <div className="text-sm font-medium text-muted-foreground">
-                  Detalhes da Transação
-                </div>
               </div>
 
-              <div className="space-y-8 px-1">
+              <SuggestedCategoryState />
+
+              <div className="mt-4">
                 <TransactionForm
                   onSubmit={onSubmit}
                   register={register}
                   errors={errors}
-                  getValues={getValues}
                   setValue={setValue}
                   watch={watch}
-                  isSubmitting={false}
+                  getValues={getValues}
+                  isSubmitting={isSubmitting}
                 />
-
-                <SuggestedCategoryState />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <CreateCategoryDialog
-          open={showCreateCategoryDialog}
-          onOpenChange={setShowCreateCategoryDialog}
-          onSuccess={handleCategoryCreated}
-          defaultCategoryName={getSuggestedCategoryNames().original}
-        />
+        {suggestedCategory && (
+          <CreateCategoryDialog
+            open={showCreateCategoryDialog}
+            onOpenChange={setShowCreateCategoryDialog}
+            suggestedName={getSuggestedCategoryNames().original}
+            onCategoryCreated={handleCategoryCreated}
+          />
+        )}
       </div>
     );
   }
 );
 
-const RecordingStatus = memo(() => (
-  <div className="flex items-center gap-1.5 h-8">
-    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-    <span className="text-sm text-muted-foreground">Ouvindo...</span>
-  </div>
-));
+VoiceTransactionForm.displayName = "VoiceTransactionForm";
 
-const ResetButton = memo(
-  ({ onClick, disabled }: { onClick: () => void; disabled: boolean }) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={onClick}
-      className="h-8"
-      disabled={disabled}
-    >
-      <RefreshCw className="h-4 w-4 mr-1.5" />
-      Limpar
-    </Button>
-  )
-);
-
-const RecordingInstruction = memo(() => (
-  <div className="flex items-center gap-1.5 h-8">
-    <MousePointerClick className="h-4 w-4 text-muted-foreground" />
-    <span className="text-sm text-muted-foreground">Clique para gravar</span>
-  </div>
-));
-
-const MicrophoneButton = memo(
-  ({
-    listening,
-    onClick,
-    disabled,
-  }: {
-    listening: boolean;
-    onClick: () => void;
-    disabled: boolean;
-  }) => (
-    <div
-      className={cn(
-        "overflow-hidden rounded-full h-20 w-20",
-        listening && "animate-pulse"
-      )}
-    >
-      <Button
-        variant={listening ? "destructive" : "default"}
-        size="sm"
-        onClick={onClick}
-        disabled={disabled}
-        className="w-full h-full"
-      >
-        {listening ? (
-          <MicOff className="h-8 w-8" />
-        ) : (
-          <Mic className="h-8 w-8" />
-        )}
-      </Button>
-    </div>
-  )
-);
-
+// Custom hook to handle transcript conversion
 const useTranscriptConversion = (
   transcript: string,
   setValue: UseFormSetValue<CreateTransactionInput>,
   loadSuggestedCategory: () => string | undefined
 ) => {
-  const [suggestedCategory, setSuggestedCategory] = useState<string>("");
+  const [suggestedCategory, setSuggestedCategory] = useState<string | undefined>(
+    undefined
+  );
+
+  useEffect(() => {
+    const savedSuggestedCategory = loadSuggestedCategory();
+    if (savedSuggestedCategory) {
+      setSuggestedCategory(savedSuggestedCategory);
+    }
+  }, [loadSuggestedCategory]);
 
   const convertTranscriptMutation = useMutation({
     mutationFn: async () => {
       if (!transcript.trim()) {
-        throw new Error("Por favor, forneça um texto para processar");
+        throw new Error("Transcrição vazia");
       }
-
+      
       const result = await processAiTransaction(transcript);
-
-      if (result.error) {
-        throw new Error(
-          result.error.message || "Erro ao processar a transação"
-        );
-      }
-
-      if (!result.data) {
-        throw new Error("Não foi possível extrair informações da transação");
-      }
-
-      // Se não houver categoria, usar o título como sugestão
-      if (!result.data.categoryId) {
-        setSuggestedCategory(result.data.title);
-      }
-
-      return result.data;
+      return result;
     },
     onSuccess(transaction) {
-      setValue("dateTime", transaction.dateTime);
-      setValue("title", transaction.title);
-      setValue("amount", transaction.amount);
-      setValue("categoryId", transaction.categoryId);
-    },
-  });
+      if (transaction.error) {
+        console.error("Error processing transaction:", transaction.error);
+        return;
+      }
 
-  // Carregar categoria sugerida salva ao montar o componente
-  useEffect(() => {
-    const savedCategory = loadSuggestedCategory();
-    if (savedCategory) {
-      setSuggestedCategory(savedCategory);
+      if (transaction.data) {
+        setValue("title", transaction.data.title);
+        setValue("amount", transaction.data.amount || 0);
+        
+        if (transaction.data.dateTime) {
+          setValue("dateTime", new Date(transaction.data.dateTime));
+        }
+        
+        if (transaction.data.suggestedCategory) {
+          setSuggestedCategory(transaction.data.suggestedCategory);
+        }
+      }
     }
-  }, [loadSuggestedCategory]);
+  });
 
   return { convertTranscriptMutation, suggestedCategory, setSuggestedCategory };
 };
-
-// Definindo displayNames para melhor debugging
-RecordingStatus.displayName = "RecordingStatus";
-ResetButton.displayName = "ResetButton";
-RecordingInstruction.displayName = "RecordingInstruction";
-MicrophoneButton.displayName = "MicrophoneButton";
-VoiceTransactionForm.displayName = "VoiceTransactionForm";
