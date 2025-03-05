@@ -177,10 +177,10 @@ export function EnvironmentPreparation() {
               transition={{ duration: 0.5 }}
               className="relative"
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-transparent h-8 -top-8" />
+              <div className="absolute inset-0 bg-linear-to-b from-background via-background to-transparent h-8 -top-8" />
               <div className="border rounded-lg p-4 bg-card shadow-lg space-y-4">
                 <div>
-                  <h2 className="text-base font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+                  <h2 className="text-base font-semibold bg-clip-text text-transparent bg-linear-to-r from-primary to-primary/50">
                     Que tal um joguinho enquanto espera?
                   </h2>
                   <p className="text-xs text-muted-foreground mt-1">

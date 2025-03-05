@@ -30,7 +30,7 @@ export function AppHeader() {
       <div className="bg-primary/10 dark:bg-primary/20 w-8 h-8 rounded-lg flex items-center justify-center">
         <span className="text-primary font-semibold text-lg">F</span>
       </div>
-      <h1 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+      <h1 className="text-lg font-semibold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
         FluxControl
       </h1>
     </Link>

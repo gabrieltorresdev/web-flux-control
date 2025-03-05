@@ -179,7 +179,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
                   className={cn(
                     "relative flex h-12 w-12 items-center justify-center rounded-md border",
                     "hover:bg-accent hover:text-accent-foreground",
-                    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    "focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2",
                     value === name && "bg-primary text-primary-foreground"
                   )}
                   onClick={() => onChange(name)}
@@ -206,7 +206,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
                   className={cn(
                     "relative flex h-12 w-12 items-center justify-center rounded-md border text-xl",
                     "hover:bg-accent hover:text-accent-foreground",
-                    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    "focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2",
                     selectedEmoji === emoji &&
                       "bg-primary text-primary-foreground"
                   )}
