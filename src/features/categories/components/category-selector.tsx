@@ -43,7 +43,7 @@ interface CategorySelectorProps {
   className?: string;
   error?: boolean;
   insideSheet?: boolean;
-  onCategoryCreated?: () => Promise<void>;
+  onCategoryCreated?: (categoryId?: string, categoryName?: string) => Promise<void>;
   showAllOption?: boolean;
   store?: ReturnType<typeof createCategoryStore>;
 }
@@ -138,7 +138,7 @@ export const CategorySelector = memo(function CategorySelector({
       const category = categories.find((cat) => cat.id === categoryId);
       onChange?.(categoryId, category);
       if (onCategoryCreated) {
-        await onCategoryCreated();
+        await onCategoryCreated(categoryId, category?.name);
       }
     },
     [onChange, onCategoryCreated, categories]

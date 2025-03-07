@@ -1,11 +1,8 @@
-import { TransactionList } from "@/features/transactions/components/transaction-list";
-import { TransactionSummary } from "@/features/transactions/components/transaction-summary";
 import { TransactionFilters } from "@/features/transactions/components/transaction-filters";
 import { Suspense } from "react";
 import { LoadingSpinner } from "@/shared/components/ui/loading-spinner";
 import { MonthFilter } from "@/features/transactions/components/month-filter";
 import { TransactionFilters as TransactionFiltersType } from "@/features/transactions/types";
-import { NewTransactionButton } from "@/features/transactions/components/new-transaction-button";
 import {
   getTransactionsList,
   getTransactionsSummary,
@@ -13,6 +10,8 @@ import {
 import { getCategoryById } from "@/features/categories/actions/categories";
 import { AnimatedPage } from "@/shared/components/layout/animated-page";
 import { TransactionsContainer } from "@/features/transactions/components/transactions-container";
+import { NewTransactionButton } from "@/features/transactions/components/new-transaction-button";
+import { TransactionSummary } from "@/features/transactions/components/transaction-summary";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -56,6 +55,8 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
               initialCategory={initialCategoryResponse?.data}
               initialSearch={search}
             />
+
+            <TransactionSummary initialSummary={initialSummary} />
           </div>
         </div>
         <Suspense fallback={<LoadingSpinner />}>
@@ -71,6 +72,9 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
           />
         </Suspense>
       </div>
+
+      <NewTransactionButton />
+
     </AnimatedPage>
   );
 } 

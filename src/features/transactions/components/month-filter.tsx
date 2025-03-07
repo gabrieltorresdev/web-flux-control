@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 import { useTransactions } from "@/features/transactions/hooks/use-transactions";
+import { useMonthFilterStore } from "@/shared/stores/month-filter-store";
 
 interface MonthFilterProps {
   initialMonth?: string;
@@ -18,23 +19,48 @@ interface MonthFilterProps {
 export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
   const router = useRouter();
   const { getParams } = useQueryParams<TransactionFiltersType>();
-  const now = new Date();
   const { isLoading, setLoading, startTransition } = useTransactions();
   const [isChangingMonth, setIsChangingMonth] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  
+  // Usar o store global com API aprimorada
+  const { 
+    month: storeMonth, 
+    year: storeYear, 
+    setDate,
+    goToPreviousMonth,
+    goToNextMonth
+  } = useMonthFilterStore();
 
   // Use o hook useRef para manter uma referência estável da data atual
   const currentDateRef = useRef(new Date());
 
-  // Use o hook useState com uma função de inicialização
+  // Use o hook useState com uma função de inicialização - SEM atualizar o estado global
   const [currentDate, setCurrentDate] = useState(() => {
-    const month = initialMonth ? parseInt(initialMonth) - 1 : now.getMonth();
-    const year = initialYear ? parseInt(initialYear) : now.getFullYear();
+    // Priorizar os valores do URL sobre os valores do store
+    const month = initialMonth 
+      ? parseInt(initialMonth) - 1 
+      : storeMonth - 1;
+    
+    const year = initialYear 
+      ? parseInt(initialYear) 
+      : storeYear;
 
     currentDateRef.current.setMonth(month);
     currentDateRef.current.setFullYear(year);
     return currentDateRef.current;
   });
+
+  // Atualizar o estado global com os valores iniciais da URL em um useEffect
+  useEffect(() => {
+    // Somente atualizar o store global se os valores da URL forem explicitamente fornecidos
+    if (initialMonth || initialYear) {
+      setDate(
+        initialMonth ? parseInt(initialMonth) : storeMonth,
+        initialYear ? parseInt(initialYear) : storeYear
+      );
+    }
+  }, [initialMonth, initialYear, storeMonth, storeYear, setDate]);
 
   // Debounce the current date changes
   const debouncedDate = useDebounce(currentDate, 500);
@@ -53,11 +79,14 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
       searchParams.set("month", newMonth);
       searchParams.set("year", newYear);
 
+      // Atualizar o store com os novos valores
+      setDate(parseInt(newMonth), parseInt(newYear));
+
       startTransition(() => {
         router.replace(`?${searchParams.toString()}`, { scroll: false });
       });
     }
-  }, [debouncedDate, getParams, router, startTransition]);
+  }, [debouncedDate, getParams, router, startTransition, setDate]);
 
   const handleDateChange = useCallback(
     (newDate: Date) => {
@@ -85,12 +114,14 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
     const newDate = new Date(currentDate);
     newDate.setMonth(currentDate.getMonth() - 1);
     handleDateChange(newDate);
+    // O store será atualizado via o useEffect do debouncedDate
   }, [currentDate, handleDateChange]);
 
   const handleNextMonth = useCallback(() => {
     const newDate = new Date(currentDate);
     newDate.setMonth(currentDate.getMonth() + 1);
     handleDateChange(newDate);
+    // O store será atualizado via o useEffect do debouncedDate
   }, [currentDate, handleDateChange]);
 
   const handleSelectMonth = useCallback(

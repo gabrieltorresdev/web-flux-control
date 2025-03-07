@@ -9,6 +9,7 @@ import { Card } from '@/shared/components/ui/card';
 import { InsightsGrid } from '@/features/dashboard/components/insights-grid';
 import { InsightsSkeleton } from '@/features/dashboard/components/insights-skeleton';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { TransactionSummary } from '@/features/transactions/components/transaction-summary';
 
 type SearchParams = {
   month?: string;

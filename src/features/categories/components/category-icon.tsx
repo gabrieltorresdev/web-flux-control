@@ -71,7 +71,7 @@ export function CategoryIcon({
   return (
     <div
       className={cn(
-        "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+        "w-full h-full rounded-full flex items-center justify-center transition-colors flex-shrink-0",
         isIncome
           ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-400/10 dark:text-emerald-400"
           : "bg-rose-500/10 text-rose-500 dark:bg-rose-400/10 dark:text-rose-400",
@@ -81,7 +81,7 @@ export function CategoryIcon({
     >
       {icon ? (
         icon.startsWith("emoji:") ? (
-          <span className={cn("text-sm", iconClassName)}>
+          <span className={cn("text-base", iconClassName)}>
             {icon.replace("emoji:", "")}
           </span>
         ) : (

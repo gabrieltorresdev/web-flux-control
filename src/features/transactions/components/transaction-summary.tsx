@@ -96,7 +96,7 @@ const SummaryContent = memo(function SummaryContent({
           <Card
             key={type}
             className={cn(
-              "p-3 bg-linear-to-br from-background to-muted/20 dark:from-background/50 dark:to-muted/30",
+              "p-3",
               isLoading && "animate-pulse"
             )}
           >

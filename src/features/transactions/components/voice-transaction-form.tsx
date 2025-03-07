@@ -26,12 +26,12 @@ import {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
-import { CreateCategoryDialog } from "@/features/categories/components/create-category-dialog";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 import { processAiTransaction } from "@/features/transactions/actions/transactions";
 import { motion, AnimatePresence } from "framer-motion";
 import { queryKeys } from "@/shared/lib/get-query-client";
 import { useDraftTransaction } from "@/features/transactions/hooks/use-draft-transaction";
+import { TransactionCreateCategoryDialog } from "./transaction-create-category-dialog";
 
 interface VoiceTransactionFormProps {
   register: UseFormRegister<CreateTransactionInput>;
@@ -120,7 +120,9 @@ export const VoiceTransactionForm = memo(
     }, [transcript, onDataChanged]);
 
     const handleCategoryCreated = useCallback(
-      async (categoryId: string, categoryName: string) => {
+      async (categoryId?: string, categoryName?: string) => {
+        if (!categoryId || !categoryName) return;
+        
         setValue("categoryId", categoryId);
         // Se o nome da categoria foi modificado, salvar ambos os nomes
         if (categoryName !== suggestedCategory) {
@@ -151,60 +153,12 @@ export const VoiceTransactionForm = memo(
       return { original, created: created || original };
     }, [suggestedCategory]);
 
-    // Renderiza o estado da categoria sugerida
-    const SuggestedCategoryState = useCallback(() => {
-      if (!suggestedCategory) return null;
-
-      const { original, created } = getSuggestedCategoryNames();
-      const wasModified = original !== created;
-      const isCreated = isSuggestedCategoryCreated();
-
-      return (
-        <div className="mt-4 rounded-lg border bg-muted p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-start sm:items-center gap-2">
-              {isCreated ? (
-                <Check className="h-4 w-4 text-green-500 mt-1 sm:mt-0" />
-              ) : (
-                <MousePointerClick className="h-4 w-4 mt-1 sm:mt-0" />
-              )}
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Categoria sugerida pela IA: <strong>{original}</strong>
-                </p>
-                {wasModified && isCreated && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                    <p className="text-xs text-muted-foreground">
-                      Modificada para: <strong>{created}</strong>
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-            {!isCreated && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full sm:w-auto"
-                onClick={() => setShowCreateCategoryDialog(true)}
-              >
-                Criar categoria
-              </Button>
-            )}
-          </div>
-        </div>
-      );
-    }, [
-      suggestedCategory,
-      getSuggestedCategoryNames,
-      isSuggestedCategoryCreated,
-    ]);
-
     const handleConvertTranscript = useCallback(() => {
       if (!transcript.trim()) return;
 
+      // Clear previous category selection when processing a new transcript
+      setValue("categoryId", "");
+      
       convertTranscriptMutation.mutate(undefined, {
         onSuccess: () => {
           setFormVisible(true);
@@ -214,7 +168,7 @@ export const VoiceTransactionForm = memo(
           setFormVisible(false);
         },
       });
-    }, [convertTranscriptMutation, transcript]);
+    }, [convertTranscriptMutation, transcript, setValue]);
 
     const handleBack = useCallback(() => {
       setFormVisible(false);
@@ -358,8 +312,6 @@ export const VoiceTransactionForm = memo(
                 </Button>
               </div>
 
-              <SuggestedCategoryState />
-
               <div className="mt-4">
                 <TransactionForm
                   onSubmit={onSubmit}
@@ -369,6 +321,7 @@ export const VoiceTransactionForm = memo(
                   watch={watch}
                   getValues={getValues}
                   isSubmitting={isSubmitting}
+                  suggestedCategory={suggestedCategory}
                 />
               </div>
             </motion.div>
@@ -376,7 +329,7 @@ export const VoiceTransactionForm = memo(
         </AnimatePresence>
 
         {suggestedCategory && (
-          <CreateCategoryDialog
+          <TransactionCreateCategoryDialog
             open={showCreateCategoryDialog}
             onOpenChange={setShowCreateCategoryDialog}
             defaultCategoryName={getSuggestedCategoryNames().original}
@@ -423,6 +376,7 @@ const useTranscriptConversion = (
       }
 
       if (transaction.data) {
+        // Definir os valores básicos do formulário
         setValue("title", transaction.data.title);
         setValue("amount", transaction.data.amount || 0);
         
@@ -430,9 +384,14 @@ const useTranscriptConversion = (
           setValue("dateTime", new Date(transaction.data.dateTime));
         }
         
-        // If categoryId is empty, use the title as a suggested category
-        if (!transaction.data.categoryId && transaction.data.title) {
-          setSuggestedCategory(transaction.data.title);
+        // Se a IA encontrou uma categoria existente, definir o ID
+        if (transaction.data.categoryId) {
+          setValue("categoryId", transaction.data.categoryId);
+        }
+        
+        // Se a IA sugeriu uma categoria que não existe, armazenar a sugestão
+        if ('suggestedCategory' in transaction.data && transaction.data.suggestedCategory) {
+          setSuggestedCategory(transaction.data.suggestedCategory);
         }
       }
     }

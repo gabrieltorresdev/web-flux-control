@@ -33,7 +33,7 @@ interface TransactionFiltersProps {
 }
 
 // Componente reutilizável para o badge do filtro
-const FilterBadge = motion(Badge);
+const FilterBadge = motion.create(Badge);
 
 export function TransactionFilters({
   initialCategoryId,
@@ -96,7 +96,7 @@ export function TransactionFilters({
       <motion.div
         initial={false}
         animate={{
-          height: hasActiveFilters ? "auto" : 48,
+          height: 48,
           backgroundColor: hasActiveFilters
             ? "var(--active-filter-bg)"
             : "var(--card-bg)",

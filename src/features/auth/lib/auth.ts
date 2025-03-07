@@ -98,7 +98,6 @@ const buildKeycloakParams = (
 };
 
 const handleKeycloakError = (error: unknown): KeycloakAuthResult => {
-  console.error("Keycloak authentication error:", error);
   return {
     success: false,
     error: error instanceof Error ? error : new Error("Unknown error"),
@@ -119,13 +118,11 @@ async function fetchUserInfo(
     );
 
     if (!response.ok) {
-      console.error("Failed to fetch user info");
       return null;
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error fetching user info:", error);
     return null;
   }
 }
@@ -150,7 +147,6 @@ async function authenticateKeycloak(
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Keycloak error response:", data);
       return {
         success: false,
         error: new Error(data.error_description || DEFAULT_ERROR_MESSAGE),
@@ -190,7 +186,6 @@ export const { handlers, auth,  signOut } = NextAuth({
           const result = await authenticateKeycloak(username, password);
 
           if (!result.success || !result.data || !result.userInfo) {
-            console.error("Authentication failed:", result.error);
             return null;
           }
 
@@ -206,7 +201,6 @@ export const { handlers, auth,  signOut } = NextAuth({
             refreshToken: result.data.refresh_token,
           };
         } catch (error) {
-          console.error("Authorization error:", error);
           return null;
         }
       },
@@ -220,9 +214,6 @@ export const { handlers, auth,  signOut } = NextAuth({
     async jwt({ token, user }): Promise<JWT> {
       // Initial sign in
       if (user) {
-        if (process.env.NODE_ENV === "development") {
-          console.log("Initial token setup");
-        }
         return {
           ...token,
           accessToken: (user as User).accessToken,
@@ -235,15 +226,6 @@ export const { handlers, auth,  signOut } = NextAuth({
         };
       }
 
-      if (process.env.NODE_ENV === "development") {
-        console.log("Checking token expiration:", {
-          hasAccessToken: !!token.accessToken,
-          hasExpiry: !!token.accessTokenExpires,
-          currentTime: Math.floor(Date.now() / 1000),
-          expiryTime: token.accessTokenExpires,
-        });
-      }
-
       // Return previous token if the access token has not expired yet
       if (
         token.accessToken &&
@@ -253,14 +235,7 @@ export const { handlers, auth,  signOut } = NextAuth({
           token.accessTokenExpires
         )
       ) {
-        if (process.env.NODE_ENV === "development") {
-          console.log("Token still valid, returning existing token");
-        }
         return token;
-      }
-
-      if (process.env.NODE_ENV === "development") {
-        console.log("Token expired, attempting refresh");
       }
 
       // Access token has expired, try to refresh it
@@ -269,9 +244,6 @@ export const { handlers, auth,  signOut } = NextAuth({
           const response = await TokenManager.refreshToken(token.refreshToken);
 
           if (response) {
-            if (process.env.NODE_ENV === "development") {
-              console.log("Token refresh successful");
-            }
             return {
               ...token,
               accessToken: response.access_token,
@@ -281,7 +253,6 @@ export const { handlers, auth,  signOut } = NextAuth({
             };
           }
         } catch (error) {
-          console.error("Error refreshing token:", error);
           return {
             ...token,
             error: "RefreshAccessTokenError",
@@ -289,9 +260,6 @@ export const { handlers, auth,  signOut } = NextAuth({
         }
       }
 
-      if (process.env.NODE_ENV === "development") {
-        console.log("No refresh token available or refresh failed");
-      }
       return {
         ...token,
         error: "RefreshAccessTokenError",
@@ -334,7 +302,7 @@ export const { handlers, auth,  signOut } = NextAuth({
             }
           );
         } catch (error) {
-          console.error("Error during Keycloak logout:", error);
+          // Silently handle logout errors
         }
       }
     },

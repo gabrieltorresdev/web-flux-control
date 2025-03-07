@@ -14,7 +14,7 @@ interface CategoryBadgeProps {
   className?: string;
 }
 
-const MotionBadge = motion(Badge);
+const MotionBadge = motion.create(Badge);
 
 export function CategoryBadge({
   category,
@@ -25,9 +25,9 @@ export function CategoryBadge({
 
   return (
     <MotionBadge
-      variant="secondary"
+      variant="default"
       className={cn(
-        "gap-1.5 pl-2 pr-1 py-0.5 whitespace-nowrap group inline-flex items-center",
+        "gap-1.5 pl-2 pr-1 py-0 whitespace-nowrap group inline-flex items-center",
         isIncome
           ? "bg-[hsl(var(--income)/0.08)] hover:bg-[hsl(var(--income)/0.12)] text-[hsl(var(--income-foreground))] border-[hsl(var(--income)/0.2)] hover:border-[hsl(var(--income)/0.3)]"
           : "bg-[hsl(var(--expense)/0.08)] hover:bg-[hsl(var(--expense)/0.12)] text-[hsl(var(--expense-foreground))] border-[hsl(var(--expense)/0.2)] hover:border-[hsl(var(--expense)/0.3)]",
@@ -41,7 +41,7 @@ export function CategoryBadge({
           isIncome={isIncome}
           className="h-3 w-3 opacity-70"
         />
-        <span className="truncate max-w-[200px] text-sm font-medium">
+        <span className="truncate max-w-[200px] text-xs font-medium">
           {category.name}
         </span>
       </div>

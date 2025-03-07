@@ -1,9 +1,9 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, MousePointerClick, AlertTriangle } from "lucide-react";
 import { CreateTransactionInput } from "@/features/transactions/types";
 import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
 import {
@@ -21,6 +21,7 @@ import {
   createCategorySelectors,
 } from "@/features/categories/stores/category-store";
 import { Category } from "@/features/categories/types";
+import { TransactionCreateCategoryDialog } from "./transaction-create-category-dialog";
 
 interface TransactionFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -30,6 +31,8 @@ interface TransactionFormProps {
   watch: UseFormWatch<CreateTransactionInput>;
   getValues: UseFormGetValues<CreateTransactionInput>;
   isSubmitting?: boolean;
+  selectedCategory?: Category;
+  suggestedCategory?: string;
 }
 
 export const TransactionForm = memo(function TransactionForm({
@@ -40,21 +43,45 @@ export const TransactionForm = memo(function TransactionForm({
   watch,
   getValues,
   isSubmitting,
+  selectedCategory: initialSelectedCategory,
+  suggestedCategory,
 }: TransactionFormProps) {
   const queryClient = useQueryClient();
   const categoryId = watch("categoryId");
   const amount = watch("amount");
   const selectors = createCategorySelectors(useCategoryStore);
   const { categories } = selectors();
+  const [showCreateCategoryDialog, setShowCreateCategoryDialog] = useState(false);
+  
+  // Use the prop if provided, otherwise find it in the categories
   const selectedCategory = useMemo(
-    () => categories?.find((cat: Category) => cat.id === categoryId),
-    [categories, categoryId]
+    () => initialSelectedCategory || categories?.find((cat: Category) => cat.id === categoryId),
+    [categories, categoryId, initialSelectedCategory]
   );
 
-  const handleCategoryCreated = async () => {
+  const handleCategoryCreated = async (categoryId?: string, categoryName?: string) => {
+    // Define o ID da categoria criada no formulário (se existir)
+    if (categoryId) {
+      setValue("categoryId", categoryId);
+    }
+    setShowCreateCategoryDialog(false);
+
+    // Revalidar o cache das categorias para atualizar o seletor
     await queryClient.invalidateQueries({
       queryKey: queryKeys.categories.all,
     });
+  };
+
+  // Função para verificar se a categoria sugerida já foi criada
+  const isSuggestedCategoryCreated = () => {
+    return categoryId && categoryId.length > 0;
+  };
+
+  // Função para extrair os nomes da categoria do draft
+  const getSuggestedCategoryNames = () => {
+    if (!suggestedCategory) return { original: "", created: "" };
+    const [original, created] = suggestedCategory.split("|");
+    return { original, created: created || original };
   };
 
   return (
@@ -148,6 +175,31 @@ export const TransactionForm = memo(function TransactionForm({
                 Categoria é obrigatória
               </p>
             )}
+            
+            {/* AI Category Suggestion Alert - só mostra se tiver sugestão e não tiver categoria selecionada */}
+            {suggestedCategory && !categoryId && (
+              <div className="mt-2 rounded-lg border bg-muted p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-start sm:items-center gap-2">
+                    <MousePointerClick className="h-4 w-4 mt-1 sm:mt-0" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Categoria sugerida pela IA: <strong>{getSuggestedCategoryNames().original}</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    onClick={() => setShowCreateCategoryDialog(true)}
+                  >
+                    Criar categoria
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -170,6 +222,16 @@ export const TransactionForm = memo(function TransactionForm({
           )}
         </Button>
       </div>
+      
+      {/* Modal de criação de categoria */}
+      {suggestedCategory && (
+        <TransactionCreateCategoryDialog
+          open={showCreateCategoryDialog}
+          onOpenChange={setShowCreateCategoryDialog}
+          defaultCategoryName={getSuggestedCategoryNames().original}
+          onSuccess={handleCategoryCreated}
+        />
+      )}
     </form>
   );
 });

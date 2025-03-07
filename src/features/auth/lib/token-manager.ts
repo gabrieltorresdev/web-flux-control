@@ -40,9 +40,6 @@ export class TokenManager {
       const decoded = jwtDecode<DecodedToken>(token);
       return decoded.exp <= currentTime + this.TOKEN_EXPIRY_THRESHOLD;
     } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Error checking token expiration:", error);
-      }
       return true;
     }
   }
@@ -85,10 +82,6 @@ export class TokenManager {
       );
 
       if (!response.ok) {
-        if (process.env.NODE_ENV === "development") {
-          const errorText = await response.text();
-          console.error("Token refresh failed:", errorText);
-        }
         return null;
       }
 
@@ -96,17 +89,11 @@ export class TokenManager {
 
       // Validate the response has the expected fields
       if (!this.isValidRefreshResponse(data)) {
-        if (process.env.NODE_ENV === "development") {
-          console.error("Invalid refresh token response");
-        }
         return null;
       }
 
       return data;
     } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Error refreshing token:", error);
-      }
       return null;
     }
   }

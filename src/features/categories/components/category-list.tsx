@@ -54,15 +54,15 @@ const CategoryGroup = memo(function CategoryGroup({
     >
       <Card
         className={cn(
-          "overflow-hidden border-0 bg-transparent shadow-none",
-          "sm:bg-background sm:border sm:shadow-xs"
+          "overflow-hidden border-0 shadow-none",
+          "sm:border sm:shadow-xs"
         )}
       >
         <div
           className={cn(
             "divide-y divide-border/50",
             "sm:divide-y sm:space-y-0",
-            "rounded-xl bg-background shadow-xs space-y-2 divide-y-0 sm:rounded-none sm:shadow-none"
+            "rounded-xl shadow-xs space-y-2 divide-y-0 sm:rounded-none sm:shadow-none"
           )}
         >
           <div className="flex items-center gap-2 px-4 py-3 border-b">

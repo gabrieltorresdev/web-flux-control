@@ -111,7 +111,7 @@ export async function deleteTransaction(
 
 export async function processAiTransaction(
   transcript: string
-): Promise<ServerActionResult<CreateTransactionInput>> {
+): Promise<ServerActionResult<CreateTransactionInput & { suggestedCategory?: string }>> {
   try {
     const aiService = new AiTransactionService(
       process.env.NODE_ENV === "development"
@@ -124,11 +124,24 @@ export async function processAiTransaction(
     );
 
     let categoryId = "";
+    let suggestedCategory = undefined;
+    
     try {
-      const categoryResponse = await getCategoryByName(aiTransaction.title);
+      // Tentar encontrar a categoria pelo nome sugerido pela IA
+      const categoryResponse = await getCategoryByName(aiTransaction.category);
       categoryId = categoryResponse?.data?.id ?? "";
-    } catch {
-      // Se a categoria não existir, retornamos o título como sugestão
+      
+      // Se a categoria existir, não precisamos sugerir
+      // Se não existir, armazenamos como sugestão
+      if (!categoryId && aiTransaction.category) {
+        suggestedCategory = aiTransaction.category;
+      }
+    } catch (error) {
+      console.error("Erro ao buscar categoria:", error);
+      // Se falhar ao buscar a categoria, ainda assim guardamos a sugestão
+      if (aiTransaction.category) {
+        suggestedCategory = aiTransaction.category;
+      }
     }
 
     return {
@@ -136,7 +149,8 @@ export async function processAiTransaction(
         title: aiTransaction.title,
         amount: aiTransaction.amount,
         dateTime: aiTransaction.dateTime,
-        categoryId,
+        categoryId, // ID da categoria se existir
+        suggestedCategory, // Nome da categoria sugerida se não existir
       },
     };
   } catch (error) {

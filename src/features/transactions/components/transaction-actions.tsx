@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVertical, Pencil, Trash, Loader2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,52 +51,64 @@ export function TransactionActions({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-muted"
-            aria-label="Abrir menu"
+            className="h-8 w-8 p-0 hover:bg-muted rounded-full flex items-center justify-center"
+            aria-label="Ações"
           >
-            <MoreVertical className="h-4 w-4" />
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">Ações</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-44 rounded-lg shadow-md">
+          <div className="px-3 py-1.5 text-xs text-muted-foreground font-medium">
+            Ações
+          </div>
+          <div className="h-px bg-border/50 -mx-1 my-0.5"></div>
           <DropdownMenuItem
             onSelect={() => setShowEditDialog(true)}
-            className="gap-2"
+            className="gap-2 py-2 cursor-pointer"
           >
-            <Pencil className="h-4 w-4" />
-            Editar
+            <Pencil className="h-3.5 w-3.5" />
+            <span className="text-sm">Editar</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => setShowDeleteAlert(true)}
-            className="gap-2 text-red-600"
+            className="gap-2 py-2 text-destructive cursor-pointer"
           >
-            <Trash className="h-4 w-4" />
-            Excluir
+            <Trash className="h-3.5 w-3.5" />
+            <span className="text-sm">Excluir</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A transação será excluída
-              permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
+        <AlertDialogContent className="max-w-[350px] rounded-xl p-0 overflow-hidden">
+          <div className="p-6">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir transação</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm">
+                Excluir esta transação? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="bg-muted/30 p-3 flex items-center space-x-2 justify-end">
+            <AlertDialogCancel className="rounded-full h-9 text-sm px-4 m-0" disabled={isDeleting}>
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90 rounded-full h-9 text-sm px-4"
             >
               {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
               ) : (
-                "Excluir"
+                <>
+                  <Trash className="mr-2 h-4 w-4" />
+                  Excluir
+                </>
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

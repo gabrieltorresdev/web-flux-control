@@ -18,12 +18,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { FilterNavLink } from "./filter-nav-link";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Wallet, label: "Transações", href: "/dashboard/transactions" },
   { icon: Tags, label: "Categorias", href: "/dashboard/categories" },
+  { icon: Settings, label: "Configurações", href: "/dashboard/settings" },
 ];
 
 function useAvailableSpace() {
@@ -106,14 +108,14 @@ export function AppHeader() {
   const hiddenItems = menuItems.slice(menuState.visibleCount);
 
   const Logo = () => (
-    <Link href="/dashboard" className="flex items-center gap-2">
+    <FilterNavLink href="/dashboard" className="flex items-center gap-2">
       <div className="bg-primary/10 dark:bg-primary/20 w-8 h-8 rounded-lg flex items-center justify-center">
         <span className="text-primary font-semibold text-lg">F</span>
       </div>
       <h1 className="text-lg font-semibold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
         FluxControl
       </h1>
-    </Link>
+    </FilterNavLink>
   );
 
   return (
@@ -127,20 +129,6 @@ export function AppHeader() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Link href="/dashboard/settings">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "rounded-full hover:bg-primary/10",
-                  pathname.startsWith("/dashboard/settings") &&
-                    "bg-primary/10 text-primary"
-                )}
-              >
-                <Settings className="h-4 w-4" />
-                <span className="sr-only">Configurações</span>
-              </Button>
-            </Link>
           </div>
         </header>
       </div>
@@ -156,18 +144,14 @@ export function AppHeader() {
 
                 return (
                   <li key={item.href}>
-                    <Link
+                    <FilterNavLink
                       href={item.href}
-                      className={cn(
-                        "flex items-center gap-2 px-4 py-3 text-sm border-b-2 hover:border-gray-300 transition-colors whitespace-nowrap",
-                        isActive
-                          ? "border-primary text-primary font-medium"
-                          : "border-transparent text-muted-foreground hover:text-foreground"
-                      )}
+                      className="flex items-center gap-2 px-4 py-3 text-sm border-b-2 hover:border-gray-300 transition-colors whitespace-nowrap"
+                      activeClassName="border-primary text-primary font-medium"
                     >
                       <Icon className="h-4 w-4" />
                       {item.label}
-                    </Link>
+                    </FilterNavLink>
                   </li>
                 );
               })}
@@ -191,16 +175,14 @@ export function AppHeader() {
                     
                     return (
                       <DropdownMenuItem key={item.href} asChild>
-                        <Link
+                        <FilterNavLink
                           href={item.href}
-                          className={cn(
-                            "flex items-center gap-2 w-full",
-                            isActive && "text-primary font-medium"
-                          )}
+                          className="flex items-center gap-2 w-full"
+                          activeClassName="text-primary font-medium"
                         >
                           <Icon className="h-4 w-4" />
                           {item.label}
-                        </Link>
+                        </FilterNavLink>
                       </DropdownMenuItem>
                     );
                   })}

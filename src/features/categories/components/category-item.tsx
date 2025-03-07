@@ -217,7 +217,7 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
             onDragEnd={handleDragEnd}
             onClick={handleTap}
             className={cn(
-              "touch-manipulation bg-background cursor-pointer",
+              "touch-manipulation cursor-pointer",
               "active:bg-accent/50 transition-colors"
             )}
           >
