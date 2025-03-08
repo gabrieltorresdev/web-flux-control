@@ -30,9 +30,11 @@ export default async function RootLayout({
         activityCheckInterval={30 * 1000}  // 30 seconds in milliseconds
         showNotifications={false}
       />
-      <div className="flex-1 flex flex-col bg-foreground/[0.02] min-h-screen w-full pb-24">
+      <div className="flex-1 flex flex-col min-h-screen">
         <AppHeader />
-        <div className="flex-1 overflow-y-auto py-3 relative">{children}</div>
+        <div className="flex-1 bg-muted/5 overflow-y-auto py-4 md:py-6 relative">
+          {children}
+        </div>
       </div>
     </>
   );

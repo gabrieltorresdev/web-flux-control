@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { refreshSession } from "@/features/auth/actions/session";
-import { toast } from "@/shared/hooks/use-toast";
+import { toast } from "sonner";
 
 interface SessionKeepAliveProps {
   // Time in milliseconds before session refresh (default: 4 minutes)
@@ -57,33 +57,28 @@ export function SessionKeepAlive({
         await update();
         
         if (showNotifications) {
-          toast({
-            title: "Sessão Atualizada",
+          toast.success("Sessão Atualizada", {
             description: "Sua sessão foi atualizada automaticamente.",
             duration: 3000,
           });
         }
       } else if (result.error && showNotifications) {
-        toast({
-          title: "Aviso de Sessão",
+        toast.error("Aviso de Sessão", {
           description: "Sua sessão está prestes a expirar. Por favor, salve seu trabalho.",
-          variant: "destructive",
           duration: 5000,
         });
       }
     } catch (error) {
       console.error("Error refreshing session:", error);
       if (showNotifications) {
-        toast({
-          title: "Erro de Sessão",
+        toast.error("Erro de Sessão", {
           description: "Houve um problema ao atualizar sua sessão.",
-          variant: "destructive",
           duration: 5000,
         });
       }
     }
   }, [session, update, showNotifications, isIdle, refreshInterval]);
-  
+
   // Set up activity tracking
   useEffect(() => {
     // List of events to track for user activity

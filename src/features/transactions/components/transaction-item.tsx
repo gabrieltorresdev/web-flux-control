@@ -18,7 +18,6 @@ import { Transaction } from "@/features/transactions/types";
 import { format } from "date-fns";
 import { formatNumberToBRL } from "@/shared/utils";
 import { TransactionActions } from "./transaction-actions";
-import { useToast } from "@/shared/hooks/use-toast";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { CategoryIcon } from "@/features/categories/components/category-icon";
 import { deleteTransaction } from "@/features/transactions/actions/transactions";
@@ -35,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 // Extend the Transaction type from the imported type
 interface ExtendedTransaction extends Transaction {
@@ -52,7 +52,6 @@ interface TransactionContentProps {
 }
 
 export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
-  const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -66,16 +65,13 @@ export const TransactionItem = memo(({ transaction }: TransactionItemProps) => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.transactions.all,
       });
-      toast({
-        title: "Transação excluída",
+      toast.success("Transação excluída", {
         description: "A transação foi excluída com sucesso.",
       });
       setIsDeleteDialogOpen(false);
     } catch {
-      toast({
-        title: "Erro ao excluir",
+      toast.error("Erro ao excluir", {
         description: "Ocorreu um erro ao excluir a transação.",
-        variant: "destructive",
       });
     } finally {
       setIsDeleting(false);

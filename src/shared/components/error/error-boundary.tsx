@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import { signOut } from "next-auth/react";
-import { toast } from "@/shared/hooks/use-toast";
-
+import { toast } from "sonner";
 interface ErrorBoundaryProps {
   error: Error;
 }
@@ -21,10 +20,9 @@ export function ErrorBoundary({ error }: ErrorBoundaryProps) {
 
     if (isSessionExpired) {
       // Show session expired toast
-      toast({
-        title: "Sessão Encerrada",
-        description: "Sua sessão foi encerrada por inatividade. Por favor, faça login novamente.",
-        variant: "destructive",
+      toast.error("Sessão Encerrada", {
+        description:
+          "Sua sessão foi encerrada por inatividade. Por favor, faça login novamente.",
         duration: 5000,
       });
 

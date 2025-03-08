@@ -1,7 +1,20 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
-import { Toaster } from "@/shared/components/ui/toaster";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+import { Toaster } from "@/shared/components/ui/sonner";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 
 export const metadata: Metadata = {
   title: "Flux Control",
@@ -18,10 +31,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className="min-h-screen font-sans antialiased">
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen flex flex-col`}>
         <Providers>
-          <main className="min-h-screen w-full">{children}</main>
-          <Toaster />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Toaster position="bottom-right" closeButton richColors />
         </Providers>
       </body>
     </html>

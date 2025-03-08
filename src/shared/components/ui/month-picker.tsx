@@ -86,7 +86,7 @@ export const MonthPicker = React.memo(function MonthPicker({
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={setIsOpen} modal>
         <PopoverTrigger asChild>
           <Button
             type="button"

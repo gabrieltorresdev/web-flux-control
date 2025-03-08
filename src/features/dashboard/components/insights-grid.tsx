@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, ArrowUpRight, Info, ChevronDown, AlertTriangle, ExternalLink, ChevronRight } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, Info, ChevronDown, AlertTriangle, ExternalLink, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
   Alert,
@@ -36,99 +36,118 @@ interface InsightsGridProps {
   insights: Insight[];
 }
 
-function InsightCard({ insight, index }: { insight: Insight; index: number }) {
-  const [expanded, setExpanded] = useState(false);
+interface InsightCardProps {
+  insight: Insight;
+  index: number;
+  expanded: boolean;
+  onToggleExpand: () => void;
+}
+
+function InsightCard({ insight, index, expanded, onToggleExpand }: InsightCardProps) {
+  const variantStyles = {
+    success: {
+      bg: 'bg-success/10',
+      sidebar: 'bg-success/20',
+      text: 'text-success',
+      hover: 'hover:bg-success/10 hover:text-success/80',
+    },
+    warning: {
+      bg: 'bg-warning/10',
+      sidebar: 'bg-warning/20',
+      text: 'text-warning',
+      hover: 'hover:bg-warning/10 hover:text-warning/80',
+    },
+    info: {
+      bg: 'bg-info/10',
+      sidebar: 'bg-info/20',
+      text: 'text-info',
+      hover: 'hover:bg-info/10 hover:text-info/80',
+    },
+    danger: {
+      bg: 'bg-destructive/10',
+      sidebar: 'bg-destructive/20',
+      text: 'text-destructive',
+      hover: 'hover:bg-destructive/10 hover:text-destructive/80',
+    },
+  };
+  
+  // Mapeia os tipos de insight para as variantes de alerta compatíveis
+  const getAlertVariant = (type: Insight['type']) => {
+    if (type === 'danger') return 'destructive';
+    if (type === 'success') return 'success';
+    if (type === 'warning') return 'warning';
+    if (type === 'info') return 'info';
+    return 'default';
+  };
+  
+  // Renderiza o ícone baseado no tipo de insight
+  const renderIcon = () => {
+    switch (insight.type) {
+      case 'success': return <TrendingUp className="h-4 w-4" />;
+      case 'warning': return <ArrowUpRight className="h-4 w-4" />;
+      case 'info': return <Info className="h-4 w-4" />;
+      case 'danger': return <AlertTriangle className="h-4 w-4" />;
+      default: return null;
+    }
+  };
   
   return (
-    <Alert
-      key={`${insight.category}-${index}`}
-      variant={insight.type === 'danger' ? 'destructive' : insight.type}
-      className={cn(
-        "relative overflow-hidden pl-10 pr-3 py-2.5 min-h-[4.5rem] h-full",
-        {
-          'bg-success/10 dark:bg-success/10': insight.type === 'success',
-          'bg-warning/10 dark:bg-warning/10': insight.type === 'warning',
-          'bg-info/10 dark:bg-info/10': insight.type === 'info',
-          'bg-destructive/10 dark:bg-destructive/10': insight.type === 'danger'
-        }
-      )}
-    >
-      <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center",
-        {
-          'bg-success/20 dark:bg-success/20': insight.type === 'success',
-          'bg-warning/20 dark:bg-warning/20': insight.type === 'warning',
-          'bg-info/20 dark:bg-info/20': insight.type === 'info',
-          'bg-destructive/20 dark:bg-destructive/20': insight.type === 'danger'
-        }
-      )}>
-        {insight.type === 'success' && <TrendingUp className="h-4 w-4" />}
-        {insight.type === 'warning' && <ArrowUpRight className="h-4 w-4" />}
-        {insight.type === 'info' && <Info className="h-4 w-4" />}
-        {insight.type === 'danger' && <AlertTriangle className="h-4 w-4" />}
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <AlertTitle className="text-sm font-medium line-clamp-1">
-            {insight.title}
-          </AlertTitle>
-          <div className="flex items-center space-x-1">
-            {insight.metadata.actionUrl && (
-              <Link href={insight.metadata.actionUrl}>
-                <Button 
-                  size="icon"
-                  variant="ghost"
-                  className={cn(
-                    "h-6 w-6",
-                    {
-                      'text-success hover:text-success/80 hover:bg-success/10': insight.type === 'success',
-                      'text-warning hover:text-warning/80 hover:bg-warning/10': insight.type === 'warning',
-                      'text-info hover:text-info/80 hover:bg-info/10': insight.type === 'info',
-                      'text-destructive hover:text-destructive/80 hover:bg-destructive/10': insight.type === 'danger'
-                    }
-                  )}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-        
-        <div className="text-xs text-muted-foreground mt-1 relative">
-          {expanded ? (
-            <AlertDescription className="text-xs text-muted-foreground">
-              {insight.description}
-            </AlertDescription>
-          ) : (
-            <div className="flex items-center">
-              <span className="line-clamp-1 flex-1">{insight.description}</span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-5 w-5 p-0 ml-1"
-                onClick={() => setExpanded(true)}
-              >
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-            </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Alert
+          key={`${insight.category}-${index}`}
+          variant={getAlertVariant(insight.type)}
+          className={cn(
+            "relative overflow-hidden min-h-[4.5rem] h-full group cursor-pointer",
+            variantStyles[insight.type].bg
           )}
+          onClick={onToggleExpand}
+        >
+          {renderIcon()}
           
-          {expanded && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-[10px] px-1.5 py-0 h-5 mt-1 opacity-60 hover:opacity-100"
-              onClick={() => setExpanded(false)}
-            >
-              <ChevronDown className="h-3 w-3 rotate-180 mr-1" />
-              <span>Menos</span>
-            </Button>
-          )}
-        </div>
-      </div>
-    </Alert>
+          <div>
+            <AlertTitle className="font-medium">
+              {insight.title}
+              {insight.metadata.actionUrl && (
+                <Link 
+                  href={insight.metadata.actionUrl} 
+                  className="float-right"
+                  onClick={(e) => e.stopPropagation()} // Impede que o clique no link acione o toggle
+                >
+                  <Button 
+                    size="icon"
+                    variant="ghost"
+                    className={cn(
+                      "h-6 w-6",
+                      variantStyles[insight.type].text,
+                      variantStyles[insight.type].hover
+                    )}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              )}
+            </AlertTitle>
+            
+            <AlertDescription className="text-xs">
+              {expanded ? (
+                <div>
+                  {insight.description}
+                </div>
+              ) : (
+                <div className="line-clamp-1">
+                  {insight.description}
+                </div>
+              )}
+            </AlertDescription>
+          </div>
+          
+        </Alert>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        {expanded ? 'Clique para recolher' : 'Clique para expandir'}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -139,7 +158,11 @@ const carouselOptions = {
   dragFree: true,
 } as const;
 
-function MobileCarousel({ insights }: { insights: Insight[] }) {
+function MobileCarousel({ insights, expanded, toggleExpandAll }: { 
+  insights: Insight[];
+  expanded: boolean;
+  toggleExpandAll: () => void;
+}) {
   const [emblaRef, emblaApi] = useEmblaCarousel(carouselOptions);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -165,10 +188,15 @@ function MobileCarousel({ insights }: { insights: Insight[] }) {
               key={index} 
               className={cn(
                 "flex-[0_0_95%] min-w-0 relative pr-4 transition-opacity duration-300",
-                index !== currentSlide && "opacity-60"
+                index !== currentSlide && "opacity-70"
               )}
             >
-              <InsightCard insight={insight} index={index} />
+              <InsightCard 
+                insight={insight} 
+                index={index} 
+                expanded={expanded}
+                onToggleExpand={toggleExpandAll}
+              />
             </div>
           ))}
         </div>
@@ -182,7 +210,7 @@ function MobileCarousel({ insights }: { insights: Insight[] }) {
             className={cn(
               "h-1 rounded-full transition-all duration-300",
               currentSlide === index
-                ? "bg-primary/80 w-5"
+                ? "bg-primary w-5"
                 : "bg-primary/20 w-2.5"
             )}
           />
@@ -194,10 +222,15 @@ function MobileCarousel({ insights }: { insights: Insight[] }) {
 
 export function InsightsGrid({ insights }: InsightsGridProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [areInsightsExpanded, setAreInsightsExpanded] = useState(false);
+  
+  const toggleExpandAll = () => {
+    setAreInsightsExpanded(!areInsightsExpanded);
+  };
 
   if (!insights?.length) {
     return (
-      <div className="flex items-center justify-center py-6 px-4 border rounded-lg bg-muted/10">
+      <div className="flex items-center justify-center py-6 px-4 border rounded-lg bg-card/50">
         <div className="text-center">
           <Info className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
           <p className="text-sm font-medium">Nenhum insight disponível</p>
@@ -211,26 +244,36 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
 
   return (
     <TooltipProvider>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {/* Mobile Carousel View */}
         <div className="sm:hidden">
-          <MobileCarousel insights={insights} />
+          <MobileCarousel 
+            insights={insights} 
+            expanded={areInsightsExpanded}
+            toggleExpandAll={toggleExpandAll}
+          />
         </div>
 
         {/* Desktop Grid View */}
-        <div className="hidden sm:grid gap-3 sm:grid-cols-2">
+        <div className="hidden sm:grid gap-4 sm:grid-cols-2">
           {visibleInsights.map((insight, index) => (
-            <InsightCard key={index} insight={insight} index={index} />
+            <InsightCard 
+              key={index} 
+              insight={insight} 
+              index={index} 
+              expanded={areInsightsExpanded}
+              onToggleExpand={toggleExpandAll}
+            />
           ))}
         </div>
 
         {/* Show More Button (Desktop Only) */}
         {hasMoreInsights && (
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex justify-center">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full text-xs font-medium text-muted-foreground hover:text-foreground group"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground group w-40"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               <span className="flex items-center gap-2">
@@ -239,21 +282,17 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
                     Ver mais
                     <Badge 
                       variant="secondary"
-                      className="bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                      className="bg-primary/10 text-primary ml-1"
                     >
                       +{insights.length - 2}
                     </Badge>
-                    insights
                   </>
                 )}
               </span>
               <ChevronDown 
                 className={cn(
-                  "ml-1 h-3 w-3 transition-transform duration-200",
-                  {
-                    "rotate-180": isExpanded,
-                    "group-hover:translate-y-1": !isExpanded
-                  }
+                  "h-3.5 w-3.5 ml-1 transition-transform duration-200",
+                  isExpanded && "rotate-180"
                 )} 
               />
             </Button>

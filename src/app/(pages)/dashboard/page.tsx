@@ -5,11 +5,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/aler
 import { AnimatedPage } from '@/shared/components/layout/animated-page';
 import { MonthFilter } from '@/features/transactions/components/month-filter';
 import { auth } from "@/features/auth/lib/auth";
-import { Card } from '@/shared/components/ui/card';
 import { InsightsGrid } from '@/features/dashboard/components/insights-grid';
 import { InsightsSkeleton } from '@/features/dashboard/components/insights-skeleton';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { TransactionSummary } from '@/features/transactions/components/transaction-summary';
 
 type SearchParams = {
   month?: string;
@@ -36,7 +34,7 @@ async function DashboardContent({ month, year }: SearchParams) {
 
   if (error || !insights) {
     return (
-      <div className="max-w-7xl mx-auto px-3 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
@@ -50,11 +48,11 @@ async function DashboardContent({ month, year }: SearchParams) {
 
   return (
     <AnimatedPage>
-      <div className="max-w-7xl mx-auto flex flex-col gap-3 px-3">
+      <div className="max-w-7xl mx-auto flex flex-col gap-4 px-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-muted-foreground text-sm font-medium">
-            Olá, <strong className="text-primary">{user?.name}</strong>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h1 className="text-foreground text-base font-medium">
+            Olá, <span className="text-primary font-semibold">{user?.name}</span>
           </h1>
           <MonthFilter initialMonth={month} initialYear={year} />
         </div>
@@ -70,9 +68,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <Suspense fallback={
-      <div className="max-w-7xl mx-auto flex flex-col gap-3 px-3">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-32" />
+      <div className="max-w-7xl mx-auto flex flex-col gap-4 px-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <Skeleton className="h-6 w-32" />
           <Skeleton className="h-9 w-36" />
         </div>
         <InsightsSkeleton />

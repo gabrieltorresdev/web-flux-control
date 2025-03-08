@@ -145,9 +145,9 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
   return (
     <div className="flex items-center gap-1.5">
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="h-8 w-8 shrink-0 hover:bg-muted/50"
+        className="h-9 w-9 shrink-0"
         onClick={handlePreviousMonth}
         aria-label="Mês anterior"
         disabled={isChangingMonth}
@@ -167,9 +167,9 @@ export function MonthFilter({ initialMonth, initialYear }: MonthFilterProps) {
       />
 
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="h-8 w-8 shrink-0 hover:bg-muted/50"
+        className="h-9 w-9 shrink-0"
         onClick={handleNextMonth}
         aria-label="Próximo mês"
         disabled={isChangingMonth}

@@ -21,13 +21,14 @@ import {
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { EditCategoryDialog } from "@/features/categories/components/edit-category-dialog";
-import { useToast } from "@/shared/hooks/use-toast";
+
 import { cn } from "@/shared/utils";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { CategoryIcon } from "./category-icon";
 import { deleteCategory } from "@/features/categories/actions/categories";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { useCategoryStore } from "@/features/categories/stores/category-store";
+import { toast } from "sonner";
 
 interface CategoryItemProps {
   category: Category;
@@ -45,7 +46,6 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
   const scale = useTransform(x, [-100, -20], [1, 0.8]);
   const backgroundOpacity = useTransform(x, [-100, 0], [1, 0]);
 
-  const { toast } = useToast();
   const isMobile = useIsMobile();
 
   const handleDelete = async () => {
@@ -54,18 +54,15 @@ export const CategoryItem = memo(({ category }: CategoryItemProps) => {
       await deleteCategory(category.id);
       // Força o recarregamento das categorias após a exclusão
       await useCategoryStore.getState().forceReload();
-      toast({
-        title: "Categoria excluída",
+      toast.success("Categoria excluída", {
         description: "A categoria foi excluída com sucesso.",
       });
       // Reset swipe position after successful delete
       x.set(0);
       setIsOpen(false);
     } catch {
-      toast({
-        title: "Erro ao excluir",
+      toast.error("Erro ao excluir categoria", {
         description: "Ocorreu um erro ao excluir a categoria.",
-        variant: "destructive",
       });
     } finally {
       setIsDeleting(false);

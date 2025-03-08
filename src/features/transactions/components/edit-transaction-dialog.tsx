@@ -7,7 +7,6 @@ import {
   CreateTransactionInput,
 } from "@/features/transactions/types";
 import { transactionSchema } from "@/shared/utils/validations/transaction";
-import { useToast } from "@/shared/hooks/use-toast";
 import { TransactionForm } from "@/features/transactions/components/transaction-form";
 import {
   ResponsiveModal,
@@ -20,6 +19,7 @@ import { updateTransaction } from "@/features/transactions/actions/transactions"
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/lib/get-query-client";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface EditTransactionDialogProps {
   transaction: Transaction;
@@ -34,7 +34,6 @@ export function EditTransactionDialog({
   open,
   onOpenChange,
 }: EditTransactionDialogProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -77,10 +76,8 @@ export function EditTransactionDialog({
           return;
         }
 
-        toast({
-          title: "Erro ao atualizar transação",
+        toast.error("Erro ao atualizar transação", {
           description: result.error.message,
-          variant: "destructive",
         });
         return;
       }
@@ -89,16 +86,13 @@ export function EditTransactionDialog({
         queryKey: queryKeys.transactions.all,
       });
       onOpenChange(false);
-      toast({
-        title: "Transação atualizada",
+      toast.success("Transação atualizada", {
         description: "A transação foi atualizada com sucesso.",
       });
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast({
-        title: "Erro ao atualizar transação",
+      toast.error("Erro ao atualizar transação", {
         description: "Ocorreu um erro inesperado ao atualizar a transação.",
-        variant: "destructive",
       });
     } finally {
       if (result?.error) {

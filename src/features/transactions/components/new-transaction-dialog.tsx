@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateTransactionInput } from "@/features/transactions/types";
 import { transactionSchema } from "@/shared/utils/validations/transaction";
-import { useToast } from "@/shared/hooks/use-toast";
 import {
   ResponsiveModal,
   ResponsiveModalTrigger,
@@ -40,7 +39,7 @@ import { queryKeys } from "@/shared/lib/get-query-client";
 import { useCategoryStore } from "@/features/categories/stores/category-store";
 import { useQueryParams } from "@/shared/hooks/use-search-params";
 import { TransactionFilters } from "@/features/transactions/types";
-
+import { toast } from "sonner";
 interface NewTransactionDialogProps {
   initialDate?: Date;
   onClose: () => void;
@@ -65,7 +64,6 @@ export function NewTransactionDialog({
   const [hasVoiceData, setHasVoiceData] = useState(false);
   const [hasManualData, setHasManualData] = useState(false);
 
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const loadCategories = useCategoryStore((state) => state.loadCategories);
   const { getParams } = useQueryParams<TransactionFilters>();
@@ -190,10 +188,8 @@ export function NewTransactionDialog({
           return;
         }
 
-        toast({
-          title: "Erro ao criar transação",
+        toast.error("Erro ao criar transação", {
           description: result.error.message,
-          variant: "destructive",
         });
         return;
       }
@@ -203,16 +199,13 @@ export function NewTransactionDialog({
       });
       clearDraft();
       onClose();
-      toast({
-        title: "Transação criada",
+      toast.success("Transação criada", {
         description: "A transação foi criada com sucesso.",
       });
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast({
-        title: "Erro ao criar transação",
+      toast.error("Erro ao criar transação", {
         description: "Ocorreu um erro inesperado ao criar a transação.",
-        variant: "destructive",
       });
     } finally {
       if (result?.error) {

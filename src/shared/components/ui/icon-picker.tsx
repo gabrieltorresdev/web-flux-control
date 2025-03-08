@@ -94,7 +94,7 @@ const IconPicker = React.forwardRef<
   };
 
   return (
-    <Popover open={open ?? isOpen} onOpenChange={handleOpenChange}>
+    <Popover open={open ?? isOpen} onOpenChange={handleOpenChange} modal>
       <PopoverTrigger ref={ref} asChild {...props}>
         {children || (
           <Button variant="outline">
@@ -108,7 +108,7 @@ const IconPicker = React.forwardRef<
           </Button>
         )}
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2">
+      <PopoverContent className="p-2">
         {searchable && (
           <Input
             placeholder={searchPlaceholder}
@@ -118,7 +118,7 @@ const IconPicker = React.forwardRef<
           />
         )}
         <div
-          className="grid grid-cols-4 gap-2 max-h-60 overflow-auto"
+          className="grid grid-cols-4 gap-2 overflow-auto"
           onScroll={handleScroll}
         >
           {displayedIcons.map(({ icon }) => (

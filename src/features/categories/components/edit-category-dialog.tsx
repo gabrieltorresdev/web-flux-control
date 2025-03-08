@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { useToast } from "@/shared/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Category, CreateCategoryInput } from "@/features/categories/types";
@@ -26,7 +25,7 @@ import { z } from "zod";
 import { updateCategory } from "@/features/categories/actions/categories";
 import { memo, useCallback, useState } from "react";
 import { useCategoryStore } from "@/features/categories/stores/category-store";
-
+import { toast } from "sonner";
 const updateCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   type: z.enum(["income", "expense"]),
@@ -91,7 +90,7 @@ export const EditCategoryDialog = memo(function EditCategoryDialog({
               defaultValue={category.type}
               onValueChange={handleTypeChange}
             >
-              <SelectTrigger className="h-12 text-base">
+              <SelectTrigger className="h-12 text-base w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -134,7 +133,6 @@ interface UseEditCategoryProps {
 }
 
 function useEditCategory({ category, onOpenChange }: UseEditCategoryProps) {
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<CreateCategoryInput>({
@@ -163,8 +161,7 @@ function useEditCategory({ category, onOpenChange }: UseEditCategoryProps) {
         });
         await useCategoryStore.getState().forceReload();
         onOpenChange(false);
-        toast({
-          title: "Categoria atualizada",
+        toast.success("Categoria atualizada", {
           description: "Categoria atualizada com sucesso",
         });
       } catch (error) {
@@ -176,10 +173,8 @@ function useEditCategory({ category, onOpenChange }: UseEditCategoryProps) {
             });
           });
         } else {
-          toast({
-            title: "Erro ao atualizar categoria",
+          toast.error("Erro ao atualizar categoria", {
             description: "Ocorreu um erro ao atualizar a categoria",
-            variant: "destructive",
           });
         }
       } finally {

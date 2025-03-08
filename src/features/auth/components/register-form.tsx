@@ -14,11 +14,11 @@ import {
   FormMessage,
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
-import { useToast } from "@/shared/hooks/use-toast";
 import { registerUser } from "@/features/auth/actions/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
+import { toast } from "sonner";
 
 const registerSchema = z
   .object({
@@ -36,7 +36,6 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const router = useRouter();
 
   const form = useForm<RegisterForm>({
@@ -54,8 +53,7 @@ export function RegisterForm() {
 
     try {
       await registerUser(data);
-      toast({
-        title: "Conta criada com sucesso!",
+      toast.success("Conta criada com sucesso!", {
         description: "Você será redirecionado para a página de login.",
       });
       setTimeout(() => {
@@ -63,9 +61,7 @@ export function RegisterForm() {
       }, 1500);
     } catch (error) {
       console.error("Erro ao criar conta:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar conta",
+      toast.error("Erro ao criar conta", {
         description: "Ocorreu um erro ao criar sua conta. Tente novamente.",
       });
     } finally {

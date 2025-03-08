@@ -4,11 +4,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { checkUserStatus } from "@/features/user/actions/user";
 import { signOut } from "next-auth/react";
-import { useToast } from "@/shared/hooks/use-toast";
+import { toast } from "sonner";
 
 export function DashboardStatusChecker() {
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -21,8 +20,7 @@ export function DashboardStatusChecker() {
         console.error("Error checking user status:", error);
         if (error instanceof Error && error.message === "Unauthorized") {
           await signOut({ redirect: false });
-          toast({
-            title: "Sessão expirada",
+          toast.error("Sessão expirada", {
             description: "Por favor, faça login novamente.",
           });
           router.push("/login");

@@ -240,7 +240,7 @@ export const CategorySelector = memo(function CategorySelector({
       <>
         <Sheet open={state.open} onOpenChange={handleOpenChange}>
           <SheetTrigger asChild>{trigger}</SheetTrigger>
-          <SheetContent side="bottom" className="h-[85vh] p-0">
+          <SheetContent side="bottom" className=" p-0">
             <SheetHeader className="px-4 py-3 border-b">
               <SheetTitle className="text-lg font-semibold">
                 Selecione uma categoria
@@ -265,7 +265,7 @@ export const CategorySelector = memo(function CategorySelector({
 
   return (
     <>
-      <Popover open={state.open} onOpenChange={handleOpenChange}>
+      <Popover open={state.open} onOpenChange={handleOpenChange} modal>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent
           className="w-[var(--radix-popover-trigger-width)] p-0"

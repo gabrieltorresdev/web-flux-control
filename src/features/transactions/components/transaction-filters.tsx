@@ -92,11 +92,10 @@ export function TransactionFilters({
   const hasActiveFilters = search || selectedCategoryId;
 
   return (
-    <Card className={className}>
+    <Card className={cn("py-0", className)}>
       <motion.div
         initial={false}
         animate={{
-          height: 48,
           backgroundColor: hasActiveFilters
             ? "var(--active-filter-bg)"
             : "var(--card-bg)",

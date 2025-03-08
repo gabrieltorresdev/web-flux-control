@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { useToast } from "@/shared/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { CreateCategoryInput } from "@/features/categories/types";
@@ -26,6 +25,7 @@ import { IconPicker } from "@/features/categories/components/icon-picker";
 import { ValidationError } from "@/shared/lib/api/error-handler";
 import { createCategory } from "@/features/categories/actions/categories";
 import { useCategoryStore } from "@/features/categories/stores/category-store";
+import { toast } from "sonner";
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -61,7 +61,6 @@ export function TransactionCreateCategoryDialog({
 
   const selectedIcon = form.watch("icon");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   // Preenche o nome da categoria com o valor sugerido quando o modal abre
   useEffect(() => {
@@ -87,10 +86,9 @@ export function TransactionCreateCategoryDialog({
       
       // Fecha APENAS o modal de criação de categoria, não o modal principal
       onOpenChange(false);
-      
+
       // Notifica o usuário
-      toast({
-        title: "Categoria criada",
+      toast.success("Categoria criada", {
         description: "A categoria foi criada com sucesso.",
       });
     } catch (error) {
@@ -102,10 +100,8 @@ export function TransactionCreateCategoryDialog({
           });
         });
       } else {
-        toast({
-          title: "Erro ao criar categoria",
+        toast.error("Erro ao criar categoria", {
           description: "Ocorreu um erro ao criar a categoria.",
-          variant: "destructive",
         });
       }
     } finally {
@@ -147,7 +143,7 @@ export function TransactionCreateCategoryDialog({
                 form.setValue("type", value as "income" | "expense")
               }
             >
-              <SelectTrigger className="h-12 text-base">
+              <SelectTrigger className="h-12 text-base w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
