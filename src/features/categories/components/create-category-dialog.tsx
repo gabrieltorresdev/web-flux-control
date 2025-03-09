@@ -38,6 +38,7 @@ interface CreateCategoryDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: (categoryId: string, categoryName: string) => void;
   defaultCategoryName?: string;
+  defaultType?: 'income' | 'expense';
 }
 
 export function CreateCategoryDialog({
@@ -45,6 +46,7 @@ export function CreateCategoryDialog({
   onOpenChange,
   onSuccess,
   defaultCategoryName,
+  defaultType = 'expense',
 }: CreateCategoryDialogProps) {
   const { form, isSubmitting, selectedIcon, handleCreateCategory } =
     useCreateCategory({
@@ -52,6 +54,7 @@ export function CreateCategoryDialog({
       onOpenChange,
       onSuccess,
       defaultCategoryName,
+      defaultType,
     });
 
   return (
@@ -83,7 +86,7 @@ export function CreateCategoryDialog({
           <div className="space-y-2">
             <label className="text-sm font-medium">Tipo</label>
             <Select
-              defaultValue="expense"
+              defaultValue={form.getValues("type")}
               onValueChange={(value) =>
                 form.setValue("type", value as "income" | "expense")
               }
@@ -135,11 +138,12 @@ function useCreateCategory({
   onOpenChange,
   onSuccess,
   defaultCategoryName,
+  defaultType = 'expense',
 }: CreateCategoryDialogProps) {
   const form = useForm<CreateCategoryInput>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
-      type: "expense",
+      type: defaultType,
       name: "",
       icon: undefined,
     },
@@ -151,12 +155,12 @@ function useCreateCategory({
   useEffect(() => {
     if (open) {
       form.reset({
-        type: "expense",
+        type: defaultType,
         name: defaultCategoryName || "",
         icon: undefined,
       });
     }
-  }, [open, defaultCategoryName, form, form.reset]);
+  }, [open, defaultCategoryName, defaultType, form]);
 
   const handleCreateCategory = form.handleSubmit(async (data) => {
     try {

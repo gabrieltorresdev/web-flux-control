@@ -25,36 +25,34 @@ export function CategoryBadge({
 
   return (
     <MotionBadge
-      variant="default"
+      variant="outline"
       className={cn(
-        "gap-1.5 pl-2 pr-1 py-0 whitespace-nowrap group inline-flex items-center",
+        "gap-1 pl-2 pr-1 py-0.5 h-6 whitespace-nowrap group",
         isIncome
-          ? "bg-[hsl(var(--income)/0.08)] hover:bg-[hsl(var(--income)/0.12)] text-[hsl(var(--income-foreground))] border-[hsl(var(--income)/0.2)] hover:border-[hsl(var(--income)/0.3)]"
-          : "bg-[hsl(var(--expense)/0.08)] hover:bg-[hsl(var(--expense)/0.12)] text-[hsl(var(--expense-foreground))] border-[hsl(var(--expense)/0.2)] hover:border-[hsl(var(--expense)/0.3)]",
-        "border transition-all duration-200",
+          ? "bg-success/5 hover:bg-success/10 text-success border-success/30 hover:border-success/40"
+          : "bg-expense/5 hover:bg-expense/10 text-expense border-expense/30 hover:border-expense/40",
+        "transition-colors",
         className
       )}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         <CategoryIcon
           icon={category.icon}
           isIncome={isIncome}
-          className="h-3 w-3 opacity-70"
+          className="h-3 w-3"
         />
-        <span className="truncate max-w-[200px] text-xs font-medium">
+        <span className="truncate max-w-[80px] text-xs">
           {category.name}
         </span>
       </div>
       <FilterButton
         onClick={onRemove}
         className={cn(
-          "group-hover:bg-background/50",
-          isIncome
-            ? "group-hover:bg-[hsl(var(--income)/0.12)]"
-            : "group-hover:bg-[hsl(var(--expense)/0.12)]"
+          "h-4 w-4 rounded-full",
+          isIncome ? "group-hover:bg-success/20" : "group-hover:bg-expense/20"
         )}
       >
-        <X className="h-3 w-3" />
+        <X className="h-2.5 w-2.5" />
       </FilterButton>
     </MotionBadge>
   );

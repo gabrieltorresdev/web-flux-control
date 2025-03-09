@@ -46,6 +46,7 @@ interface CategorySelectorProps {
   onCategoryCreated?: (categoryId?: string, categoryName?: string) => Promise<void>;
   showAllOption?: boolean;
   store?: ReturnType<typeof createCategoryStore>;
+  filterByType?: 'income' | 'expense';
 }
 
 export const CategorySelector = memo(function CategorySelector({
@@ -60,6 +61,7 @@ export const CategorySelector = memo(function CategorySelector({
   onCategoryCreated,
   showAllOption = false,
   store = useCategoryStore,
+  filterByType,
 }: CategorySelectorProps) {
   const [state, setState] = useState({
     open: false,
@@ -79,14 +81,21 @@ export const CategorySelector = memo(function CategorySelector({
 
   // Filter categories based on search term
   const filteredCategories = useMemo(() => {
+    // First filter by type if filterByType is provided
+    const typeFilteredCategories = filterByType 
+      ? categories.filter(cat => cat.type === filterByType)
+      : categories;
+    
+    // Then filter by search term if provided
     if (!debouncedSearchTerm) {
       // Sort categories with default categories first
-      return [...categories].sort((a, b) => {
+      return [...typeFilteredCategories].sort((a, b) => {
         if (a.isDefault === b.isDefault) return 0;
         return a.isDefault ? -1 : 1;
       });
     }
-    return categories
+    
+    return typeFilteredCategories
       .filter((cat: Category) =>
         cat.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       )
@@ -94,7 +103,7 @@ export const CategorySelector = memo(function CategorySelector({
         if (a.isDefault === b.isDefault) return 0;
         return a.isDefault ? -1 : 1;
       });
-  }, [categories, debouncedSearchTerm]);
+  }, [categories, debouncedSearchTerm, filterByType]);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -144,6 +153,13 @@ export const CategorySelector = memo(function CategorySelector({
     [onChange, onCategoryCreated, categories]
   );
 
+  // Update placeholder if category type filter is applied
+  const typeFilterPlaceholder = filterByType === 'income' 
+    ? 'Selecione categoria de entrada' 
+    : filterByType === 'expense'
+      ? 'Selecione categoria de saída'
+      : placeholder;
+
   const content = (
     <Command shouldFilter={false} className="w-full">
       <div className="sticky top-0 left-0 right-0 bg-background z-10">
@@ -153,6 +169,11 @@ export const CategorySelector = memo(function CategorySelector({
         >
           <Plus className="mr-2 h-4 w-4" />
           Criar nova categoria
+          {filterByType && (
+            <span className="ml-1 text-xs opacity-70">
+              ({filterByType === 'income' ? 'entrada' : 'saída'})
+            </span>
+          )}
         </CommandItem>
         <CommandInput
           placeholder="Buscar categoria..."
@@ -183,6 +204,11 @@ export const CategorySelector = memo(function CategorySelector({
                   )}
                 />
                 Todas as categorias
+                {filterByType && (
+                  <span className="ml-1 text-xs opacity-70">
+                    ({filterByType === 'income' ? 'entradas' : 'saídas'})
+                  </span>
+                )}
               </CommandItem>
             )}
             {filteredCategories?.length > 0 &&
@@ -220,7 +246,7 @@ export const CategorySelector = memo(function CategorySelector({
       role="combobox"
       aria-expanded={state.open}
       className={cn(
-        "w-full justify-between h-12 text-base",
+        "w-full justify-between h-10 text-base",
         showAsBadge && "w-40",
         error && "border-destructive text-destructive",
         className
@@ -229,7 +255,7 @@ export const CategorySelector = memo(function CategorySelector({
       {selectedCategory ? (
         <CategorySelectItem category={selectedCategory} showType={false} />
       ) : (
-        placeholder
+        typeFilterPlaceholder
       )}
       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
     </Button>
@@ -240,10 +266,15 @@ export const CategorySelector = memo(function CategorySelector({
       <>
         <Sheet open={state.open} onOpenChange={handleOpenChange}>
           <SheetTrigger asChild>{trigger}</SheetTrigger>
-          <SheetContent side="bottom" className=" p-0">
+          <SheetContent side="bottom" className="p-0">
             <SheetHeader className="px-4 py-3 border-b">
               <SheetTitle className="text-lg font-semibold">
                 Selecione uma categoria
+                {filterByType && (
+                  <span className="text-sm font-normal ml-1 opacity-70">
+                    ({filterByType === 'income' ? 'entrada' : 'saída'})
+                  </span>
+                )}
               </SheetTitle>
               <SheetDescription />
             </SheetHeader>
@@ -257,7 +288,7 @@ export const CategorySelector = memo(function CategorySelector({
             setState((prev) => ({ ...prev, showCreateDialog: open }))
           }
           onSuccess={handleCreateSuccess}
-          defaultCategoryName={state.searchTerm}
+          defaultType={filterByType}
         />
       </>
     );
@@ -265,12 +296,9 @@ export const CategorySelector = memo(function CategorySelector({
 
   return (
     <>
-      <Popover open={state.open} onOpenChange={handleOpenChange} modal>
+      <Popover open={state.open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-        <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0"
-          align="start"
-        >
+        <PopoverContent className="w-[300px] p-0" align="start">
           {content}
         </PopoverContent>
       </Popover>
@@ -281,7 +309,7 @@ export const CategorySelector = memo(function CategorySelector({
           setState((prev) => ({ ...prev, showCreateDialog: open }))
         }
         onSuccess={handleCreateSuccess}
-        defaultCategoryName={state.searchTerm}
+        defaultType={filterByType}
       />
     </>
   );

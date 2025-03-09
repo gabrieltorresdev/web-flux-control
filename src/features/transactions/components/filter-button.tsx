@@ -15,8 +15,8 @@ export const FilterButton = React.forwardRef<
     variant="ghost"
     size="icon"
     className={cn(
-      "h-5 w-5 p-0 hover:bg-background/50 transition-all duration-200",
-      "opacity-50 hover:opacity-100",
+      "h-5 w-5 p-0 rounded-sm hover:bg-muted/70 transition-colors",
+      "opacity-70 hover:opacity-100",
       active && "opacity-100",
       className
     )}

@@ -9,6 +9,8 @@ export interface TransactionFilters {
   year?: string;
   /** Search term */
   search?: string;
+  /** Transaction type: income or expense */
+  type?: 'income' | 'expense';
 }
 
 export interface Transaction {

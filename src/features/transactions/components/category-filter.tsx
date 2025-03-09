@@ -15,6 +15,7 @@ interface CategoryFilterProps {
   ) => void;
   insideSheet?: boolean;
   store?: ReturnType<typeof createCategoryStore>;
+  type?: 'income' | 'expense';
 }
 
 export const CategoryFilter = memo(function CategoryFilter({
@@ -24,6 +25,7 @@ export const CategoryFilter = memo(function CategoryFilter({
   onCategoryChange,
   insideSheet = false,
   store,
+  type,
 }: CategoryFilterProps) {
   return (
     <CategorySelector
@@ -34,6 +36,8 @@ export const CategoryFilter = memo(function CategoryFilter({
       insideSheet={insideSheet}
       showAllOption={true}
       store={store}
+      className="w-full"
+      filterByType={type}
     />
   );
 });

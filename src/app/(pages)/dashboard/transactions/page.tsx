@@ -21,7 +21,7 @@ interface TransactionsPageProps {
 }
 
 export default async function TransactionsPage({ searchParams }: TransactionsPageProps) {
-  const { month, year, categoryId, search } = await searchParams;
+  const { month, year, categoryId, search, type } = await searchParams;
 
   // Fetch initial data on the server
   const [initialTransactions, initialSummary, initialCategoryResponse] =
@@ -29,11 +29,17 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
       getTransactionsList({
         month: month ? parseInt(month) : undefined,
         year: year ? parseInt(year) : undefined,
+        categoryId: categoryId,
+        search: search,
+        type: type as 'income' | 'expense' | undefined,
         perPage: 10,
       }),
       getTransactionsSummary({
         month: month ? parseInt(month) : undefined,
         year: year ? parseInt(year) : undefined,
+        categoryId: categoryId,
+        search: search,
+        type: type as 'income' | 'expense' | undefined,
       }),
       categoryId ? getCategoryById(categoryId) : null,
     ]);
@@ -54,6 +60,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
               initialCategoryId={categoryId}
               initialCategory={initialCategoryResponse?.data}
               initialSearch={search}
+              initialType={type as 'income' | 'expense' | undefined}
             />
 
             <TransactionSummary initialSummary={initialSummary} />
@@ -68,6 +75,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
               year: year || null,
               categoryId: categoryId || null,
               search: search || null,
+              type: type || null,
             }}
           />
         </Suspense>

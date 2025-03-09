@@ -20,6 +20,7 @@ interface TransactionsContainerProps {
     year: string | null;
     categoryId: string | null;
     search: string | null;
+    type: string | null;
   };
 }
 

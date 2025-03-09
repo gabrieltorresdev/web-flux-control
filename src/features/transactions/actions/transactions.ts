@@ -20,6 +20,7 @@ type TransactionListParams = {
   year?: number;
   categoryId?: string;
   search?: string;
+  type?: 'income' | 'expense';
   page?: number;
   perPage?: number;
 };
@@ -29,6 +30,7 @@ export async function getTransactionsList({
   year,
   categoryId,
   search,
+  type,
   page = 1,
   perPage = 10,
 }: TransactionListParams = {}) {
@@ -44,7 +46,8 @@ export async function getTransactionsList({
     endDate,
     categoryId,
     search,
-    { page, perPage }
+    { page, perPage },
+    type
   );
 
   return {
@@ -61,6 +64,7 @@ export async function getTransactionsSummary({
   year,
   categoryId,
   search,
+  type,
 }: Omit<TransactionListParams, "page" | "perPage"> = {}) {
   const date = new Date(
     year || new Date().getFullYear(),
@@ -69,7 +73,7 @@ export async function getTransactionsSummary({
   const startDate = startOfMonth(date);
   const endDate = endOfMonth(date);
 
-  return transactionService.getSummary(startDate, endDate, categoryId, search);
+  return transactionService.getSummary(startDate, endDate, categoryId, search, type);
 }
 
 export async function createTransaction(

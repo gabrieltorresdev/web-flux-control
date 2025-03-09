@@ -21,7 +21,8 @@ export class TransactionService {
     endDate?: Date,
     categoryId?: string | null,
     search?: string,
-    pagination?: PaginationParams
+    pagination?: PaginationParams,
+    type?: 'income' | 'expense'
   ): Promise<ApiTransactionPaginatedList> {
     const params = new URLSearchParams();
     if (startDate) {
@@ -30,8 +31,15 @@ export class TransactionService {
     if (endDate) {
       params.append("endDate", endDate.toISOString());
     }
-    params.append("categoryId", categoryId || "");
-    params.append("search", search || "");
+    if (categoryId) {
+      params.append("categoryId", categoryId);
+    }
+    if (search) {
+      params.append("search", search);
+    }
+    if (type) {
+      params.append("type", type);
+    }
     if (pagination?.page) {
       params.append("page", pagination.page.toString());
     }
@@ -49,7 +57,8 @@ export class TransactionService {
     startDate?: Date,
     endDate?: Date,
     categoryId?: string | null,
-    search?: string
+    search?: string,
+    type?: 'income' | 'expense'
   ): Promise<ApiTransactionSummaryResponse> {
     const params = new URLSearchParams();
     if (startDate) {
@@ -58,8 +67,15 @@ export class TransactionService {
     if (endDate) {
       params.append("endDate", endDate.toISOString());
     }
-    params.append("categoryId", categoryId || "");
-    params.append("search", search || "");
+    if (categoryId) {
+      params.append("categoryId", categoryId);
+    }
+    if (search) {
+      params.append("search", search);
+    }
+    if (type) {
+      params.append("type", type);
+    }
 
     return this.httpClient.get<ApiTransactionSummaryResponse>(
       `${getBackendApiUrl(this.route)}/summary?${params.toString()}`,

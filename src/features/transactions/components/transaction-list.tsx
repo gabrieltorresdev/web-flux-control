@@ -20,6 +20,7 @@ interface SearchParams {
   year: string | null;
   categoryId: string | null;
   search: string | null;
+  type: string | null;
 }
 
 interface TransactionListProps {
@@ -110,6 +111,7 @@ export const TransactionList = function TransactionList({
         year: searchParams.year ? parseInt(searchParams.year) : undefined,
         categoryId: searchParams.categoryId || undefined,
         search: searchParams.search || undefined,
+        type: (searchParams.type as 'income' | 'expense' | undefined) || undefined,
         perPage: 10,
       });
       setData(response);
